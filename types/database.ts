@@ -200,6 +200,7 @@ export interface Note {
   author_id: string | null;
   author_name: string | null;
   visibility: NoteVisibility;
+  reviewed: boolean;
   created_at: string;
 }
 

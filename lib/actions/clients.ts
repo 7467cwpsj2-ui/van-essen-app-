@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { defaultPermissions, type ModuleKey } from "@/types/database";
 
 export async function inviteClient(formData: FormData) {
@@ -15,7 +16,7 @@ export async function inviteClient(formData: FormData) {
   const supabase = createClient();
   const { data: client, error: clientError } = await supabase
     .from("clients")
-    .insert({ name, permissions: defaultPermissions() })
+    .insert({ name, permissions: permissionsFromFormData(formData) })
     .select()
     .single();
   if (clientError || !client) throw new Error(clientError?.message || "Kon klant niet aanmaken.");

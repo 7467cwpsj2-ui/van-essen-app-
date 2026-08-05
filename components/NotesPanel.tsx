@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2 } from "lucide-react";
-import { createNote, deleteNote, setNoteVisibility } from "@/lib/actions/notes";
+import { Trash2, Users, UserCheck } from "lucide-react";
+import { createNote, deleteNote, markNoteReviewed, setNoteVisibility } from "@/lib/actions/notes";
 import type { Note, NoteVisibility, Role } from "@/types/database";
 
 const VIS_LABEL: Record<NoteVisibility, string> = { prive: "Alleen ik", team: "Team", klant: "Team + klant" };
@@ -32,6 +32,8 @@ export function NotesPanel({
     });
   };
 
+  const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
+
   const visibilityOptions: NoteVisibility[] =
     role === "eigenaar" ? ["prive", "team", "klant"] : role === "team" ? ["prive", "team"] : ["prive"];
 
@@ -40,37 +42,64 @@ export function NotesPanel({
       {role === "klant" && (
         <div className="hint-bar">Jouw notities zijn standaard alleen zichtbaar voor de eigenaar, tot die ze eventueel deelt.</div>
       )}
+      {role === "eigenaar" && notes.some((n) => !n.reviewed) && (
+        <div className="hint-bar">Er staan nieuwe notities klaar om te beoordelen — kies hieronder of je ze verder deelt.</div>
+      )}
       {notes.length === 0 && <div className="empty-hint">Nog geen notities.</div>}
       <div className="note-list">
-        {notes.map((n) => (
-          <div key={n.id} className="note-card">
-            <div className="note-top">
-              <span className="note-author">{n.author_name || "—"}</span>
-              <span className="note-date mono">{new Date(n.created_at).toLocaleDateString("nl-NL")}</span>
-              <span className={"vis-pill " + VIS_CLASS[n.visibility]}>{VIS_LABEL[n.visibility]}</span>
-              {role === "eigenaar" && (
-                <select
-                  className="note-visibility-select"
-                  value={n.visibility}
-                  onChange={(e) => setNoteVisibility(projectId, n.id, e.target.value as NoteVisibility).catch((err) => alert(err.message))}
-                >
-                  <option value="prive">Alleen ik</option>
-                  <option value="team">Team</option>
-                  <option value="klant">Team + klant</option>
-                </select>
-              )}
-              {(role === "eigenaar" || n.author_id === currentUserId) && (
-                <button
-                  className="icon-btn danger ghost note-del"
-                  onClick={() => deleteNote(projectId, n.id).catch((err) => alert(err.message))}
-                >
-                  <Trash2 size={13} />
-                </button>
+        {notes.map((n) => {
+          const needsReview = role === "eigenaar" && !n.reviewed;
+          return (
+            <div key={n.id} className={"note-card" + (needsReview ? " note-card-pending" : "")}>
+              <div className="note-top">
+                <span className="note-author">{n.author_name || "—"}</span>
+                <span className="note-date mono">{new Date(n.created_at).toLocaleDateString("nl-NL")}</span>
+                <span className={"vis-pill " + VIS_CLASS[n.visibility]}>{VIS_LABEL[n.visibility]}</span>
+                {needsReview && <span className="vis-pill vis-review">nieuw · nog controleren</span>}
+                {role === "eigenaar" && !needsReview && (
+                  <select
+                    className="note-visibility-select"
+                    value={n.visibility}
+                    onChange={(e) => run(() => setNoteVisibility(projectId, n.id, e.target.value as NoteVisibility))}
+                  >
+                    <option value="prive">Alleen ik</option>
+                    <option value="team">Team</option>
+                    <option value="klant">Team + klant</option>
+                  </select>
+                )}
+                {(role === "eigenaar" || n.author_id === currentUserId) && (
+                  <button className="icon-btn danger ghost note-del" onClick={() => run(() => deleteNote(projectId, n.id))}>
+                    <Trash2 size={13} />
+                  </button>
+                )}
+              </div>
+              <div className="note-text">{n.text}</div>
+              {needsReview && (
+                <div className="review-controls">
+                  {n.visibility === "prive" ? (
+                    <>
+                      <button className="btn-primary" onClick={() => run(() => setNoteVisibility(projectId, n.id, "team"))}>
+                        <Users size={13} /> Delen met team
+                      </button>
+                      <button className="btn-ghost" onClick={() => run(() => markNoteReviewed(projectId, n.id))}>
+                        Privé houden
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <button className="btn-primary" onClick={() => run(() => setNoteVisibility(projectId, n.id, "klant"))}>
+                        <UserCheck size={13} /> Delen met klant
+                      </button>
+                      <button className="btn-ghost" onClick={() => run(() => markNoteReviewed(projectId, n.id))}>
+                        Niet delen met klant
+                      </button>
+                    </>
+                  )}
+                </div>
               )}
             </div>
-            <div className="note-text">{n.text}</div>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div className="add-form">
         <div className="add-form-title">Notitie toevoegen</div>

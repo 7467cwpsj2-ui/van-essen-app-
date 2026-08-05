@@ -3,6 +3,7 @@
 import { useRef, useState, useTransition } from "react";
 import { Plus } from "lucide-react";
 import { inviteTeamMember } from "@/lib/actions/team";
+import { MODULE_KEYS, MODULE_LABELS } from "@/types/database";
 
 export function InviteTeamForm() {
   const formRef = useRef<HTMLFormElement>(null);
@@ -25,10 +26,19 @@ export function InviteTeamForm() {
         <input name="name" placeholder="Naam / bedrijf" required />
         <input name="email" type="email" placeholder="E-mailadres" required />
         <input name="trade" placeholder="Vak (optioneel)" />
-        <button type="submit" className="btn-primary" disabled={pending}>
-          <Plus size={14} /> {pending ? "Bezig…" : "Uitnodigen"}
-        </button>
       </div>
+      <div className="hint-bar small">Kies meteen wat dit teamlid mag zien — je kunt dit later altijd nog aanpassen.</div>
+      <div className="perm-grid">
+        {MODULE_KEYS.map((key) => (
+          <label key={key} className="perm-checkbox">
+            <input type="checkbox" name={`perm_${key}`} defaultChecked />
+            {MODULE_LABELS[key]}
+          </label>
+        ))}
+      </div>
+      <button type="submit" className="btn-primary" disabled={pending} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> {pending ? "Bezig…" : "Uitnodigen"}
+      </button>
       {error && <div className="login-error">{error}</div>}
     </form>
   );

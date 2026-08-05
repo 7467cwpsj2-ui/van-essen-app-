@@ -32,8 +32,9 @@ Die volgen in latere fases.
 
 Maak een project aan op [supabase.com](https://supabase.com) en voer de
 migraties uit — via de SQL-editor in het dashboard (plak de inhoud van elk
-bestand in `supabase/migrations/` op volgorde, `0001_init.sql` eerst,
-daarna `0002_fase2.sql`, en klik telkens Run), of met de Supabase CLI:
+bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
+`0002_fase2.sql`, `0003_uren_nacalculatie.sql`, `0004_notes_review.sql`,
+en klik telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>
@@ -41,9 +42,9 @@ supabase db push
 ```
 
 Dit maakt alle tabellen, RLS-policies, RPC's en de storage-bucket
-(`project-files`) aan. Draai je al een bestaand project met alleen
-`0001_init.sql`? Dan hoef je nu alleen `0002_fase2.sql` nog te draaien —
-die bouwt voort op wat er al staat.
+(`project-files`) aan. Draai je al een bestaand project met een deel van
+deze migraties? Dan hoef je alleen de ontbrekende, latere bestanden nog
+te draaien — ze bouwen op elkaar voort.
 
 ### 2. Eerste eigenaarsaccount
 

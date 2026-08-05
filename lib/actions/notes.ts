@@ -23,7 +23,17 @@ export async function createNote(projectId: string, text: string, visibility: No
 export async function setNoteVisibility(projectId: string, id: string, visibility: NoteVisibility) {
   await requireUser();
   const supabase = createClient();
-  const { error } = await supabase.from("notes").update({ visibility }).eq("id", id);
+  const { error } = await supabase.from("notes").update({ visibility, reviewed: true }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/notities`);
+}
+
+// Eigenaar besluit een notitie niet te delen — blijft op de huidige
+// zichtbaarheid staan, verdwijnt alleen als "nog te beoordelen".
+export async function markNoteReviewed(projectId: string, id: string) {
+  await requireUser();
+  const supabase = createClient();
+  const { error } = await supabase.from("notes").update({ reviewed: true }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/notities`);
 }
