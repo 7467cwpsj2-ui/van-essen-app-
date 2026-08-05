@@ -74,6 +74,25 @@ export async function toggleClientCanEditSchedule(id: string, value: boolean) {
   revalidatePath("/clients");
 }
 
+// Een project heeft precies één klant (project.client_id). Aanvinken
+// koppelt dit project aan deze klant (en ontkoppelt 'm dus bij een
+// eventuele vorige klant); uitvinken ontkoppelt het project weer —
+// alleen als het nu nog echt aan deze klant hangt, voor de zekerheid.
+export async function setClientProject(clientId: string, projectId: string, granted: boolean) {
+  await requireOwner();
+  const supabase = createClient();
+  if (granted) {
+    const { error } = await supabase.from("projects").update({ client_id: clientId }).eq("id", projectId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("projects").update({ client_id: null }).eq("id", projectId).eq("client_id", clientId);
+    if (error) throw new Error(error.message);
+  }
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
+  revalidatePath(`/projects/${projectId}`);
+}
+
 export async function removeClient(id: string) {
   await requireOwner();
   const supabase = createClient();
