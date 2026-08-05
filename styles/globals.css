@@ -1803,6 +1803,10 @@ textarea {
 @media (max-width: 760px) {
   .app-shell {
     grid-template-columns: 1fr;
+    /* Zonder dit stretcht CSS Grid de twee auto-rijen (mobile-bar +
+       main) om de volle schermhoogte te vullen, wat een grote lege
+       zwarte balk tussen de header en de inhoud oplevert. */
+    align-content: start;
   }
   .sidebar {
     position: fixed;
@@ -1824,7 +1828,7 @@ textarea {
     justify-content: space-between;
     background: var(--panel);
     border-bottom: 1px solid var(--border);
-    padding: 10px 14px;
+    padding: 8px 14px;
     position: sticky;
     top: 0;
     z-index: 10;
@@ -1837,6 +1841,12 @@ textarea {
     border: none;
     color: var(--text);
     font-size: 12.5px;
+  }
+  .mobile-bar .brandmark-name {
+    font-size: 15px;
+  }
+  .mobile-bar .bm-sub {
+    font-size: 7px;
   }
   .main {
     padding: 16px;
