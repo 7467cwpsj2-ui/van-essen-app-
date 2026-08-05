@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { Send } from "lucide-react";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export interface ChatItem {
   id: string;
@@ -16,14 +17,20 @@ export function ChatPanel({
   messages,
   onSend,
   hint,
+  projectId,
+  realtimeTable,
 }: {
   currentUserId: string;
   messages: ChatItem[];
   onSend: (text: string) => Promise<void>;
   hint?: string;
+  projectId: string;
+  realtimeTable: string;
 }) {
   const [text, setText] = useState("");
   const [, startTransition] = useTransition();
+
+  useRealtimeRefresh(realtimeTable, projectId);
 
   const send = () => {
     if (!text.trim()) return;

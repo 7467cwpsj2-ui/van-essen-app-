@@ -22,6 +22,8 @@ export default async function ChatPage({ params }: { params: { id: string } }) {
       currentUserId={current.id}
       messages={(messages ?? []) as ChatMessage[]}
       onSend={sendChatMessage.bind(null, params.id)}
+      projectId={params.id}
+      realtimeTable="chat_messages"
     />
   );
 }

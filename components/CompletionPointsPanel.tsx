@@ -9,6 +9,7 @@ import {
   markCompletionPointReady,
   resetCompletionPoint,
 } from "@/lib/actions/completionPoints";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import type { CompletionPoint, CompletionPointStatus, Role } from "@/types/database";
 
 const STATUS_LABEL: Record<CompletionPointStatus, string> = { open: "Open", gereed: "Gereed gemeld", goedgekeurd: "Goedgekeurd" };
@@ -31,6 +32,8 @@ export function CompletionPointsPanel({
 }) {
   const [form, setForm] = useState({ description: "", responsibleTeamMemberId: "", deadline: "" });
   const [, startTransition] = useTransition();
+
+  useRealtimeRefresh("completion_points", projectId);
 
   const add = () => {
     if (!form.description.trim()) return;

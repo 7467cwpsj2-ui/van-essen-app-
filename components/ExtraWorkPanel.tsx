@@ -6,6 +6,7 @@ import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
 import { createClient } from "@/lib/supabase/client";
 import { approveExtraWork, createExtraWork, deleteExtraWork, rejectExtraWork, resetExtraWork } from "@/lib/actions/extraWork";
+import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import type { ExtraWork, ExtraWorkStatus, ExtraWorkType, Role, SchedulePhase } from "@/types/database";
 
 const STATUS_LABEL: Record<ExtraWorkStatus, string> = { open: "open", akkoord: "akkoord", afgewezen: "afgewezen" };
@@ -39,6 +40,8 @@ export function ExtraWorkPanel({
   const [signingId, setSigningId] = useState<string | null>(null);
   const [sigPreview, setSigPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  useRealtimeRefresh("extra_work", projectId);
 
   const toggleExplain = (id: string) =>
     setExpandedIds((prev) => {

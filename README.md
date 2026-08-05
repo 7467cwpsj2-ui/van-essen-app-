@@ -34,7 +34,7 @@ Maak een project aan op [supabase.com](https://supabase.com) en voer de
 migraties uit — via de SQL-editor in het dashboard (plak de inhoud van elk
 bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0002_fase2.sql`, `0003_uren_nacalculatie.sql`, `0004_notes_review.sql`,
-en klik telkens Run), of met de Supabase CLI:
+`0005_realtime.sql`, en klik telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

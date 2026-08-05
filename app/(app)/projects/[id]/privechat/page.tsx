@@ -22,6 +22,8 @@ export default async function PrivateChatPage({ params }: { params: { id: string
       messages={(messages ?? []) as OwnerClientMessage[]}
       onSend={sendPrivateMessage.bind(null, params.id)}
       hint="Dit gesprek is privé tussen jou en de klant — het team ziet dit nooit."
+      projectId={params.id}
+      realtimeTable="owner_client_messages"
     />
   );
 }
