@@ -14,6 +14,8 @@ import {
   Palette,
   Archive,
   Lock,
+  Clock,
+  TrendingUp,
 } from "lucide-react";
 import type { ModuleKey } from "@/types/database";
 
@@ -43,16 +45,36 @@ const TAB_ORDER: ModuleKey[] = [
   "dossier",
 ];
 
+// Tabs die geen module-toggle hebben (harde regels of eigenaar-only),
+// dus buiten het permissiesysteem om apart worden bepaald.
+interface ExtraTab {
+  key: string;
+  label: string;
+  icon: React.ReactNode;
+  visible: boolean;
+}
+
 export function ProjectTabs({
   projectId,
   visibleTabs,
   showPrivateChat,
+  showHours,
+  showCalc,
 }: {
   projectId: string;
   visibleTabs: ModuleKey[];
   showPrivateChat: boolean;
+  showHours: boolean;
+  showCalc: boolean;
 }) {
   const pathname = usePathname();
+
+  const extraTabs: ExtraTab[] = [
+    { key: "uren", label: "Uren", icon: <Clock size={14} />, visible: showHours },
+    { key: "nacalculatie", label: "Nacalculatie", icon: <TrendingUp size={14} />, visible: showCalc },
+    { key: "privechat", label: "Klant & eigenaar", icon: <Lock size={14} />, visible: showPrivateChat },
+  ];
+
   return (
     <div className="tabs">
       {TAB_ORDER.filter((t) => visibleTabs.includes(t)).map((key) => {
@@ -64,14 +86,17 @@ export function ProjectTabs({
           </Link>
         );
       })}
-      {showPrivateChat && (
-        <Link
-          href={`/projects/${projectId}/privechat`}
-          className={"tab-btn" + (pathname.startsWith(`/projects/${projectId}/privechat`) ? " active" : "")}
-        >
-          <Lock size={14} /> Klant &amp; eigenaar
-        </Link>
-      )}
+      {extraTabs
+        .filter((t) => t.visible)
+        .map((t) => {
+          const href = `/projects/${projectId}/${t.key}`;
+          const active = pathname.startsWith(href);
+          return (
+            <Link key={t.key} href={href} className={"tab-btn" + (active ? " active" : "")}>
+              {t.icon} {t.label}
+            </Link>
+          );
+        })}
     </div>
   );
 }

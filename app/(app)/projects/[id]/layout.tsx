@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Lock, MapPin } from "lucide-react";
-import { canSeeModule, canSeePrivateChat, requireUser } from "@/lib/auth";
+import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
@@ -30,6 +30,8 @@ export default async function ProjectLayout({
 
   const visibleTabs = MODULE_KEYS.filter((key) => canSeeModule(current, key));
   const showPrivateChat = canSeePrivateChat(current);
+  const showHours = canSeeHours(current);
+  const showCalc = canSeeCalc(current);
   const isLocked = !!p.delivery_signed_at;
 
   return (
@@ -86,7 +88,13 @@ export default async function ProjectLayout({
         </div>
       )}
 
-      <ProjectTabs projectId={p.id} visibleTabs={visibleTabs} showPrivateChat={showPrivateChat} />
+      <ProjectTabs
+        projectId={p.id}
+        visibleTabs={visibleTabs}
+        showPrivateChat={showPrivateChat}
+        showHours={showHours}
+        showCalc={showCalc}
+      />
       {children}
     </div>
   );

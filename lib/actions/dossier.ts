@@ -7,14 +7,13 @@ import type { WarrantyUnit } from "@/types/database";
 
 export async function updateDossierSettings(
   projectId: string,
-  data: { quoteAmount: number; deliveryDate: string | null; warrantyText: string | null; deliveryReady: boolean }
+  data: { deliveryDate: string | null; warrantyText: string | null; deliveryReady: boolean }
 ) {
   await requireOwner();
   const supabase = createClient();
   const { error } = await supabase
     .from("projects")
     .update({
-      quote_amount: data.quoteAmount,
       delivery_date: data.deliveryDate || null,
       warranty_text: data.warrantyText || null,
       delivery_ready: data.deliveryReady,

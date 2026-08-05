@@ -106,6 +106,7 @@ export interface Project {
   delivery_signed_at: string | null;
   delivery_signed_by: string | null;
   delivery_signature_path: string | null;
+  actual_cost: number;
 }
 
 export interface SchedulePhase {
@@ -255,5 +256,15 @@ export interface OwnerClientMessage {
   author_id: string | null;
   author_name: string | null;
   text: string;
+  created_at: string;
+}
+
+export interface HourEntry {
+  id: string;
+  project_id: string;
+  team_member_id: string;
+  work_date: string;
+  hours: number;
+  note: string | null;
   created_at: string;
 }

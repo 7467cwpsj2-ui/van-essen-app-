@@ -32,7 +32,6 @@ export function DossierPanel({
   signatureUrl: string | null;
 }) {
   const isLocked = !!project.delivery_signed_at;
-  const [quoteAmount, setQuoteAmount] = useState(String(project.quote_amount ?? 0));
   const [deliveryDate, setDeliveryDate] = useState(project.delivery_date || "");
   const [warrantyText, setWarrantyText] = useState(project.warranty_text || "");
   const [deliveryReady, setDeliveryReady] = useState(project.delivery_ready);
@@ -51,7 +50,6 @@ export function DossierPanel({
   const saveSettings = () => {
     startTransition(() => {
       updateDossierSettings(projectId, {
-        quoteAmount: Number(quoteAmount) || 0,
         deliveryDate: deliveryDate || null,
         warrantyText: warrantyText || null,
         deliveryReady,
@@ -111,11 +109,8 @@ export function DossierPanel({
       {role === "eigenaar" && !isLocked && (
         <div className="add-form no-print">
           <div className="add-form-title">Opleverdossier instellen</div>
+          <div className="hint-bar small">Het offertebedrag stel je in bij Nacalculatie — dat bedrag wordt hier automatisch meegenomen.</div>
           <div className="calc-grid">
-            <label className="calc-field">
-              Offertebedrag
-              <input type="number" value={quoteAmount} onChange={(e) => setQuoteAmount(e.target.value)} />
-            </label>
             <label className="calc-field">
               Opleverdatum
               <input type="date" value={deliveryDate} onChange={(e) => setDeliveryDate(e.target.value)} />

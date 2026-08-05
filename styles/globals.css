@@ -1755,6 +1755,19 @@ textarea {
   font-weight: 700;
   font-size: 14px;
 }
+.calc-line-marge {
+  font-weight: 700;
+  font-size: 14px;
+}
+.calc-line-marge.pos {
+  color: var(--success);
+}
+.calc-line-marge.neg {
+  color: var(--danger);
+}
+.calc-field input:disabled {
+  opacity: 0.6;
+}
 
 .warranty-list {
   display: flex;
