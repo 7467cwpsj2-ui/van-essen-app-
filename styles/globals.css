@@ -1,23 +1,24 @@
 @import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@700;800;900&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap");
 
 :root {
-  --bg: #050505;
-  --panel: #121316;
-  --panel-2: #1a1c20;
-  --border: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.14);
-  --brand: #3aa9db;
-  --brand-dim: #1c4c63;
-  --success: #4caf7d;
-  --danger: #d1554a;
-  --text: #f2f3f4;
-  --text-dim: #a3a8ad;
-  --text-faint: #6c7075;
+  --bg: #eef1f5;
+  --panel: #ffffff;
+  --panel-2: #f4f6f9;
+  --border: rgba(15, 23, 42, 0.08);
+  --border-strong: rgba(15, 23, 42, 0.16);
+  --brand: #1c7fc4;
+  --brand-dim: #0f5f96;
+  --brand-soft: #e8f2fb;
+  --success: #23935f;
+  --danger: #c8443a;
+  --text: #14161b;
+  --text-dim: #565d68;
+  --text-faint: #7d8390;
   --font-display: "Montserrat", sans-serif;
   --font-body: "Inter", sans-serif;
   --font-mono: "IBM Plex Mono", monospace;
-  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 20px -10px rgba(0, 0, 0, 0.6);
-  --shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.45), 0 20px 48px -16px rgba(0, 0, 0, 0.7);
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.05), 0 6px 18px -6px rgba(16, 24, 40, 0.12);
+  --shadow-elevated: 0 4px 12px rgba(16, 24, 40, 0.08), 0 24px 48px -16px rgba(16, 24, 40, 0.18);
 }
 
 * {
@@ -320,20 +321,20 @@ textarea {
   white-space: nowrap;
 }
 .pill-gepland {
-  background: rgba(201, 209, 122, 0.14);
-  color: #c9d17a;
+  background: rgba(160, 143, 15, 0.12);
+  color: #7a6a0e;
 }
 .pill-lopend {
-  background: rgba(58, 169, 219, 0.16);
-  color: #7fc4ea;
+  background: var(--brand-soft);
+  color: var(--brand-dim);
 }
 .pill-afgerond {
-  background: rgba(76, 175, 125, 0.16);
-  color: #7fd4a3;
+  background: rgba(35, 147, 95, 0.14);
+  color: #1c7a4f;
 }
 .pill-danger {
-  background: rgba(209, 85, 74, 0.16);
-  color: #e79188;
+  background: rgba(200, 68, 58, 0.13);
+  color: #a4362c;
 }
 
 .sidebar-user {
@@ -390,7 +391,7 @@ textarea {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background: radial-gradient(560px circle at 12% -10%, rgba(58, 169, 219, 0.16), transparent 60%);
+  background: radial-gradient(560px circle at 12% -10%, rgba(28, 127, 196, 0.12), transparent 60%);
 }
 .header-top {
   position: relative;
@@ -692,7 +693,7 @@ textarea {
 
 .btn-primary {
   background: var(--brand);
-  color: #051019;
+  color: #ffffff;
   border: none;
   padding: 9px 16px;
   border-radius: 10px;
@@ -704,7 +705,7 @@ textarea {
   justify-content: center;
   gap: 6px;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 16px -6px rgba(58, 169, 219, 0.5);
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.1), 0 6px 16px -6px rgba(28, 127, 196, 0.5);
 }
 .btn-primary:hover:not(:disabled) {
   filter: brightness(1.06);
@@ -882,12 +883,12 @@ textarea {
   font-family: var(--font-mono);
 }
 .vis-review {
-  background: rgba(58, 169, 219, 0.16);
-  color: #7fc4ea;
+  background: var(--brand-soft);
+  color: var(--brand-dim);
 }
 .vis-public {
-  background: rgba(58, 169, 219, 0.16);
-  color: #7fc4ea;
+  background: var(--brand-soft);
+  color: var(--brand-dim);
 }
 
 /* ---------- meerwerk ---------- */
@@ -1004,16 +1005,16 @@ textarea {
   display: inline-block;
 }
 .stamp-open {
-  color: #7fc4ea;
-  background: rgba(58, 169, 219, 0.16);
+  color: var(--brand-dim);
+  background: var(--brand-soft);
 }
 .stamp-akkoord {
-  color: #7fd4a3;
-  background: rgba(76, 175, 125, 0.16);
+  color: #1c7a4f;
+  background: rgba(35, 147, 95, 0.14);
 }
 .stamp-afgewezen {
-  color: #e79188;
-  background: rgba(209, 85, 74, 0.16);
+  color: #a4362c;
+  background: rgba(200, 68, 58, 0.13);
 }
 .choice-btns {
   display: flex;
@@ -1124,7 +1125,7 @@ textarea {
   line-height: 1.1;
 }
 .gantt-head.weekend {
-  background: #201f26;
+  background: var(--panel-2);
 }
 .gantt-row-label {
   position: sticky;
@@ -1161,7 +1162,7 @@ textarea {
   top: 4px;
 }
 .gantt-daycell.weekend {
-  background: #201f26;
+  background: var(--panel-2);
 }
 .gantt-daycell.filled {
   background: var(--brand);
@@ -1245,8 +1246,8 @@ textarea {
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: var(--brand-dim);
-  color: #a9d4ee;
+  background: var(--brand);
+  color: #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1653,12 +1654,12 @@ textarea {
   white-space: pre-wrap;
 }
 .vis-private {
-  background: rgba(209, 85, 74, 0.16);
-  color: #e79188;
+  background: rgba(200, 68, 58, 0.13);
+  color: #a4362c;
 }
 .vis-klant {
-  background: rgba(76, 175, 125, 0.16);
-  color: #7fd4a3;
+  background: rgba(35, 147, 95, 0.14);
+  color: #1c7a4f;
 }
 .note-visibility-select {
   margin-left: auto;
@@ -1688,8 +1689,12 @@ textarea {
 }
 .chat-msg.mine {
   align-self: flex-end;
-  background: var(--brand-dim);
+  background: var(--brand);
   border-color: var(--brand);
+  color: #ffffff;
+}
+.chat-msg.mine .chat-date {
+  color: rgba(255, 255, 255, 0.75);
 }
 .chat-msg-top {
   display: flex;
@@ -1766,19 +1771,19 @@ textarea {
   border: 1px solid var(--border);
 }
 .dossier-status.pending {
-  background: rgba(224, 196, 138, 0.12);
-  color: #e0c48a;
-  border-color: rgba(224, 196, 138, 0.3);
+  background: rgba(160, 143, 15, 0.1);
+  color: #7a6a0e;
+  border-color: rgba(160, 143, 15, 0.25);
 }
 .dossier-status.ready {
-  background: rgba(58, 169, 219, 0.14);
-  color: #7fc4ea;
-  border-color: rgba(58, 169, 219, 0.35);
+  background: var(--brand-soft);
+  color: var(--brand-dim);
+  border-color: rgba(28, 127, 196, 0.3);
 }
 .dossier-status.signed {
-  background: rgba(76, 175, 125, 0.14);
-  color: #7fd4a3;
-  border-color: rgba(76, 175, 125, 0.35);
+  background: rgba(35, 147, 95, 0.12);
+  color: #1c7a4f;
+  border-color: rgba(35, 147, 95, 0.3);
 }
 
 .calc-grid {
@@ -1939,6 +1944,22 @@ textarea {
   }
   .project-header h1 {
     font-size: 20px;
+  }
+  .tabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .tabs::-webkit-scrollbar {
+    display: none;
+  }
+  .tab-btn {
+    flex-shrink: 0;
   }
   .login-shell {
     min-height: 100dvh;
