@@ -4,6 +4,7 @@ import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, requireUser }
 import { createClient } from "@/lib/supabase/server";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
+import { RouteMenu } from "@/components/RouteMenu";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
 const STATUS_LABEL = { gepland: "Gepland", lopend: "Lopend", afgerond: "Afgerond" };
@@ -77,14 +78,7 @@ export default async function ProjectLayout({
             <div className="address-label">Adres</div>
             <div className="address-value">{p.address}</div>
           </div>
-          <a
-            className="address-link"
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Route
-          </a>
+          <RouteMenu address={p.address} />
         </div>
       )}
 

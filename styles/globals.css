@@ -475,6 +475,54 @@ textarea {
   font-weight: 600;
 }
 
+.route-menu {
+  position: relative;
+}
+.route-menu .address-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--brand);
+  cursor: pointer;
+  padding: 0;
+}
+.route-menu .address-link svg {
+  transition: transform 0.15s ease;
+}
+.route-menu .address-link svg.open {
+  transform: rotate(180deg);
+}
+.route-menu-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+  padding: 4px;
+}
+.route-menu-panel a {
+  padding: 9px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+}
+.route-menu-panel a:hover {
+  background: var(--panel-2);
+  color: var(--brand);
+}
+
 .icon-btn {
   background: transparent;
   border: 1px solid var(--border);
