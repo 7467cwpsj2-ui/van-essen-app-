@@ -3,15 +3,28 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, Trash2 } from "lucide-react";
 import { PermGrid } from "@/components/PermGrid";
-import { removeClient, toggleClientCanEditSchedule, toggleClientModulePermission, updateClientDetails } from "@/lib/actions/clients";
+import {
+  removeClient,
+  setClientProject,
+  toggleClientCanEditSchedule,
+  toggleClientModulePermission,
+  updateClientDetails,
+} from "@/lib/actions/clients";
 import type { Client, ModuleKey } from "@/types/database";
 import { MODULE_KEYS } from "@/types/database";
 
-export function ClientRow({ client }: { client: Client }) {
+export function ClientRow({
+  client,
+  projects,
+}: {
+  client: Client;
+  projects: { id: string; name: string; client_id: string | null }[];
+}) {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(client.name);
   const [, startTransition] = useTransition();
   const permCount = MODULE_KEYS.filter((k) => client.permissions[k]).length;
+  const linkedProjects = projects.filter((p) => p.client_id === client.id);
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
@@ -26,7 +39,8 @@ export function ClientRow({ client }: { client: Client }) {
         <span className="access-summary-main">
           <span className="access-summary-name">{client.name}</span>
           <span className="access-summary-sub">
-            {permCount}/{MODULE_KEYS.length} onderdelen zichtbaar
+            {permCount}/{MODULE_KEYS.length} onderdelen zichtbaar · {linkedProjects.length} project
+            {linkedProjects.length === 1 ? "" : "en"}
           </span>
         </span>
         <ChevronDown size={14} className={"access-chevron" + (expanded ? " open" : "")} />
@@ -62,6 +76,26 @@ export function ClientRow({ client }: { client: Client }) {
             />
             Mag de bouwplanning zelf bewerken (zelden nodig)
           </label>
+          <div className="project-access">
+            <div className="access-summary-sub">Welke project(en) ziet deze klant?</div>
+            <div className="project-access-list">
+              {projects.length === 0 && <span className="empty-hint">Nog geen projecten aangemaakt.</span>}
+              {projects.map((p) => {
+                const linkedElsewhere = p.client_id !== null && p.client_id !== client.id;
+                return (
+                  <label key={p.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={p.client_id === client.id}
+                      onChange={() => run(() => setClientProject(client.id, p.id, p.client_id !== client.id))}
+                    />
+                    {p.name}
+                    {linkedElsewhere && <span className="access-summary-sub"> — nu bij een andere klant, aanvinken verplaatst het</span>}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { defaultPermissions, type ModuleKey } from "@/types/database";
 
 export async function inviteTeamMember(formData: FormData) {
@@ -16,7 +17,7 @@ export async function inviteTeamMember(formData: FormData) {
   const supabase = createClient();
   const { data: member, error: memberError } = await supabase
     .from("team_members")
-    .insert({ name, trade, permissions: defaultPermissions(), sees_all_projects: true })
+    .insert({ name, trade, permissions: permissionsFromFormData(formData), sees_all_projects: true })
     .select()
     .single();
   if (memberError || !member) throw new Error(memberError?.message || "Kon teamlid niet aanmaken.");

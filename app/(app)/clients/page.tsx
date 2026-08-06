@@ -3,13 +3,17 @@ import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ClientRow } from "@/components/ClientRow";
 import { InviteClientForm } from "@/components/InviteClientForm";
-import type { Client } from "@/types/database";
+import type { Client, Project } from "@/types/database";
 
 export default async function ClientsPage() {
   await requireOwner();
   const supabase = createClient();
-  const { data: clients } = await supabase.from("clients").select("*").order("name");
+  const [{ data: clients }, { data: projects }] = await Promise.all([
+    supabase.from("clients").select("*").order("name"),
+    supabase.from("projects").select("id,name,client_id").order("name"),
+  ]);
   const clientList = (clients ?? []) as Client[];
+  const projectList = (projects ?? []) as Pick<Project, "id" | "name" | "client_id">[];
 
   return (
     <div className="panel access-panel">
@@ -23,7 +27,7 @@ export default async function ClientsPage() {
         {clientList.length === 0 && <div className="empty-hint">Nog geen klanten uitgenodigd.</div>}
         <div className="access-list">
           {clientList.map((c) => (
-            <ClientRow key={c.id} client={c} />
+            <ClientRow key={c.id} client={c} projects={projectList} />
           ))}
         </div>
       </div>

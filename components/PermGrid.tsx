@@ -7,7 +7,7 @@ export function PermGrid({ perm, onToggle }: { perm: Permissions; onToggle: (key
     <div className="perm-grid">
       {MODULE_KEYS.map((key) => (
         <label key={key} className="perm-checkbox">
-          <input type="checkbox" checked={!!perm[key]} onChange={() => onToggle(key)} />
+          <input type="checkbox" checked={perm[key] !== false} onChange={() => onToggle(key)} />
           {MODULE_LABELS[key]}
         </label>
       ))}

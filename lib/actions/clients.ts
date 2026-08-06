@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { defaultPermissions, type ModuleKey } from "@/types/database";
 
 export async function inviteClient(formData: FormData) {
@@ -15,7 +16,7 @@ export async function inviteClient(formData: FormData) {
   const supabase = createClient();
   const { data: client, error: clientError } = await supabase
     .from("clients")
-    .insert({ name, permissions: defaultPermissions() })
+    .insert({ name, permissions: permissionsFromFormData(formData) })
     .select()
     .single();
   if (clientError || !client) throw new Error(clientError?.message || "Kon klant niet aanmaken.");
@@ -71,6 +72,25 @@ export async function toggleClientCanEditSchedule(id: string, value: boolean) {
   const { error } = await supabase.from("clients").update({ can_edit_schedule: value }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/clients");
+}
+
+// Een project heeft precies één klant (project.client_id). Aanvinken
+// koppelt dit project aan deze klant (en ontkoppelt 'm dus bij een
+// eventuele vorige klant); uitvinken ontkoppelt het project weer —
+// alleen als het nu nog echt aan deze klant hangt, voor de zekerheid.
+export async function setClientProject(clientId: string, projectId: string, granted: boolean) {
+  await requireOwner();
+  const supabase = createClient();
+  if (granted) {
+    const { error } = await supabase.from("projects").update({ client_id: clientId }).eq("id", projectId);
+    if (error) throw new Error(error.message);
+  } else {
+    const { error } = await supabase.from("projects").update({ client_id: null }).eq("id", projectId).eq("client_id", clientId);
+    if (error) throw new Error(error.message);
+  }
+  revalidatePath("/clients");
+  revalidatePath("/dashboard");
+  revalidatePath(`/projects/${projectId}`);
 }
 
 export async function removeClient(id: string) {

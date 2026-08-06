@@ -129,21 +129,25 @@ export function TeamMemberRow({
               />
               Ziet alle projecten
             </label>
-            {!member.sees_all_projects && (
-              <div className="project-access-list">
-                {projects.length === 0 && <span className="empty-hint">Nog geen projecten aangemaakt.</span>}
-                {projects.map((p) => (
-                  <label key={p.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={access.includes(p.id)}
-                      onChange={() => run(() => toggleTeamProjectAccess(member.id, p.id, !access.includes(p.id)))}
-                    />
-                    {p.name}
-                  </label>
-                ))}
-              </div>
-            )}
+            <div className="access-summary-sub">
+              {member.sees_all_projects
+                ? "Zet uit om per project te kiezen — voor nu ziet dit teamlid alles hieronder."
+                : "Kies hieronder welke projecten dit teamlid mag zien."}
+            </div>
+            <div className="project-access-list">
+              {projects.length === 0 && <span className="empty-hint">Nog geen projecten aangemaakt.</span>}
+              {projects.map((p) => (
+                <label key={p.id} className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={member.sees_all_projects || access.includes(p.id)}
+                    disabled={member.sees_all_projects}
+                    onChange={() => run(() => toggleTeamProjectAccess(member.id, p.id, !access.includes(p.id)))}
+                  />
+                  {p.name}
+                </label>
+              ))}
+            </div>
           </div>
         </div>
       )}

@@ -1,9 +1,11 @@
 import { notFound } from "next/navigation";
-import { MapPin } from "lucide-react";
-import { canSeeModule, requireUser } from "@/lib/auth";
+import { Lock, MapPin } from "lucide-react";
+import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
+import { RouteMenu } from "@/components/RouteMenu";
+import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
 const STATUS_LABEL = { gepland: "Gepland", lopend: "Lopend", afgerond: "Afgerond" };
@@ -29,6 +31,10 @@ export default async function ProjectLayout({
   }
 
   const visibleTabs = MODULE_KEYS.filter((key) => canSeeModule(current, key));
+  const showPrivateChat = canSeePrivateChat(current);
+  const showHours = canSeeHours(current);
+  const showCalc = canSeeCalc(current);
+  const isLocked = !!p.delivery_signed_at;
 
   return (
     <div>
@@ -45,13 +51,31 @@ export default async function ProjectLayout({
                 </span>
               )}
               <span className={"pill pill-" + p.status}>{STATUS_LABEL[p.status]}</span>
+              {isLocked && (
+                <span className="pill pill-afgerond">
+                  <Lock size={10} style={{ display: "inline", marginRight: 3, verticalAlign: -1 }} /> Vergrendeld
+                </span>
+              )}
             </div>
           </div>
           <div className="header-right">
-            {current.profile.role === "eigenaar" && <StatusSelect projectId={p.id} status={p.status} />}
+            {current.profile.role === "eigenaar" && !isLocked && (
+              <>
+                <StatusSelect projectId={p.id} status={p.status} />
+                <DeleteProjectButton projectId={p.id} projectName={p.name} />
+              </>
+            )}
           </div>
         </div>
       </div>
+
+      {isLocked && (
+        <div className="hint-bar">
+          <Lock size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
+          Het opleverdossier is ondertekend door {p.delivery_signed_by} — dit project ligt permanent vast, niemand kan er nog iets aan
+          wijzigen.
+        </div>
+      )}
 
       {p.address && (
         <div className="address-card">
@@ -60,18 +84,17 @@ export default async function ProjectLayout({
             <div className="address-label">Adres</div>
             <div className="address-value">{p.address}</div>
           </div>
-          <a
-            className="address-link"
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.address)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Route
-          </a>
+          <RouteMenu address={p.address} />
         </div>
       )}
 
-      <ProjectTabs projectId={p.id} visibleTabs={visibleTabs} />
+      <ProjectTabs
+        projectId={p.id}
+        visibleTabs={visibleTabs}
+        showPrivateChat={showPrivateChat}
+        showHours={showHours}
+        showCalc={showCalc}
+      />
       {children}
     </div>
   );

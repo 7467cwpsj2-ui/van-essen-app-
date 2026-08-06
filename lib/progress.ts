@@ -2,12 +2,14 @@ import type { SchedulePhase, Task } from "@/types/database";
 
 const DAY_MS = 86400000;
 
-// Voortgang van een project in procenten: taken die aan een fase hangen
-// tellen mee naar rato van de duur van die fase (langere fases wegen
-// zwaarder); fases zonder gekoppelde taken vallen terug op de datum
-// (verstreken = klaar, nog niet begonnen = 0%). Zonder bouwplanning
-// telt gewoon het aandeel afgevinkte taken. Poort van projectProgress()
-// uit het prototype (projectplanning_1.jsx:1245-1275).
+// Voortgang van een project in procenten, per fase gewogen naar rato
+// van de duur van die fase (langere fases wegen zwaarder). Elke fase
+// telt zowel het afvinken van gekoppelde taken als het verstrijken van
+// de tijd binnen de bouwplanning-periode mee (gemiddelde van beide) —
+// zo blijft de voortgangsbalk meelopen met de planning, ook als er nog
+// niemand een taak heeft afgevinkt, én blijft afgevinkt werk zichtbaar
+// als een fase nog maar net begonnen is. Zonder bouwplanning telt
+// gewoon het aandeel afgevinkte taken.
 export function projectProgress(phases: SchedulePhase[], tasks: Task[]): number {
   if (!phases.length) {
     const total = tasks.length;
@@ -22,16 +24,14 @@ export function projectProgress(phases: SchedulePhase[], tasks: Task[]): number 
     const end = new Date(ph.end_date).getTime();
     const weight = Math.max(1, Math.round((end - start) / DAY_MS) + 1);
     const linked = tasks.filter((t) => t.phase_id === ph.id);
-    let ratio: number;
-    if (linked.length) {
-      ratio = linked.filter((t) => t.done).length / linked.length;
-    } else if (now >= end) {
-      ratio = 1;
-    } else if (now <= start) {
-      ratio = 0;
-    } else {
-      ratio = (now - start) / Math.max(1, end - start);
-    }
+
+    let dateRatio: number;
+    if (now >= end) dateRatio = 1;
+    else if (now <= start) dateRatio = 0;
+    else dateRatio = (now - start) / Math.max(1, end - start);
+
+    const ratio = linked.length ? (linked.filter((t) => t.done).length / linked.length + dateRatio) / 2 : dateRatio;
+
     weightedSum += ratio * weight;
     totalWeight += weight;
   });

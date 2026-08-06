@@ -65,3 +65,20 @@ export function canEditSchedule(current: CurrentUser): boolean {
   if (current.profile.role === "klant") return current.client?.can_edit_schedule ?? false;
   return false;
 }
+
+// Privéchat eigenaar-klant: harde regel, geen toggle — team komt hier
+// nooit bij, net zoals uren/veiligheid dat straks zullen zijn.
+export function canSeePrivateChat(current: CurrentUser): boolean {
+  return current.profile.role === "eigenaar" || current.profile.role === "klant";
+}
+
+// Uren: harde regel, altijd intern (eigenaar + team), nooit klant. Geen
+// module-toggle.
+export function canSeeHours(current: CurrentUser): boolean {
+  return current.profile.role === "eigenaar" || current.profile.role === "team";
+}
+
+// Nacalculatie: alleen de eigenaar.
+export function canSeeCalc(current: CurrentUser): boolean {
+  return current.profile.role === "eigenaar";
+}

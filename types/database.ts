@@ -4,9 +4,30 @@
 
 export type Role = "eigenaar" | "team" | "klant";
 
-export type ModuleKey = "planning" | "bouwplanning" | "tekeningen" | "fotos" | "meerwerk";
+export type ModuleKey =
+  | "planning"
+  | "bouwplanning"
+  | "tekeningen"
+  | "fotos"
+  | "meerwerk"
+  | "chat"
+  | "notities"
+  | "opleverpunten"
+  | "klantkeuzes"
+  | "dossier";
 
-export const MODULE_KEYS: ModuleKey[] = ["planning", "bouwplanning", "tekeningen", "fotos", "meerwerk"];
+export const MODULE_KEYS: ModuleKey[] = [
+  "planning",
+  "bouwplanning",
+  "tekeningen",
+  "fotos",
+  "meerwerk",
+  "chat",
+  "notities",
+  "opleverpunten",
+  "klantkeuzes",
+  "dossier",
+];
 
 export const MODULE_LABELS: Record<ModuleKey, string> = {
   planning: "Planning",
@@ -14,6 +35,11 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   tekeningen: "Tekeningen",
   fotos: "Foto's",
   meerwerk: "Meer-/minderwerk",
+  chat: "Chat",
+  notities: "Notities",
+  opleverpunten: "Opleverpunten",
+  klantkeuzes: "Klantkeuzes",
+  dossier: "Opleverdossier",
 };
 
 export type Permissions = Record<ModuleKey, boolean>;
@@ -24,6 +50,11 @@ export const defaultPermissions = (): Permissions => ({
   tekeningen: true,
   fotos: true,
   meerwerk: true,
+  chat: true,
+  notities: true,
+  opleverpunten: true,
+  klantkeuzes: true,
+  dossier: true,
 });
 
 export type ProjectStatus = "gepland" | "lopend" | "afgerond";
@@ -68,6 +99,14 @@ export interface Project {
   status: ProjectStatus;
   created_by: string | null;
   created_at: string;
+  quote_amount: number;
+  delivery_ready: boolean;
+  delivery_date: string | null;
+  warranty_text: string | null;
+  delivery_signed_at: string | null;
+  delivery_signed_by: string | null;
+  delivery_signature_path: string | null;
+  actual_cost: number;
 }
 
 export interface SchedulePhase {
@@ -149,5 +188,85 @@ export interface ExtraWork {
   rejected_date: string | null;
   signature_path: string | null;
   created_by: string | null;
+  created_at: string;
+}
+
+export type NoteVisibility = "prive" | "team" | "klant";
+
+export interface Note {
+  id: string;
+  project_id: string;
+  text: string;
+  author_id: string | null;
+  author_name: string | null;
+  visibility: NoteVisibility;
+  reviewed: boolean;
+  created_at: string;
+}
+
+export type CompletionPointStatus = "open" | "gereed" | "goedgekeurd";
+
+export interface CompletionPoint {
+  id: string;
+  project_id: string;
+  description: string;
+  responsible_team_member_id: string | null;
+  responsible_name: string | null;
+  deadline: string | null;
+  status: CompletionPointStatus;
+  photo_path: string | null;
+  created_at: string;
+}
+
+export type ClientChoiceStatus = "open" | "gekozen" | "afgewezen";
+
+export interface ClientChoice {
+  id: string;
+  project_id: string;
+  category: string;
+  description: string | null;
+  deadline: string | null;
+  status: ClientChoiceStatus;
+  choice_text: string | null;
+  decided_at: string | null;
+  created_at: string;
+}
+
+export type WarrantyUnit = "weken" | "maanden" | "jaren";
+
+export interface WarrantyItem {
+  id: string;
+  project_id: string;
+  item: string;
+  amount: number;
+  unit: WarrantyUnit;
+  created_at: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  project_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  text: string;
+  created_at: string;
+}
+
+export interface OwnerClientMessage {
+  id: string;
+  project_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  text: string;
+  created_at: string;
+}
+
+export interface HourEntry {
+  id: string;
+  project_id: string;
+  team_member_id: string;
+  work_date: string;
+  hours: number;
+  note: string | null;
   created_at: string;
 }
