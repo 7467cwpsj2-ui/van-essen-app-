@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
 import { RouteMenu } from "@/components/RouteMenu";
+import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
 const STATUS_LABEL = { gepland: "Gepland", lopend: "Lopend", afgerond: "Afgerond" };
@@ -58,7 +59,12 @@ export default async function ProjectLayout({
             </div>
           </div>
           <div className="header-right">
-            {current.profile.role === "eigenaar" && !isLocked && <StatusSelect projectId={p.id} status={p.status} />}
+            {current.profile.role === "eigenaar" && !isLocked && (
+              <>
+                <StatusSelect projectId={p.id} status={p.status} />
+                <DeleteProjectButton projectId={p.id} projectName={p.name} />
+              </>
+            )}
           </div>
         </div>
       </div>
