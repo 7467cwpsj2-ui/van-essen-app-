@@ -1569,22 +1569,147 @@ textarea {
 .dash-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 14px;
   padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   text-align: left;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: var(--shadow-card);
+}
+.dash-card-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
 }
 .dash-card-value {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 26px;
-  color: var(--brand);
+  color: var(--text);
 }
 .dash-card-title {
   font-size: 12px;
   color: var(--text-dim);
+}
+.dash-card-delta {
+  font-weight: 600;
+}
+.dash-card-delta.up {
+  color: var(--success);
+}
+.dash-card-delta.down {
+  color: var(--danger);
+}
+
+.dash-panels {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+}
+.dash-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dash-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+.dash-panel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.empty-hint.small {
+  padding: 8px 2px;
+  font-size: 12px;
+}
+.dash-panel-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 6px;
+  border-radius: 9px;
+  text-decoration: none;
+  color: inherit;
+}
+a.dash-panel-row:hover {
+  background: var(--panel-2);
+}
+.dash-panel-row.static {
+  cursor: default;
+}
+.dash-panel-row-icon {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dash-panel-row-icon.activity-meerwerk {
+  background: var(--brand-soft);
+  color: var(--brand-dim);
+}
+.dash-panel-row-icon.activity-minderwerk {
+  background: rgba(200, 68, 58, 0.12);
+  color: var(--danger);
+}
+.dash-panel-row-icon.activity-foto {
+  background: rgba(35, 147, 95, 0.12);
+  color: var(--success);
+}
+.dash-panel-row-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.dash-panel-row-title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-panel-row-sub {
+  font-size: 11px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dash-panel-row .proj-card-progress {
+  margin-top: 3px;
+  height: 4px;
+}
+.dash-panel-row-pct {
+  font-size: 11px;
+  color: var(--text-dim);
+  flex-shrink: 0;
 }
 
 /* ---------- login ---------- */

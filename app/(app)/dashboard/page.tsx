@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import { Building2, Camera, CheckCircle2, Clock, Euro, TrendingDown, TrendingUp } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { getProjectsWithProgress } from "@/lib/data";
-import { createClient } from "@/lib/supabase/server";
+import { getDashboardExtras, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
+import { timeAgo } from "@/lib/timeAgo";
 import type { ProjectStatus } from "@/types/database";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -11,27 +11,33 @@ const STATUS_LABEL: Record<ProjectStatus, string> = {
   afgerond: "Afgerond",
 };
 
+const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+
+const ACTIVITY_ICON: Record<ActivityItem["kind"], React.ReactNode> = {
+  meerwerk: <TrendingUp size={14} />,
+  minderwerk: <TrendingDown size={14} />,
+  foto: <Camera size={14} />,
+};
+
 export default async function DashboardPage() {
   const current = await requireUser();
   const projects = await getProjectsWithProgress();
-  const supabase = createClient();
-
-  const projectIds = projects.map((p) => p.id);
-  let openMeerwerkCount = 0;
-  if (projectIds.length) {
-    const { count } = await supabase
-      .from("extra_work")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "open")
-      .in("project_id", projectIds);
-    openMeerwerkCount = count ?? 0;
-  }
+  const extras = await getDashboardExtras(projects, current.profile.role);
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
     lopend: projects.filter((p) => p.status === "lopend").length,
     afgerond: projects.filter((p) => p.status === "afgerond").length,
   };
+
+  const topProjects = [...projects]
+    .sort((a, b) => (a.status === "lopend" ? -1 : 1) - (b.status === "lopend" ? -1 : 1))
+    .slice(0, 5);
+
+  const revenueDelta =
+    extras.revenueThisMonth && extras.revenueThisMonth.previousAmount > 0
+      ? Math.round(((extras.revenueThisMonth.amount - extras.revenueThisMonth.previousAmount) / extras.revenueThisMonth.previousAmount) * 100)
+      : null;
 
   return (
     <div className="dashboard">
@@ -41,27 +47,144 @@ export default async function DashboardPage() {
       </h1>
 
       <div className="dash-cards">
-        <div className="dash-card">
+        <a href="#alle-projecten" className="dash-card">
+          <div className="dash-card-icon">
+            <Building2 size={16} />
+          </div>
           <div className="dash-card-value">{counts.lopend}</div>
           <div className="dash-card-title">Lopende projecten</div>
-        </div>
+        </a>
         <div className="dash-card">
-          <div className="dash-card-value">{counts.gepland}</div>
-          <div className="dash-card-title">Gepland</div>
-        </div>
-        <div className="dash-card">
-          <div className="dash-card-value">{counts.afgerond}</div>
-          <div className="dash-card-title">Afgerond</div>
+          <div className="dash-card-icon">
+            <Clock size={16} />
+          </div>
+          <div className="dash-card-value">{extras.todayTasks.length}</div>
+          <div className="dash-card-title">Planning vandaag</div>
         </div>
         {current.profile.role !== "klant" && (
           <div className="dash-card">
-            <div className="dash-card-value">{openMeerwerkCount}</div>
-            <div className="dash-card-title">Openstaand meerwerk</div>
+            <div className="dash-card-icon">
+              <TrendingUp size={16} />
+            </div>
+            <div className="dash-card-value">{extras.openMeerwerk.count}</div>
+            <div className="dash-card-title">
+              Meerwerk openstaand{extras.openMeerwerk.amount > 0 ? ` · ${fmtEuro(extras.openMeerwerk.amount)}` : ""}
+            </div>
+          </div>
+        )}
+        <div className="dash-card">
+          <div className="dash-card-icon">
+            <CheckCircle2 size={16} />
+          </div>
+          <div className="dash-card-value">{extras.openCompletionPoints}</div>
+          <div className="dash-card-title">Opleverpunten open</div>
+        </div>
+        {extras.revenueThisMonth && (
+          <div className="dash-card">
+            <div className="dash-card-icon">
+              <Euro size={16} />
+            </div>
+            <div className="dash-card-value">{fmtEuro(extras.revenueThisMonth.amount)}</div>
+            <div className="dash-card-title">
+              Omzet deze maand
+              {revenueDelta !== null && (
+                <span className={"dash-card-delta " + (revenueDelta >= 0 ? "up" : "down")}>
+                  {" "}
+                  {revenueDelta >= 0 ? "+" : ""}
+                  {revenueDelta}% t.o.v. vorige maand
+                </span>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      <div className="dash-section-title">Projecten</div>
+      <div className="dash-panels">
+        <div className="dash-panel">
+          <div className="dash-panel-head">
+            <span>Projecten overzicht</span>
+            {projects.length > 5 && (
+              <a href="#alle-projecten" className="link-btn">
+                Bekijk alle
+              </a>
+            )}
+          </div>
+          {topProjects.length === 0 ? (
+            <div className="empty-hint small">Nog geen projecten.</div>
+          ) : (
+            <div className="dash-panel-list">
+              {topProjects.map((p) => (
+                <Link key={p.id} href={`/projects/${p.id}/planning`} className="dash-panel-row">
+                  <div className="dash-panel-row-icon">
+                    <Building2 size={14} />
+                  </div>
+                  <div className="dash-panel-row-body">
+                    <div className="dash-panel-row-title">{p.name}</div>
+                    {p.clientName && <div className="dash-panel-row-sub">{p.clientName}</div>}
+                    <div className="proj-card-progress">
+                      <div className="proj-card-progress-fill" style={{ width: `${p.progress}%` }} />
+                    </div>
+                  </div>
+                  <span className="mono dash-panel-row-pct">{p.progress}%</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="dash-panel">
+          <div className="dash-panel-head">
+            <span>Planning vandaag</span>
+          </div>
+          {extras.todayTasks.length === 0 ? (
+            <div className="empty-hint small">Geen taken gepland voor vandaag.</div>
+          ) : (
+            <div className="dash-panel-list">
+              {extras.todayTasks.map((t) => (
+                <Link key={t.id} href={`/projects/${t.projectId}/planning`} className="dash-panel-row">
+                  <div className="dash-panel-row-icon">
+                    <Clock size={14} />
+                  </div>
+                  <div className="dash-panel-row-body">
+                    <div className="dash-panel-row-title">{t.title}</div>
+                    <div className="dash-panel-row-sub">
+                      {t.projectName}
+                      {t.assignee ? ` · ${t.assignee}` : ""}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="dash-panel">
+          <div className="dash-panel-head">
+            <span>Laatste meldingen</span>
+          </div>
+          {extras.activity.length === 0 ? (
+            <div className="empty-hint small">Nog geen activiteit.</div>
+          ) : (
+            <div className="dash-panel-list">
+              {extras.activity.map((a) => (
+                <div key={a.id} className="dash-panel-row static">
+                  <div className={"dash-panel-row-icon activity-" + a.kind}>{ACTIVITY_ICON[a.kind]}</div>
+                  <div className="dash-panel-row-body">
+                    <div className="dash-panel-row-title">{a.text}</div>
+                    <div className="dash-panel-row-sub">
+                      {a.projectName} · {timeAgo(a.createdAt)}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div id="alle-projecten" className="dash-section-title">
+        Alle projecten
+      </div>
       {projects.length === 0 ? (
         <div className="empty-hint">
           {current.profile.role === "eigenaar" ? (
