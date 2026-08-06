@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Bouwmanagement-app voor Van Essen Bouw & Onderhoud",
     start_url: "/dashboard",
     display: "standalone",
-    background_color: "#eef1f5",
-    theme_color: "#1c7fc4",
+    background_color: "#f5f7fa",
+    theme_color: "#33a8e8",
     icons: [
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "any" },
       { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png", purpose: "maskable" },
