@@ -54,15 +54,15 @@ export default async function DashboardPage() {
           <div className="dash-card-value">{counts.lopend}</div>
           <div className="dash-card-title">Lopende projecten</div>
         </a>
-        <div className="dash-card">
+        <Link href="/te-doen" className="dash-card">
           <div className="dash-card-icon">
             <Clock size={16} />
           </div>
           <div className="dash-card-value">{extras.todayTasks.length}</div>
           <div className="dash-card-title">Te doen vandaag</div>
-        </div>
+        </Link>
         {current.profile.role !== "klant" && (
-          <div className="dash-card">
+          <Link href="/meerwerk" className="dash-card">
             <div className="dash-card-icon">
               <TrendingUp size={16} />
             </div>
@@ -70,15 +70,15 @@ export default async function DashboardPage() {
             <div className="dash-card-title">
               Meerwerk openstaand{extras.openMeerwerk.amount > 0 ? ` · ${fmtEuro(extras.openMeerwerk.amount)}` : ""}
             </div>
-          </div>
+          </Link>
         )}
-        <div className="dash-card">
+        <Link href="/opleverpunten" className="dash-card">
           <div className="dash-card-icon">
             <CheckCircle2 size={16} />
           </div>
           <div className="dash-card-value">{extras.openCompletionPoints}</div>
           <div className="dash-card-title">Opleverpunten open</div>
-        </div>
+        </Link>
         {extras.revenueThisMonth && (
           <div className="dash-card">
             <div className="dash-card-icon">
@@ -135,6 +135,9 @@ export default async function DashboardPage() {
         <div className="dash-panel">
           <div className="dash-panel-head">
             <span>Te doen vandaag</span>
+            <Link href="/te-doen" className="link-btn">
+              Bekijk alle
+            </Link>
           </div>
           {extras.todayTasks.length === 0 ? (
             <div className="empty-hint small">Niets te doen gepland voor vandaag.</div>

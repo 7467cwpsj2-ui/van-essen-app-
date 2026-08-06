@@ -31,6 +31,7 @@ export function CompletionPointsPanel({
   isLocked,
   points,
   teamMembers,
+  hideAddForm,
 }: {
   projectId: string;
   role: Role;
@@ -38,6 +39,7 @@ export function CompletionPointsPanel({
   isLocked: boolean;
   points: CompletionPointWithPhoto[];
   teamMembers: { id: string; name: string }[];
+  hideAddForm?: boolean;
 }) {
   const [form, setForm] = useState({ description: "", responsibleTeamMemberId: "", deadline: "" });
   const [pending, setPending] = useState<{ blob: Blob; fileType: "image" | "pdf"; fileName: string; previewUrl: string } | null>(null);
@@ -140,7 +142,7 @@ export function CompletionPointsPanel({
           );
         })}
       </div>
-      {role === "eigenaar" && !isLocked && (
+      {role === "eigenaar" && !isLocked && !hideAddForm && (
         <div className="add-form">
           <div className="add-form-title">Opleverpunt toevoegen</div>
           <div className="hint-bar small">

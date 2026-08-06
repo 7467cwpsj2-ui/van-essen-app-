@@ -662,6 +662,28 @@ textarea {
   font-size: 11px;
 }
 
+.overview-group {
+  margin-bottom: 6px;
+}
+.overview-group-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--text);
+  text-decoration: none;
+  margin: 4px 0 10px;
+}
+.overview-group-head:hover {
+  color: var(--brand);
+}
+.overview-group-head svg {
+  color: var(--text-faint);
+  flex-shrink: 0;
+}
+
 .task-team-picker {
   margin-top: 10px;
   padding: 10px 12px;

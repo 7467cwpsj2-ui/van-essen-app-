@@ -19,6 +19,7 @@ export function PlanningPanel({
   isLocked,
   tasks,
   teamMembers,
+  hideAddForm,
 }: {
   projectId: string;
   role: Role;
@@ -26,6 +27,7 @@ export function PlanningPanel({
   isLocked: boolean;
   tasks: Task[];
   teamMembers: { id: string; name: string }[];
+  hideAddForm?: boolean;
 }) {
   const [form, setForm] = useState<{ title: string; assigneeType: TaskAssigneeType; assigneeTeamMemberIds: string[]; dueDate: string }>({
     title: "",
@@ -55,7 +57,7 @@ export function PlanningPanel({
     return false;
   };
 
-  const canCreate = (role === "eigenaar" || role === "team") && !isLocked;
+  const canCreate = (role === "eigenaar" || role === "team") && !isLocked && !hideAddForm;
 
   const toggleFormMember = (id: string) => {
     setForm((f) => ({
@@ -89,10 +91,12 @@ export function PlanningPanel({
 
   return (
     <div className="panel">
-      <div className="hint-bar">
-        Losse actiepunten en herinneringen — “bel leverancier”, “zoek iets uit”, “regel iets”. Wijs toe aan jezelf, het team, of de
-        klant; alleen die persoon (of jij als eigenaar) kan het afvinken.
-      </div>
+      {!hideAddForm && (
+        <div className="hint-bar">
+          Losse actiepunten en herinneringen — “bel leverancier”, “zoek iets uit”, “regel iets”. Wijs toe aan jezelf, het team, of de
+          klant; alleen die persoon (of jij als eigenaar) kan het afvinken.
+        </div>
+      )}
       {tasks.length === 0 && <div className="empty-hint">Nog niets te doen.</div>}
       <div className="task-list">
         {sorted.map((t) => {

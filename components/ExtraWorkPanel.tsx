@@ -22,11 +22,13 @@ export function ExtraWorkPanel({
   role,
   phases,
   items,
+  hideAddForm,
 }: {
   projectId: string;
   role: Role;
   phases: SchedulePhase[];
   items: ExtraWorkWithSignature[];
+  hideAddForm?: boolean;
 }) {
   const [form, setForm] = useState({
     type: "meerwerk" as ExtraWorkType,
@@ -234,7 +236,7 @@ export function ExtraWorkPanel({
           );
         })}
       </div>
-      {role !== "klant" && (
+      {role !== "klant" && !hideAddForm && (
         <div className="add-form">
           <div className="add-form-title">Meer- of minderwerk toevoegen</div>
           <div className="add-form-grid">
