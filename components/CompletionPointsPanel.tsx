@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, ImagePlus, Plus, Trash2 } from "lucide-react";
 import {
   approveCompletionPoint,
   createCompletionPoint,
@@ -10,10 +10,19 @@ import {
   resetCompletionPoint,
 } from "@/lib/actions/completionPoints";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
+import { FileCaptureButtons } from "@/components/FileCaptureButtons";
+import { FilePreview } from "@/components/FilePreview";
+import { Lightbox } from "@/components/Lightbox";
+import { processUploadedFile } from "@/lib/fileProcessing";
+import { createClient } from "@/lib/supabase/client";
 import type { CompletionPoint, CompletionPointStatus, Role } from "@/types/database";
 
 const STATUS_LABEL: Record<CompletionPointStatus, string> = { open: "Open", gereed: "Gereed gemeld", goedgekeurd: "Goedgekeurd" };
 const STATUS_CLASS: Record<CompletionPointStatus, string> = { open: "stamp-open", gereed: "stamp-open", goedgekeurd: "stamp-akkoord" };
+
+export interface CompletionPointWithPhoto extends CompletionPoint {
+  photoUrl: string | null;
+}
 
 export function CompletionPointsPanel({
   projectId,
@@ -27,30 +36,64 @@ export function CompletionPointsPanel({
   role: Role;
   currentTeamMemberId: string | null;
   isLocked: boolean;
-  points: CompletionPoint[];
+  points: CompletionPointWithPhoto[];
   teamMembers: { id: string; name: string }[];
 }) {
   const [form, setForm] = useState({ description: "", responsibleTeamMemberId: "", deadline: "" });
+  const [pending, setPending] = useState<{ blob: Blob; fileType: "image" | "pdf"; fileName: string; previewUrl: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [preview, setPreview] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   useRealtimeRefresh("completion_points", projectId);
 
-  const add = () => {
+  const handlePicked = async (file: File) => {
+    setBusy(true);
+    try {
+      const result = await processUploadedFile(file);
+      setPending(result);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Verwerken mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const add = async () => {
     if (!form.description.trim()) return;
-    startTransition(() => {
-      createCompletionPoint(projectId, {
+    setBusy(true);
+    try {
+      let photoPath: string | null = null;
+      if (pending) {
+        const supabase = createClient();
+        const ext = pending.fileName.split(".").pop() || "jpg";
+        const path = `${projectId}/completion-points/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("project-files").upload(path, pending.blob, {
+          contentType: "image/jpeg",
+        });
+        if (uploadError) throw new Error(uploadError.message);
+        photoPath = path;
+      }
+      await createCompletionPoint(projectId, {
         description: form.description,
         responsibleTeamMemberId: form.responsibleTeamMemberId || null,
         deadline: form.deadline || null,
-      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
-    });
-    setForm({ description: "", responsibleTeamMemberId: "", deadline: "" });
+        photoPath,
+      });
+      setForm({ description: "", responsibleTeamMemberId: "", deadline: "" });
+      setPending(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
 
   return (
     <div className="panel">
+      <Lightbox src={preview} onClose={() => setPreview(null)} />
       {role === "klant" && <div className="hint-bar">Zodra een punt &ldquo;gereed gemeld&rdquo; is, kun jij het hier goedkeuren.</div>}
       {points.length === 0 && <div className="empty-hint">Nog geen opleverpunten.</div>}
       <div className="work-list">
@@ -60,6 +103,11 @@ export function CompletionPointsPanel({
           const canApprove = !isLocked && p.status === "gereed" && (role === "eigenaar" || role === "klant");
           return (
             <div key={p.id} className="list-row">
+              {p.photoUrl && (
+                <button type="button" className="thumb-btn cp-thumb-btn" onClick={() => setPreview(p.photoUrl)} title="Foto vergroten">
+                  <img src={p.photoUrl} alt="" className="cp-thumb" />
+                </button>
+              )}
               <div className="list-row-body">
                 <div className="list-row-title">{p.description}</div>
                 <div className="list-row-sub">
@@ -95,6 +143,17 @@ export function CompletionPointsPanel({
       {role === "eigenaar" && !isLocked && (
         <div className="add-form">
           <div className="add-form-title">Opleverpunt toevoegen</div>
+          <div className="hint-bar small">
+            <ImagePlus size={13} style={{ display: "inline", marginRight: 4, verticalAlign: -2 }} />
+            Voeg een foto toe om nog duidelijker te maken wat er moet gebeuren.
+          </div>
+          <FileCaptureButtons accept="image/*" onPicked={handlePicked} busy={busy} />
+          <FilePreview
+            previewUrl={pending?.previewUrl ?? null}
+            fileType={pending?.fileType ?? null}
+            fileName={pending?.fileName ?? null}
+            onClear={() => setPending(null)}
+          />
           <div className="add-form-grid">
             <input
               placeholder="Omschrijving"
@@ -110,7 +169,7 @@ export function CompletionPointsPanel({
               ))}
             </select>
             <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-            <button className="btn-primary" onClick={add}>
+            <button className="btn-primary" onClick={add} disabled={busy}>
               <Plus size={14} /> Toevoegen
             </button>
           </div>

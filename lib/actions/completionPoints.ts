@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function createCompletionPoint(
   projectId: string,
-  data: { description: string; responsibleTeamMemberId: string | null; deadline: string | null }
+  data: { description: string; responsibleTeamMemberId: string | null; deadline: string | null; photoPath: string | null }
 ) {
   await requireOwner();
   if (!data.description.trim()) throw new Error("Omschrijving is verplicht.");
@@ -24,6 +24,7 @@ export async function createCompletionPoint(
     responsible_team_member_id: data.responsibleTeamMemberId,
     responsible_name: responsibleName,
     deadline: data.deadline || null,
+    photo_path: data.photoPath,
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/opleverpunten`);

@@ -214,6 +214,7 @@ export interface CompletionPoint {
   responsible_name: string | null;
   deadline: string | null;
   status: CompletionPointStatus;
+  photo_path: string | null;
   created_at: string;
 }
 
