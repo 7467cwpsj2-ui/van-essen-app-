@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
-import type { Project, Role, SchedulePhase } from "@/types/database";
+import type { Project, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
@@ -56,16 +56,14 @@ export interface DashboardExtras {
   openMeerwerk: { count: number; amount: number };
   openCompletionPoints: number;
   activity: ActivityItem[];
-  revenueThisMonth: { amount: number; previousAmount: number } | null;
 }
 
-export async function getDashboardExtras(projects: ProjectWithProgress[], role: Role): Promise<DashboardExtras> {
+export async function getDashboardExtras(projects: ProjectWithProgress[]): Promise<DashboardExtras> {
   const empty: DashboardExtras = {
     todayTasks: [],
     openMeerwerk: { count: 0, amount: 0 },
     openCompletionPoints: 0,
     activity: [],
-    revenueThisMonth: null,
   };
   const projectIds = projects.map((p) => p.id);
   if (projectIds.length === 0) return empty;
@@ -131,31 +129,10 @@ export async function getDashboardExtras(projects: ProjectWithProgress[], role: 
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
     .slice(0, 6);
 
-  let revenueThisMonth: DashboardExtras["revenueThisMonth"] = null;
-  if (role === "eigenaar") {
-    const now = new Date();
-    const startThis = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-    const startPrev = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
-    const [{ data: signedThis }, { data: signedPrev }] = await Promise.all([
-      supabase.from("projects").select("quote_amount").in("id", projectIds).gte("delivery_signed_at", startThis),
-      supabase
-        .from("projects")
-        .select("quote_amount")
-        .in("id", projectIds)
-        .gte("delivery_signed_at", startPrev)
-        .lt("delivery_signed_at", startThis),
-    ]);
-    revenueThisMonth = {
-      amount: (signedThis ?? []).reduce((s, p) => s + Number(p.quote_amount || 0), 0),
-      previousAmount: (signedPrev ?? []).reduce((s, p) => s + Number(p.quote_amount || 0), 0),
-    };
-  }
-
   return {
     todayTasks,
     openMeerwerk,
     openCompletionPoints: (openPoints ?? []).length,
     activity,
-    revenueThisMonth,
   };
 }

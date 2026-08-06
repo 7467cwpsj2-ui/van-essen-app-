@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Camera, CheckCircle2, Clock, Euro, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Camera, CheckCircle2, Clock, TrendingDown, TrendingUp } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { getDashboardExtras, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
@@ -22,7 +22,7 @@ const ACTIVITY_ICON: Record<ActivityItem["kind"], React.ReactNode> = {
 export default async function DashboardPage() {
   const current = await requireUser();
   const projects = await getProjectsWithProgress();
-  const extras = await getDashboardExtras(projects, current.profile.role);
+  const extras = await getDashboardExtras(projects);
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -33,11 +33,6 @@ export default async function DashboardPage() {
   const topProjects = [...projects]
     .sort((a, b) => (a.status === "lopend" ? -1 : 1) - (b.status === "lopend" ? -1 : 1))
     .slice(0, 5);
-
-  const revenueDelta =
-    extras.revenueThisMonth && extras.revenueThisMonth.previousAmount > 0
-      ? Math.round(((extras.revenueThisMonth.amount - extras.revenueThisMonth.previousAmount) / extras.revenueThisMonth.previousAmount) * 100)
-      : null;
 
   return (
     <div className="dashboard">
@@ -79,24 +74,6 @@ export default async function DashboardPage() {
           <div className="dash-card-value">{extras.openCompletionPoints}</div>
           <div className="dash-card-title">Opleverpunten open</div>
         </Link>
-        {extras.revenueThisMonth && (
-          <div className="dash-card">
-            <div className="dash-card-icon">
-              <Euro size={16} />
-            </div>
-            <div className="dash-card-value">{fmtEuro(extras.revenueThisMonth.amount)}</div>
-            <div className="dash-card-title">
-              Omzet deze maand
-              {revenueDelta !== null && (
-                <span className={"dash-card-delta " + (revenueDelta >= 0 ? "up" : "down")}>
-                  {" "}
-                  {revenueDelta >= 0 ? "+" : ""}
-                  {revenueDelta}% t.o.v. vorige maand
-                </span>
-              )}
-            </div>
-          </div>
-        )}
       </div>
 
       <div className="dash-panels">

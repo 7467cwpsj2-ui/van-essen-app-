@@ -1780,15 +1780,6 @@ textarea {
   font-size: 12px;
   color: var(--text-dim);
 }
-.dash-card-delta {
-  font-weight: 600;
-}
-.dash-card-delta.up {
-  color: var(--success);
-}
-.dash-card-delta.down {
-  color: var(--danger);
-}
 
 .dash-panels {
   display: grid;
