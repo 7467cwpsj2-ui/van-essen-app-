@@ -94,10 +94,11 @@ npm run dev
   tot slot het opleverdossier invullen en ondertekenen — controleer
   daarna dat het project echt overal vergrendeld is (probeer als
   eigenaar nog iets te wijzigen, dat hoort te mislukken).
-- E-mailsjablonen van Supabase Auth linken standaard met
-  `?token_hash=&type=`; `app/auth/callback/route.ts` ondersteunt zowel dat
-  formaat als het PKCE-`code`-formaat. Controleer dit bij afwijkende
-  Supabase Auth-instellingen.
+- `app/auth/callback/page.tsx` verwerkt de link uit uitnodigings-/
+  reset-mails van Supabase Auth client-side, en ondersteunt alle
+  formaten die Supabase gebruikt (`#access_token=...`-fragment,
+  `?code=`, en `?token_hash=&type=`) — geen aanpassingen aan de
+  e-mailsjablonen in het Supabase-dashboard nodig.
 - Sidebar-projectkaarten tonen nog een placeholder-icoon i.p.v. de laatste
   projectfoto (dat vereist per project een signed-URL-lookup bij elke
   paginalaad — bewust simpel gehouden voor fase 1).
