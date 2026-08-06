@@ -20,7 +20,7 @@ import {
 import type { ModuleKey } from "@/types/database";
 
 const TAB_META: Record<ModuleKey, { icon: React.ReactNode; label: string }> = {
-  planning: { icon: <ClipboardList size={14} />, label: "Planning" },
+  planning: { icon: <ClipboardList size={14} />, label: "Te doen" },
   bouwplanning: { icon: <CalendarRange size={14} />, label: "Bouwplanning" },
   tekeningen: { icon: <ImageIcon size={14} />, label: "Tekeningen" },
   fotos: { icon: <Camera size={14} />, label: "Foto's" },

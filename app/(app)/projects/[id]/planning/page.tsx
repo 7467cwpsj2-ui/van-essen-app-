@@ -1,7 +1,7 @@
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PlanningPanel } from "@/components/PlanningPanel";
-import type { SchedulePhase, Task, TeamMember } from "@/types/database";
+import type { Project, Task, TeamMember } from "@/types/database";
 
 export default async function PlanningPage({ params }: { params: { id: string } }) {
   const current = await requireUser();
@@ -10,19 +10,20 @@ export default async function PlanningPage({ params }: { params: { id: string } 
   }
 
   const supabase = createClient();
-  const [{ data: phases }, { data: tasks }, { data: teamMembers }] = await Promise.all([
-    supabase.from("schedule_phases").select("*").eq("project_id", params.id).order("start_date"),
+  const [{ data: tasks }, { data: teamMembers }, { data: project }] = await Promise.all([
     supabase.from("tasks").select("*").eq("project_id", params.id).order("created_at"),
     supabase.from("team_members").select("*").order("name"),
+    supabase.from("projects").select("delivery_signed_at").eq("id", params.id).single(),
   ]);
 
   return (
     <PlanningPanel
       projectId={params.id}
       role={current.profile.role}
-      phases={(phases ?? []) as SchedulePhase[]}
+      currentTeamMemberId={current.profile.team_member_id}
+      isLocked={!!(project as Pick<Project, "delivery_signed_at"> | null)?.delivery_signed_at}
       tasks={(tasks ?? []) as Task[]}
-      teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, trade: m.trade }))}
+      teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }))}
     />
   );
 }

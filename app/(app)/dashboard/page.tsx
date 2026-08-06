@@ -3,7 +3,7 @@ import { Building2, Camera, CheckCircle2, Clock, Euro, TrendingDown, TrendingUp 
 import { requireUser } from "@/lib/auth";
 import { getDashboardExtras, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
-import type { ProjectStatus } from "@/types/database";
+import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
   gepland: "Gepland",
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
             <Clock size={16} />
           </div>
           <div className="dash-card-value">{extras.todayTasks.length}</div>
-          <div className="dash-card-title">Planning vandaag</div>
+          <div className="dash-card-title">Te doen vandaag</div>
         </div>
         {current.profile.role !== "klant" && (
           <div className="dash-card">
@@ -134,10 +134,10 @@ export default async function DashboardPage() {
 
         <div className="dash-panel">
           <div className="dash-panel-head">
-            <span>Planning vandaag</span>
+            <span>Te doen vandaag</span>
           </div>
           {extras.todayTasks.length === 0 ? (
-            <div className="empty-hint small">Geen taken gepland voor vandaag.</div>
+            <div className="empty-hint small">Niets te doen gepland voor vandaag.</div>
           ) : (
             <div className="dash-panel-list">
               {extras.todayTasks.map((t) => (
@@ -148,8 +148,7 @@ export default async function DashboardPage() {
                   <div className="dash-panel-row-body">
                     <div className="dash-panel-row-title">{t.title}</div>
                     <div className="dash-panel-row-sub">
-                      {t.projectName}
-                      {t.assignee ? ` · ${t.assignee}` : ""}
+                      {t.projectName} · {TASK_ASSIGNEE_LABEL[t.assigneeType]}
                     </div>
                   </div>
                 </Link>

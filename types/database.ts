@@ -30,7 +30,7 @@ export const MODULE_KEYS: ModuleKey[] = [
 ];
 
 export const MODULE_LABELS: Record<ModuleKey, string> = {
-  planning: "Planning",
+  planning: "Te doen",
   bouwplanning: "Bouwplanning",
   tekeningen: "Tekeningen",
   fotos: "Foto's",
@@ -40,6 +40,12 @@ export const MODULE_LABELS: Record<ModuleKey, string> = {
   opleverpunten: "Opleverpunten",
   klantkeuzes: "Klantkeuzes",
   dossier: "Opleverdossier",
+};
+
+export const TASK_ASSIGNEE_LABEL: Record<TaskAssigneeType, string> = {
+  eigenaar: "Jou",
+  team: "Team",
+  klant: "Klant",
 };
 
 export type Permissions = Record<ModuleKey, boolean>;
@@ -119,14 +125,20 @@ export interface SchedulePhase {
   created_at: string;
 }
 
+export type TaskAssigneeType = "eigenaar" | "team" | "klant";
+
 export interface Task {
   id: string;
   project_id: string;
   phase_id: string | null;
   title: string;
   assignee: string | null;
+  assignee_type: TaskAssigneeType;
+  assignee_team_member_id: string | null;
   due_date: string | null;
   done: boolean;
+  done_by: string | null;
+  done_at: string | null;
   created_at: string;
 }
 

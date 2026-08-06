@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
-import type { Project, Role, SchedulePhase, Task } from "@/types/database";
+import type { Project, Role, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
@@ -25,14 +25,11 @@ export async function getProjectsWithProgress(): Promise<ProjectWithProgress[]> 
 
   return Promise.all(
     projectRows.map(async (p) => {
-      const [{ data: phases }, { data: tasks }] = await Promise.all([
-        supabase.from("schedule_phases").select("*").eq("project_id", p.id),
-        supabase.from("tasks").select("*").eq("project_id", p.id),
-      ]);
+      const { data: phases } = await supabase.from("schedule_phases").select("*").eq("project_id", p.id);
       return {
         ...p,
         clientName: p.client_id ? clientMap[p.client_id] ?? null : null,
-        progress: projectProgress((phases ?? []) as SchedulePhase[], (tasks ?? []) as Task[]),
+        progress: projectProgress((phases ?? []) as SchedulePhase[]),
       };
     })
   );
@@ -43,7 +40,7 @@ export interface TodayTask {
   title: string;
   projectId: string;
   projectName: string;
-  assignee: string | null;
+  assigneeType: "eigenaar" | "team" | "klant";
 }
 
 export interface ActivityItem {
@@ -82,7 +79,7 @@ export async function getDashboardExtras(projects: ProjectWithProgress[], role: 
     await Promise.all([
       supabase
         .from("tasks")
-        .select("id,project_id,title,assignee,due_date,done")
+        .select("id,project_id,title,assignee_type,due_date,done")
         .in("project_id", projectIds)
         .eq("due_date", today)
         .eq("done", false),
@@ -107,7 +104,7 @@ export async function getDashboardExtras(projects: ProjectWithProgress[], role: 
     title: t.title as string,
     projectId: t.project_id as string,
     projectName: projectNameMap[t.project_id as string] ?? "",
-    assignee: t.assignee as string | null,
+    assigneeType: t.assignee_type as TodayTask["assigneeType"],
   }));
 
   const openMeerwerk = {

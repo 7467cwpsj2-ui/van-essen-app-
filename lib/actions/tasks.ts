@@ -3,10 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import type { TaskAssigneeType } from "@/types/database";
 
 export async function createTask(
   projectId: string,
-  data: { title: string; assignee: string | null; dueDate: string | null; phaseId: string | null }
+  data: { title: string; assigneeType: TaskAssigneeType; assigneeTeamMemberId: string | null; dueDate: string | null }
 ) {
   await requireUser();
   if (!data.title.trim()) throw new Error("Titel is verplicht.");
@@ -14,20 +15,25 @@ export async function createTask(
   const { error } = await supabase.from("tasks").insert({
     project_id: projectId,
     title: data.title.trim(),
-    assignee: data.assignee || null,
+    assignee_type: data.assigneeType,
+    assignee_team_member_id: data.assigneeType === "team" ? data.assigneeTeamMemberId : null,
     due_date: data.dueDate || null,
-    phase_id: data.phaseId || null,
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/dashboard");
 }
 
 export async function toggleTask(projectId: string, taskId: string, done: boolean) {
-  await requireUser();
+  const current = await requireUser();
   const supabase = createClient();
-  const { error } = await supabase.from("tasks").update({ done }).eq("id", taskId);
+  const { error } = await supabase
+    .from("tasks")
+    .update({ done, done_by: done ? current.profile.name : null, done_at: done ? new Date().toISOString() : null })
+    .eq("id", taskId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/dashboard");
 }
 
 export async function deleteTask(projectId: string, taskId: string) {
@@ -36,4 +42,5 @@ export async function deleteTask(projectId: string, taskId: string) {
   const { error } = await supabase.from("tasks").delete().eq("id", taskId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/dashboard");
 }
