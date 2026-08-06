@@ -54,9 +54,9 @@ export function ExtraWorkPanel({
 
   const addItem = async () => {
     if (!form.description.trim() || !form.amount) return;
-    const days = form.type === "meerwerk" ? Number(form.extraDays) || 0 : 0;
+    const days = Number(form.extraDays) || 0;
     if (days > 0 && !form.phaseId) {
-      alert("Kies bij welke fase deze extra dagen horen, anders wordt de bouwplanning niet aangepast.");
+      alert("Kies bij welke fase deze dagen horen, anders wordt de bouwplanning niet aangepast.");
       return;
     }
     setBusy(true);
@@ -176,9 +176,12 @@ export function ExtraWorkPanel({
                 <div className="work-sub mono">
                   {w.type === "meerwerk" ? "+" : "−"} {fmtEuro(Number(w.amount))}
                 </div>
-                {!!w.extra_days && w.extra_days > 0 && (
+                {!!w.extra_days && (
                   <div className="work-sub">
-                    +{w.extra_days} {w.extra_days === 1 ? "dag" : "dagen"} extra{phase ? ` bij ${phase.title}` : ""} —{" "}
+                    {w.extra_days > 0
+                      ? `+${w.extra_days} ${w.extra_days === 1 ? "dag" : "dagen"} extra`
+                      : `${Math.abs(w.extra_days)} ${Math.abs(w.extra_days) === 1 ? "dag" : "dagen"} korter`}
+                    {phase ? ` bij ${phase.title}` : ""} —{" "}
                     {w.schedule_applied ? "bouwplanning aangepast" : "bouwplanning past pas aan na akkoord van de klant"}
                   </div>
                 )}
@@ -252,12 +255,12 @@ export function ExtraWorkPanel({
               value={form.explanation}
               onChange={(e) => setForm({ ...form, explanation: e.target.value })}
             />
-            {role === "eigenaar" && form.type === "meerwerk" && phases.length > 0 && (
+            {phases.length > 0 && (
               <>
                 <input
                   type="number"
                   min="0"
-                  placeholder="Extra dagen (optioneel)"
+                  placeholder={form.type === "meerwerk" ? "Extra dagen (optioneel)" : "Dagen korter (optioneel)"}
                   value={form.extraDays}
                   onChange={(e) => setForm({ ...form, extraDays: e.target.value })}
                 />
@@ -277,10 +280,10 @@ export function ExtraWorkPanel({
               Toevoegen
             </button>
           </div>
-          {role === "eigenaar" && form.type === "meerwerk" && phases.length > 0 && Number(form.extraDays) > 0 && (
+          {phases.length > 0 && Number(form.extraDays) > 0 && (
             <div className="hint-bar small">
-              Zodra de klant akkoord geeft, wordt de gekozen fase met {form.extraDays} dagen verlengd en schuiven latere fases
-              automatisch mee. Wijst de klant af, dan verandert er niets aan de planning.
+              Zodra de klant akkoord geeft, wordt de gekozen fase met {form.extraDays} dagen {form.type === "meerwerk" ? "verlengd" : "verkort"} en
+              schuiven latere fases automatisch mee. Wijst de klant af, dan verandert er niets aan de planning.
             </div>
           )}
         </div>

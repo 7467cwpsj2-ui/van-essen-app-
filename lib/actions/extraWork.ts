@@ -20,11 +20,14 @@ export async function createExtraWork(
   if (!data.description.trim() || !(data.amount >= 0)) throw new Error("Omschrijving en bedrag zijn verplicht.");
 
   const supabase = createClient();
+  const days = data.extraDays && data.extraDays > 0 ? data.extraDays : 0;
+  const signedDays = days ? (data.type === "minderwerk" ? -days : days) : 0;
+
   let scheduleCutoff: string | null = null;
-  if (data.extraDays && data.extraDays > 0 && data.phaseId) {
+  if (signedDays !== 0 && data.phaseId) {
     const { data: phase } = await supabase.from("schedule_phases").select("end_date").eq("id", data.phaseId).single();
     scheduleCutoff = phase?.end_date ?? null;
-    if (!scheduleCutoff) throw new Error("Kies bij welke fase deze extra dagen horen.");
+    if (!scheduleCutoff) throw new Error("Kies bij welke fase deze dagen horen.");
   }
 
   const { error } = await supabase.from("extra_work").insert({
@@ -33,8 +36,8 @@ export async function createExtraWork(
     description: data.description.trim(),
     amount: data.amount,
     explanation: data.explanation?.trim() || null,
-    extra_days: data.extraDays && data.extraDays > 0 ? data.extraDays : null,
-    phase_id: data.extraDays && data.extraDays > 0 ? data.phaseId : null,
+    extra_days: signedDays !== 0 ? signedDays : null,
+    phase_id: signedDays !== 0 ? data.phaseId : null,
     schedule_cutoff: scheduleCutoff,
   });
   if (error) throw new Error(error.message);
