@@ -35,7 +35,8 @@ migraties uit — via de SQL-editor in het dashboard (plak de inhoud van elk
 bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0002_fase2.sql`, `0003_uren_nacalculatie.sql`, `0004_notes_review.sql`,
 `0005_realtime.sql`, `0006_completion_point_photo.sql`,
-`0007_reminders.sql`, en klik telkens Run), of met de Supabase CLI:
+`0007_reminders.sql`, `0008_task_multi_assignee.sql`, en klik telkens
+Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

@@ -662,6 +662,26 @@ textarea {
   font-size: 11px;
 }
 
+.task-team-picker {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.task-team-picker-hint {
+  font-size: 11px;
+  color: var(--text-faint);
+}
+.task-team-picker-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
 /* ---------- planning ---------- */
 
 .task-list {

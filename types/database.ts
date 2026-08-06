@@ -134,7 +134,7 @@ export interface Task {
   title: string;
   assignee: string | null;
   assignee_type: TaskAssigneeType;
-  assignee_team_member_id: string | null;
+  assignee_team_member_ids: string[];
   due_date: string | null;
   done: boolean;
   done_by: string | null;

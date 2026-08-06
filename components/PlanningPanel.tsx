@@ -27,28 +27,44 @@ export function PlanningPanel({
   tasks: Task[];
   teamMembers: { id: string; name: string }[];
 }) {
-  const [form, setForm] = useState<{ title: string; assigneeType: TaskAssigneeType; assigneeTeamMemberId: string; dueDate: string }>({
+  const [form, setForm] = useState<{ title: string; assigneeType: TaskAssigneeType; assigneeTeamMemberIds: string[]; dueDate: string }>({
     title: "",
     assigneeType: "eigenaar",
-    assigneeTeamMemberId: "",
+    assigneeTeamMemberIds: [],
     dueDate: "",
   });
   const [, startTransition] = useTransition();
 
-  const teamMemberName = (id: string | null) => teamMembers.find((m) => m.id === id)?.name;
+  const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name;
 
-  const assigneeLabel = (t: Task) =>
-    t.assignee_type === "team" && t.assignee_team_member_id ? teamMemberName(t.assignee_team_member_id) || "Team" : TASK_ASSIGNEE_LABEL[t.assignee_type];
+  const assigneeLabel = (t: Task) => {
+    if (t.assignee_type !== "team") return TASK_ASSIGNEE_LABEL[t.assignee_type];
+    if (t.assignee_team_member_ids.length === 0) return "Team (iedereen)";
+    return t.assignee_team_member_ids.map((id) => teamMemberName(id) || "?").join(", ");
+  };
 
   const canToggle = (t: Task) => {
     if (isLocked) return false;
     if (role === "eigenaar") return true;
-    if (role === "team") return t.assignee_type === "team" && (!t.assignee_team_member_id || t.assignee_team_member_id === currentTeamMemberId);
+    if (role === "team")
+      return (
+        t.assignee_type === "team" &&
+        (t.assignee_team_member_ids.length === 0 || (!!currentTeamMemberId && t.assignee_team_member_ids.includes(currentTeamMemberId)))
+      );
     if (role === "klant") return t.assignee_type === "klant";
     return false;
   };
 
   const canCreate = (role === "eigenaar" || role === "team") && !isLocked;
+
+  const toggleFormMember = (id: string) => {
+    setForm((f) => ({
+      ...f,
+      assigneeTeamMemberIds: f.assigneeTeamMemberIds.includes(id)
+        ? f.assigneeTeamMemberIds.filter((x) => x !== id)
+        : [...f.assigneeTeamMemberIds, id],
+    }));
+  };
 
   const addTask = () => {
     if (!form.title.trim()) return;
@@ -56,11 +72,11 @@ export function PlanningPanel({
       createTask(projectId, {
         title: form.title,
         assigneeType: form.assigneeType,
-        assigneeTeamMemberId: form.assigneeType === "team" ? form.assigneeTeamMemberId || null : null,
+        assigneeTeamMemberIds: form.assigneeType === "team" ? form.assigneeTeamMemberIds : [],
         dueDate: form.dueDate || null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ title: "", assigneeType: "eigenaar", assigneeTeamMemberId: "", dueDate: "" });
+    setForm({ title: "", assigneeType: "eigenaar", assigneeTeamMemberIds: [], dueDate: "" });
   };
 
   const sorted = [...tasks].sort((a, b) => {
@@ -124,7 +140,7 @@ export function PlanningPanel({
                 setForm({
                   ...form,
                   assigneeType: e.target.value as TaskAssigneeType,
-                  assigneeTeamMemberId: e.target.value === "team" && role === "team" ? currentTeamMemberId || "" : "",
+                  assigneeTeamMemberIds: e.target.value === "team" && role === "team" && currentTeamMemberId ? [currentTeamMemberId] : [],
                 })
               }
             >
@@ -132,24 +148,40 @@ export function PlanningPanel({
               <option value="team">Team</option>
               <option value="klant">Klant</option>
             </select>
-            {form.assigneeType === "team" && teamMembers.length > 0 && (
-              <select value={form.assigneeTeamMemberId} onChange={(e) => setForm({ ...form, assigneeTeamMemberId: e.target.value })}>
-                <option value="">Iedereen in het team</option>
-                {role === "team" && currentTeamMemberId && <option value={currentTeamMemberId}>Mijzelf</option>}
-                {teamMembers
-                  .filter((m) => m.id !== currentTeamMemberId)
-                  .map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-              </select>
-            )}
             <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
             <button className="btn-primary" onClick={addTask}>
               <Plus size={14} /> Toevoegen
             </button>
           </div>
+          {form.assigneeType === "team" && teamMembers.length > 0 && (
+            <div className="task-team-picker">
+              <div className="task-team-picker-hint">Niemand aangevinkt = iedereen in het team kan het afvinken.</div>
+              <div className="task-team-picker-grid">
+                {role === "team" && currentTeamMemberId && (
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={form.assigneeTeamMemberIds.includes(currentTeamMemberId)}
+                      onChange={() => toggleFormMember(currentTeamMemberId)}
+                    />
+                    Mijzelf
+                  </label>
+                )}
+                {teamMembers
+                  .filter((m) => m.id !== currentTeamMemberId)
+                  .map((m) => (
+                    <label key={m.id} className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={form.assigneeTeamMemberIds.includes(m.id)}
+                        onChange={() => toggleFormMember(m.id)}
+                      />
+                      {m.name}
+                    </label>
+                  ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
