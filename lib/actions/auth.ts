@@ -27,3 +27,20 @@ export async function signOut() {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+export async function requestPasswordReset(formData: FormData) {
+  const email = String(formData.get("email") || "").trim();
+  if (!email) {
+    redirect(`/wachtwoord-vergeten?error=${encodeURIComponent("Vul je e-mailadres in.")}`);
+  }
+
+  const supabase = createClient();
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${siteUrl}/auth/callback?next=/account/wachtwoord`,
+  });
+
+  // Altijd dezelfde uitkomst tonen, ongeacht of dit e-mailadres bestaat —
+  // voorkomt dat iemand kan aftasten welke adressen geregistreerd staan.
+  redirect("/wachtwoord-vergeten?sent=1");
+}

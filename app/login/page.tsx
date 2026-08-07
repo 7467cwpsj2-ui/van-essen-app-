@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { signIn } from "@/lib/actions/auth";
 import { KeyRound } from "lucide-react";
 
@@ -31,6 +32,9 @@ export default function LoginPage({
             Inloggen
           </button>
         </form>
+        <div className="login-hint">
+          <Link href="/wachtwoord-vergeten">Wachtwoord vergeten?</Link>
+        </div>
         <div className="login-hint">
           Nog geen account? Vraag een uitnodiging aan bij de eigenaar van je project.
         </div>
