@@ -80,6 +80,11 @@ export function BouwplanningPanel({
               const end = new Date(i.end_date).getTime();
               const linked = tasks.filter((t) => t.phase_id === i.id);
               const done = linked.filter((t) => t.done).length;
+              const filledFlags = days.map((d) => {
+                const t = d.getTime();
+                const wd = d.getUTCDay();
+                return t >= start && t <= end && wd !== 0 && wd !== 6;
+              });
               return (
                 <div key={i.id} style={{ display: "contents" }}>
                   <div className="gantt-cell gantt-row-label">
@@ -102,11 +107,10 @@ export function BouwplanningPanel({
                     )}
                   </div>
                   {days.map((d, idx) => {
-                    const t = d.getTime();
-                    const filled = t >= start && t <= end;
-                    const isFirst = filled && t === start;
-                    const isLast = filled && t === end;
                     const wd = d.getUTCDay();
+                    const filled = filledFlags[idx];
+                    const isFirst = filled && !filledFlags[idx - 1];
+                    const isLast = filled && !filledFlags[idx + 1];
                     return (
                       <div
                         key={idx}
@@ -115,7 +119,7 @@ export function BouwplanningPanel({
                           (filled ? " filled" : "") +
                           (isFirst ? " first" : "") +
                           (isLast ? " last" : "") +
-                          (!filled && (wd === 0 || wd === 6) ? " weekend" : "")
+                          (wd === 0 || wd === 6 ? " weekend" : "")
                         }
                         title={filled ? `${i.title}: ${i.start_date} – ${i.end_date}` : ""}
                       />
