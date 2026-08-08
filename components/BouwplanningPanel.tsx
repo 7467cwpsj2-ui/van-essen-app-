@@ -4,10 +4,15 @@ import { useState, useTransition } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { AssigneeInput } from "@/components/AssigneeInput";
 import { createPhase, deletePhase } from "@/lib/actions/schedule";
+import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { SchedulePhase, Task } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
+
+function fmtDate(iso: string) {
+  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso + "T00:00:00Z"));
+}
 
 export function BouwplanningPanel({
   projectId,
@@ -22,15 +27,19 @@ export function BouwplanningPanel({
   teamMembers: { id: string; name: string; trade: string | null }[];
   canEdit: boolean;
 }) {
-  const [form, setForm] = useState({ title: "", assignee: "", start: "", end: "" });
+  const [form, setForm] = useState({ title: "", assignee: "", start: "", days: "" });
   const [, startTransition] = useTransition();
 
+  const computedEnd = form.start && Number(form.days) >= 1 ? endDateForWorkingDays(form.start, Number(form.days)) : "";
+
   const addItem = () => {
-    if (!form.title.trim() || !form.start || !form.end) return;
+    if (!form.title.trim() || !form.start || !computedEnd) return;
     startTransition(() => {
-      createPhase(projectId, form).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      createPhase(projectId, { title: form.title, assignee: form.assignee, start: form.start, end: computedEnd }).catch((err) =>
+        alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
+      );
     });
-    setForm({ title: "", assignee: "", start: "", end: "" });
+    setForm({ title: "", assignee: "", start: "", days: "" });
   };
 
   let days: Date[] = [];
@@ -130,11 +139,31 @@ export function BouwplanningPanel({
               onChange={(e) => setForm({ ...form, title: e.target.value })}
             />
             <AssigneeInput value={form.assignee} onChange={(v) => setForm({ ...form, assignee: v })} teamMembers={teamMembers} />
-            <input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} />
-            <input type="date" value={form.end} onChange={(e) => setForm({ ...form, end: e.target.value })} />
+            <input
+              type="date"
+              value={form.start}
+              onChange={(e) => setForm({ ...form, start: e.target.value })}
+              title="Startdatum"
+            />
+            <input
+              type="number"
+              min="1"
+              placeholder="Aantal werkdagen"
+              value={form.days}
+              onChange={(e) => setForm({ ...form, days: e.target.value })}
+            />
             <button className="btn-primary" onClick={addItem}>
               <Plus size={14} /> Toevoegen
             </button>
+          </div>
+          <div className="hint-bar small">
+            Weekenden tellen niet mee bij het doortellen van de werkdagen.
+            {computedEnd && (
+              <>
+                {" "}
+                Deze fase loopt dan tot en met <b>{fmtDate(computedEnd)}</b>.
+              </>
+            )}
           </div>
         </div>
       )}
