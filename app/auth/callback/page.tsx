@@ -38,10 +38,23 @@ function AuthCallbackInner() {
       } else if (tokenHash && type) {
         const { error } = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
         if (error) throw error;
+      } else {
+        // Supabase's eigen verify-redirect gebruikt vaak een
+        // #access_token=...-fragment. De client hierboven verwerkt dat
+        // in principe automatisch, maar dat gebeurt async vlak na het
+        // aanmaken van de client — meteen daarna getSession() aanroepen
+        // kan die verwerking dan net vóór zijn (race condition), met
+        // een valse "verlopen"-melding tot gevolg. Daarom hier expliciet
+        // zelf het fragment lezen en de sessie zetten.
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const accessToken = hashParams.get("access_token");
+        const refreshToken = hashParams.get("refresh_token");
+        if (accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken });
+          if (error) throw error;
+        }
       }
 
-      // Bij een #access_token=...-fragment heeft de client hierboven
-      // die al automatisch verwerkt en opgeslagen.
       const { data } = await supabase.auth.getSession();
       if (data.session) {
         router.replace(next);
