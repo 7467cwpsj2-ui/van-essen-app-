@@ -36,8 +36,9 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0002_fase2.sql`, `0003_uren_nacalculatie.sql`, `0004_notes_review.sql`,
 `0005_realtime.sql`, `0006_completion_point_photo.sql`,
 `0007_reminders.sql`, `0008_task_multi_assignee.sql`,
-`0009_minderwerk_days.sql`, `0010_working_days.sql`, en klik telkens
-Run), of met de Supabase CLI:
+`0009_minderwerk_days.sql`, `0010_working_days.sql`,
+`0011_push_notifications.sql`, en klik telkens Run), of met de
+Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>
@@ -75,6 +76,10 @@ Vul in met de waarden uit Project Settings → API in het Supabase-dashboard:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY` (alleen server-side, nooit naar de client sturen)
 - `NEXT_PUBLIC_SITE_URL` (voor uitnodigingsmails)
+- `NEXT_PUBLIC_VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` (optioneel, voor
+  pushmeldingen — genereer een sleutelpaar met `npx web-push
+  generate-vapid-keys`; zonder deze variabelen blijft push simpelweg
+  uitgeschakeld, de rest van de app werkt gewoon door)
 
 ### 4. Draaien
 

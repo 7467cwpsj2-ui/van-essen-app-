@@ -3,7 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnerUserIds, getProjectClientUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
 import type { ExtraWorkType } from "@/types/database";
+
+async function notifyOwnerAndClient(projectId: string, excludeUserId: string, title: string, body: string) {
+  const [owners, clients] = await Promise.all([
+    getOwnerUserIds(excludeUserId),
+    getProjectClientUserIds(projectId, excludeUserId),
+  ]);
+  const recipients = Array.from(new Set([...owners, ...clients]));
+  if (recipients.length) {
+    await sendPushToUsers(recipients, { title, body, url: `/projects/${projectId}/meerwerk` });
+  }
+}
 
 export async function createExtraWork(
   projectId: string,
@@ -16,7 +28,7 @@ export async function createExtraWork(
     phaseId: string | null;
   }
 ) {
-  await requireUser();
+  const current = await requireUser();
   if (!data.description.trim() || !(data.amount >= 0)) throw new Error("Omschrijving en bedrag zijn verplicht.");
 
   const supabase = createClient();
@@ -42,24 +54,34 @@ export async function createExtraWork(
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/meerwerk`);
+
+  const projectName = await getProjectName(projectId);
+  const label = data.type === "meerwerk" ? "meerwerk" : "minderwerk";
+  await notifyOwnerAndClient(projectId, current.id, `Nieuw ${label} — ${projectName}`, data.description.trim());
 }
 
 export async function approveExtraWork(projectId: string, workId: string, signaturePath: string | null) {
-  await requireUser();
+  const current = await requireUser();
   const supabase = createClient();
   const { error } = await supabase.rpc("approve_extra_work", { p_work_id: workId, p_signature_path: signaturePath });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/meerwerk`);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
+
+  const projectName = await getProjectName(projectId);
+  await notifyOwnerAndClient(projectId, current.id, `Meer-/minderwerk goedgekeurd — ${projectName}`, "Akkoord gegeven.");
 }
 
 export async function rejectExtraWork(projectId: string, workId: string) {
-  await requireUser();
+  const current = await requireUser();
   const supabase = createClient();
   const { error } = await supabase.rpc("reject_extra_work", { p_work_id: workId });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/meerwerk`);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
+
+  const projectName = await getProjectName(projectId);
+  await notifyOwnerAndClient(projectId, current.id, `Meer-/minderwerk afgewezen — ${projectName}`, "Afgewezen.");
 }
 
 export async function resetExtraWork(projectId: string, workId: string) {

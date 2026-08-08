@@ -3,7 +3,12 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnerUserIds, getProjectClientUserIds, getProjectInternalUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
 import type { NoteVisibility } from "@/types/database";
+
+function truncate(text: string, max = 120) {
+  return text.length > max ? text.slice(0, max - 1) + "…" : text;
+}
 
 export async function createNote(projectId: string, text: string, visibility: NoteVisibility) {
   const current = await requireUser();
@@ -18,14 +23,55 @@ export async function createNote(projectId: string, text: string, visibility: No
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/notities`);
+
+  let recipients: string[] = [];
+  if (current.profile.role !== "eigenaar") {
+    // Niet-eigenaar-notities gaan altijd eerst langs de eigenaar ter beoordeling.
+    recipients = await getOwnerUserIds(current.id);
+  } else if (visibility === "team") {
+    recipients = await getProjectInternalUserIds(projectId, current.id);
+  } else if (visibility === "klant") {
+    const [internal, clients] = await Promise.all([
+      getProjectInternalUserIds(projectId, current.id),
+      getProjectClientUserIds(projectId, current.id),
+    ]);
+    recipients = Array.from(new Set([...internal, ...clients]));
+  }
+  if (recipients.length) {
+    const projectName = await getProjectName(projectId);
+    await sendPushToUsers(recipients, {
+      title: `Nieuwe notitie — ${projectName}`,
+      body: truncate(text.trim()),
+      url: `/projects/${projectId}/notities`,
+    });
+  }
 }
 
 export async function setNoteVisibility(projectId: string, id: string, visibility: NoteVisibility) {
-  await requireUser();
+  const current = await requireUser();
   const supabase = createClient();
   const { error } = await supabase.from("notes").update({ visibility, reviewed: true }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/notities`);
+
+  let recipients: string[] = [];
+  if (visibility === "team") {
+    recipients = await getProjectInternalUserIds(projectId, current.id);
+  } else if (visibility === "klant") {
+    const [internal, clients] = await Promise.all([
+      getProjectInternalUserIds(projectId, current.id),
+      getProjectClientUserIds(projectId, current.id),
+    ]);
+    recipients = Array.from(new Set([...internal, ...clients]));
+  }
+  if (recipients.length) {
+    const projectName = await getProjectName(projectId);
+    await sendPushToUsers(recipients, {
+      title: `Notitie gedeeld — ${projectName}`,
+      body: "Er is een notitie met je gedeeld.",
+      url: `/projects/${projectId}/notities`,
+    });
+  }
 }
 
 // Eigenaar besluit een notitie niet te delen — blijft op de huidige

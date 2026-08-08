@@ -15,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
+import { PushPrompt } from "@/components/PushPrompt";
 import { signOut } from "@/lib/actions/auth";
 import type { ProjectStatus, Role } from "@/types/database";
 
@@ -146,7 +147,10 @@ export function AppShell({
         </div>
       </aside>
 
-      <main className="main">{children}</main>
+      <main className="main">
+        <PushPrompt />
+        {children}
+      </main>
     </div>
   );
 }
