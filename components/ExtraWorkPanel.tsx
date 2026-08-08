@@ -179,8 +179,8 @@ export function ExtraWorkPanel({
                 {!!w.extra_days && (
                   <div className="work-sub">
                     {w.extra_days > 0
-                      ? `+${w.extra_days} ${w.extra_days === 1 ? "dag" : "dagen"} extra`
-                      : `${Math.abs(w.extra_days)} ${Math.abs(w.extra_days) === 1 ? "dag" : "dagen"} korter`}
+                      ? `+${w.extra_days} werk${w.extra_days === 1 ? "dag" : "dagen"} extra`
+                      : `${Math.abs(w.extra_days)} werk${Math.abs(w.extra_days) === 1 ? "dag" : "dagen"} korter`}
                     {phase ? ` bij ${phase.title}` : ""} —{" "}
                     {w.schedule_applied ? "bouwplanning aangepast" : "bouwplanning past pas aan na akkoord van de klant"}
                   </div>
@@ -260,7 +260,7 @@ export function ExtraWorkPanel({
                 <input
                   type="number"
                   min="0"
-                  placeholder={form.type === "meerwerk" ? "Extra dagen (optioneel)" : "Dagen korter (optioneel)"}
+                  placeholder={form.type === "meerwerk" ? "Extra werkdagen (optioneel)" : "Werkdagen korter (optioneel)"}
                   value={form.extraDays}
                   onChange={(e) => setForm({ ...form, extraDays: e.target.value })}
                 />
@@ -282,8 +282,9 @@ export function ExtraWorkPanel({
           </div>
           {phases.length > 0 && Number(form.extraDays) > 0 && (
             <div className="hint-bar small">
-              Zodra de klant akkoord geeft, wordt de gekozen fase met {form.extraDays} dagen {form.type === "meerwerk" ? "verlengd" : "verkort"} en
-              schuiven latere fases automatisch mee. Wijst de klant af, dan verandert er niets aan de planning.
+              Zodra de klant akkoord geeft, wordt de gekozen fase met {form.extraDays} werkdagen {form.type === "meerwerk" ? "verlengd" : "verkort"}{" "}
+              (weekenden tellen niet mee) en schuiven latere fases automatisch mee. Wijst de klant af, dan verandert er niets aan de
+              planning.
             </div>
           )}
         </div>
