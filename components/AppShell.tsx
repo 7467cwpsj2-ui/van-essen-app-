@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
 import { PushPrompt } from "@/components/PushPrompt";
+import { UpdateChecker } from "@/components/UpdateChecker";
 import { signOut } from "@/lib/actions/auth";
 import type { ProjectStatus, Role } from "@/types/database";
 
@@ -158,6 +159,7 @@ export function AppShell({
       </aside>
 
       <main className="main">
+        <UpdateChecker />
         <PushPrompt />
         {children}
       </main>

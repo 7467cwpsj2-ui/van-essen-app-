@@ -1,6 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // Unieke waarde per deploy — de client vergelijkt hiermee de versie die
+  // hij nu draait met de versie die live staat (zie /api/version en
+  // components/UpdateChecker.tsx), zodat een geïnstalleerde app zichzelf
+  // kan aanbieden te verversen i.p.v. dat iemand hem moet verwijderen en
+  // opnieuw installeren.
+  env: {
+    NEXT_PUBLIC_BUILD_ID: process.env.VERCEL_GIT_COMMIT_SHA || String(Date.now()),
+  },
   images: {
     remotePatterns: [
       {
