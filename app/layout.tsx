@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Van Essen",
+    title: "Van Essen Bouw & Onderhoud",
   },
 };
 

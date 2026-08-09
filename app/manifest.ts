@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "Van Essen Bouw & Onderhoud",
-    short_name: "Van Essen",
+    short_name: "Van Essen Bouw & Onderhoud",
     description: "Bouwmanagement-app voor Van Essen Bouw & Onderhoud",
     start_url: "/dashboard",
     display: "standalone",
