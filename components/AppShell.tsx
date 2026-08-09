@@ -12,6 +12,7 @@ import {
   LogOut,
   ChevronDown,
   Menu,
+  Smartphone,
   X,
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
@@ -133,6 +134,14 @@ export function AppShell({
             );
           })}
         </div>
+
+        <Link
+          href="/installeren"
+          className={"toegang-toggle" + (pathname === "/installeren" ? " active" : "")}
+          onClick={() => setSidebarOpen(false)}
+        >
+          <Smartphone size={14} /> App installeren
+        </Link>
 
         <div className="sidebar-user">
           <div>

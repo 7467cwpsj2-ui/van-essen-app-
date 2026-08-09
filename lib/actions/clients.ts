@@ -24,7 +24,7 @@ export async function inviteClient(formData: FormData) {
   const admin = createAdminClient();
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?next=/account/wachtwoord`,
+    redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`,
   });
 
   if (inviteError || !invited?.user) {
