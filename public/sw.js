@@ -9,8 +9,18 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Deze service worker cachet bewust niets zelf (geen fetch-handler) —
-// paginacontent wordt altijd rechtstreeks van de server gehaald.
+// Deze service worker cachet zelf niets — maar de standaard navigatie
+// van een op het beginscherm geïnstalleerde app (standalone-modus) blijkt
+// op iOS soms een oude, lokaal bewaarde versie van de pagina te tonen,
+// zelfs met "no-store"-headers op de server. Door zelf expliciet met
+// cache: "no-store" opnieuw te fetchen bij elke paginanavigatie, omzeilen
+// we die verouderde cache en krijgt de geïnstalleerde app altijd de
+// actuele pagina — net als een gewoon Safari-tabblad al deed.
+self.addEventListener("fetch", (event) => {
+  if (event.request.mode === "navigate") {
+    event.respondWith(fetch(event.request, { cache: "no-store" }));
+  }
+});
 
 self.addEventListener("push", (event) => {
   let payload = { title: "Van Essen", body: "" };
