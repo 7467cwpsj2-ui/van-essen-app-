@@ -1,3 +1,17 @@
+// Nieuwe versies van dit bestand direct actief maken i.p.v. te
+// wachten tot alle open tabbladen/de geïnstalleerde app gesloten zijn
+// — anders blijft een oudere service worker (en daarmee mogelijk een
+// verouderde weergave van de app) actief tot een handmatige herstart.
+self.addEventListener("install", () => {
+  self.skipWaiting();
+});
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+// Deze service worker cachet bewust niets zelf (geen fetch-handler) —
+// paginacontent wordt altijd rechtstreeks van de server gehaald.
+
 self.addEventListener("push", (event) => {
   let payload = { title: "Van Essen", body: "" };
   try {
