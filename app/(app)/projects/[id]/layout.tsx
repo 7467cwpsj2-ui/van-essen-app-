@@ -6,7 +6,7 @@ import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
 import { RouteMenu } from "@/components/RouteMenu";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
-import { CoverPhotoUpload } from "@/components/CoverPhotoUpload";
+import { CoverPhotoControls } from "@/components/CoverPhotoControls";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
 const STATUS_LABEL = { gepland: "Gepland", lopend: "Lopend", afgerond: "Afgerond" };
@@ -45,8 +45,12 @@ export default async function ProjectLayout({
 
   return (
     <div>
-      <CoverPhotoUpload projectId={p.id} coverPhotoUrl={coverPhotoUrl} editable={current.profile.role === "eigenaar" && !isLocked} />
-      <div className="project-header">
+      <div className={"project-header" + (coverPhotoUrl ? " has-cover" : "")}>
+        {coverPhotoUrl && (
+          <div className="project-header-cover">
+            <img src={coverPhotoUrl} alt="" />
+          </div>
+        )}
         <div className="header-grid-texture" />
         <div className="header-top">
           <div>
@@ -69,6 +73,7 @@ export default async function ProjectLayout({
           <div className="header-right">
             {current.profile.role === "eigenaar" && !isLocked && (
               <>
+                <CoverPhotoControls projectId={p.id} hasPhoto={!!coverPhotoUrl} />
                 <StatusSelect projectId={p.id} status={p.status} />
                 <DeleteProjectButton projectId={p.id} projectName={p.name} />
               </>

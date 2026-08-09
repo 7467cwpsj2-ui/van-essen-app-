@@ -6,19 +6,9 @@ import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
 import { setCoverPhoto, removeCoverPhoto } from "@/lib/actions/projects";
 
-export function CoverPhotoUpload({
-  projectId,
-  coverPhotoUrl,
-  editable,
-}: {
-  projectId: string;
-  coverPhotoUrl: string | null;
-  editable: boolean;
-}) {
+export function CoverPhotoControls({ projectId, hasPhoto }: { projectId: string; hasPhoto: boolean }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
-
-  if (!editable && !coverPhotoUrl) return null;
 
   const handleFile = async (file: File) => {
     setBusy(true);
@@ -54,28 +44,16 @@ export function CoverPhotoUpload({
   };
 
   return (
-    <div className={"project-cover" + (coverPhotoUrl ? "" : " empty")}>
-      {editable && <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleChange} />}
-      {coverPhotoUrl ? (
-        <>
-          <img src={coverPhotoUrl} alt="" />
-          {editable && (
-            <div className="project-cover-actions">
-              <button type="button" className="btn-ghost" onClick={() => inputRef.current?.click()} disabled={busy}>
-                {busy ? <Loader2 className="spin" size={13} /> : <ImagePlus size={13} />} Wijzigen
-              </button>
-              <button type="button" className="icon-btn danger ghost" onClick={handleRemove} disabled={busy}>
-                <Trash2 size={13} />
-              </button>
-            </div>
-          )}
-        </>
-      ) : (
-        <button type="button" className="project-cover-add" onClick={() => inputRef.current?.click()} disabled={busy}>
-          {busy ? <Loader2 className="spin" size={16} /> : <ImagePlus size={16} />}
-          {busy ? "Bezig…" : "Omslagfoto toevoegen"}
+    <>
+      <input ref={inputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleChange} />
+      <button type="button" className="btn-ghost" onClick={() => inputRef.current?.click()} disabled={busy}>
+        {busy ? <Loader2 className="spin" size={13} /> : <ImagePlus size={13} />} {hasPhoto ? "Wijzigen" : "Omslagfoto"}
+      </button>
+      {hasPhoto && (
+        <button type="button" className="icon-btn ghost" onClick={handleRemove} disabled={busy} title="Omslagfoto verwijderen">
+          <Trash2 size={14} />
         </button>
       )}
-    </div>
+    </>
   );
 }

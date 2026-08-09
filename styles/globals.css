@@ -447,60 +447,6 @@ textarea {
   overflow-y: auto;
 }
 
-.project-cover {
-  position: relative;
-  height: 150px;
-  border-radius: var(--radius-lg);
-  overflow: hidden;
-  margin-bottom: 14px;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-}
-.project-cover img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-.project-cover-actions {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  display: flex;
-  gap: 6px;
-}
-.project-cover-actions .btn-ghost {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(4px);
-}
-.project-cover-actions .icon-btn {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(4px);
-}
-.project-cover-add {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius-lg);
-  background: transparent;
-  color: var(--text-faint);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-.project-cover-add:hover {
-  color: var(--brand-dim);
-  border-color: var(--brand-dim);
-  background: var(--brand-soft);
-}
-.project-cover.empty {
-  height: 72px;
-}
-
 .project-header {
   position: relative;
   padding: 20px 22px;
@@ -511,11 +457,74 @@ textarea {
   margin-bottom: 14px;
   box-shadow: var(--shadow-card);
 }
+.project-header.has-cover {
+  min-height: 210px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.project-header-cover {
+  position: absolute;
+  inset: 0;
+}
+.project-header-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.project-header-cover::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(8, 11, 16, 0.3) 0%, rgba(8, 11, 16, 0.68) 100%);
+}
 .header-grid-texture {
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: radial-gradient(560px circle at 12% -10%, rgba(28, 127, 196, 0.12), transparent 60%);
+}
+.project-header.has-cover .header-grid-texture {
+  display: none;
+}
+.project-header.has-cover .header-eyebrow {
+  color: rgba(255, 255, 255, 0.85);
+}
+.project-header.has-cover h1 {
+  color: #fff;
+}
+.project-header.has-cover .header-meta span {
+  color: rgba(255, 255, 255, 0.92);
+}
+.project-header.has-cover .pill {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+}
+.project-header.has-cover .status-select {
+  background: rgba(255, 255, 255, 0.92);
+  border-color: rgba(255, 255, 255, 0.5);
+}
+.project-header.has-cover .header-right .btn-ghost {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+}
+.project-header.has-cover .header-right .btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.32);
+  border-color: rgba(255, 255, 255, 0.6);
+  color: #fff;
+}
+.project-header.has-cover .header-right .icon-btn {
+  color: rgba(255, 255, 255, 0.9);
+}
+.project-header.has-cover .header-right .icon-btn:hover {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.project-header.has-cover .header-right .icon-btn.danger:hover {
+  border-color: #ff8a80;
+  color: #ff8a80;
 }
 .header-top {
   position: relative;
