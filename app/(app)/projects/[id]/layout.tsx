@@ -6,6 +6,7 @@ import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
 import { RouteMenu } from "@/components/RouteMenu";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
+import { CoverPhotoUpload } from "@/components/CoverPhotoUpload";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
 const STATUS_LABEL = { gepland: "Gepland", lopend: "Lopend", afgerond: "Afgerond" };
@@ -30,6 +31,12 @@ export default async function ProjectLayout({
     clientName = client?.name ?? null;
   }
 
+  let coverPhotoUrl: string | null = null;
+  if (p.cover_photo_path) {
+    const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(p.cover_photo_path, 3600);
+    coverPhotoUrl = signed?.signedUrl ?? null;
+  }
+
   const visibleTabs = MODULE_KEYS.filter((key) => canSeeModule(current, key));
   const showPrivateChat = canSeePrivateChat(current);
   const showHours = canSeeHours(current);
@@ -38,6 +45,7 @@ export default async function ProjectLayout({
 
   return (
     <div>
+      <CoverPhotoUpload projectId={p.id} coverPhotoUrl={coverPhotoUrl} editable={current.profile.role === "eigenaar" && !isLocked} />
       <div className="project-header">
         <div className="header-grid-texture" />
         <div className="header-top">

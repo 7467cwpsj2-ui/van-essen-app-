@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProjectStatus } from "@/types/database";
 
-const STORAGE_FOLDERS = ["drawings", "photos", "signatures", "delivery"];
+const STORAGE_FOLDERS = ["drawings", "photos", "signatures", "delivery", "cover"];
 
 export async function createProject(formData: FormData) {
   const current = await requireOwner();
@@ -33,6 +33,41 @@ export async function updateProjectStatus(id: string, status: ProjectStatus) {
   const supabase = createClient();
   const { error } = await supabase.from("projects").update({ status }).eq("id", id);
   if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${id}`);
+  revalidatePath("/dashboard");
+}
+
+export async function setCoverPhoto(id: string, filePath: string) {
+  await requireOwner();
+  const supabase = createClient();
+  const { data: project } = await supabase.from("projects").select("cover_photo_path").eq("id", id).single();
+  const oldPath = project?.cover_photo_path as string | null | undefined;
+
+  const { error } = await supabase.from("projects").update({ cover_photo_path: filePath }).eq("id", id);
+  if (error) throw new Error(error.message);
+
+  if (oldPath && oldPath !== filePath) {
+    const admin = createAdminClient();
+    await admin.storage.from("project-files").remove([oldPath]);
+  }
+
+  revalidatePath(`/projects/${id}`);
+  revalidatePath("/dashboard");
+}
+
+export async function removeCoverPhoto(id: string) {
+  await requireOwner();
+  const supabase = createClient();
+  const { data: project } = await supabase.from("projects").select("cover_photo_path").eq("id", id).single();
+  const oldPath = project?.cover_photo_path as string | null | undefined;
+  if (!oldPath) return;
+
+  const { error } = await supabase.from("projects").update({ cover_photo_path: null }).eq("id", id);
+  if (error) throw new Error(error.message);
+
+  const admin = createAdminClient();
+  await admin.storage.from("project-files").remove([oldPath]);
+
   revalidatePath(`/projects/${id}`);
   revalidatePath("/dashboard");
 }

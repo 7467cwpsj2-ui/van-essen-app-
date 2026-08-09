@@ -26,6 +26,7 @@ export interface SidebarProject {
   status: ProjectStatus;
   clientName: string | null;
   progress: number;
+  coverPhotoUrl: string | null;
 }
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -118,7 +119,7 @@ export function AppShell({
                         onClick={() => setSidebarOpen(false)}
                       >
                         <div className="project-item-thumb">
-                          <Building2 size={14} />
+                          {p.coverPhotoUrl ? <img src={p.coverPhotoUrl} alt="" /> : <Building2 size={14} />}
                         </div>
                         <div className="project-item-info">
                           <span className="project-item-name">{p.name}</span>

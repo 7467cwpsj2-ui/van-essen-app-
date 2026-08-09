@@ -447,6 +447,60 @@ textarea {
   overflow-y: auto;
 }
 
+.project-cover {
+  position: relative;
+  height: 150px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 14px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+}
+.project-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.project-cover-actions {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  gap: 6px;
+}
+.project-cover-actions .btn-ghost {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+}
+.project-cover-actions .icon-btn {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+}
+.project-cover-add {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-lg);
+  background: transparent;
+  color: var(--text-faint);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.project-cover-add:hover {
+  color: var(--brand-dim);
+  border-color: var(--brand-dim);
+  background: var(--brand-soft);
+}
+.project-cover.empty {
+  height: 72px;
+}
+
 .project-header {
   position: relative;
   padding: 20px 22px;
@@ -1948,6 +2002,13 @@ a.dash-panel-row:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
+}
+.dash-panel-row-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 .dash-panel-row-icon.activity-meerwerk {
   background: var(--brand-soft);

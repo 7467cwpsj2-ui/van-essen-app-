@@ -113,6 +113,7 @@ export interface Project {
   delivery_signed_by: string | null;
   delivery_signature_path: string | null;
   actual_cost: number;
+  cover_photo_path: string | null;
 }
 
 export interface SchedulePhase {

@@ -12,6 +12,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     status: p.status,
     clientName: p.clientName,
     progress: p.progress,
+    coverPhotoUrl: p.coverPhotoUrl,
   }));
 
   return (

@@ -5,6 +5,7 @@ import type { Project, SchedulePhase } from "@/types/database";
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
   progress: number;
+  coverPhotoUrl: string | null;
 }
 
 // RLS beperkt dit vanzelf tot de projecten waar de ingelogde
@@ -26,10 +27,16 @@ export async function getProjectsWithProgress(): Promise<ProjectWithProgress[]> 
   return Promise.all(
     projectRows.map(async (p) => {
       const { data: phases } = await supabase.from("schedule_phases").select("*").eq("project_id", p.id);
+      let coverPhotoUrl: string | null = null;
+      if (p.cover_photo_path) {
+        const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(p.cover_photo_path, 3600);
+        coverPhotoUrl = signed?.signedUrl ?? null;
+      }
       return {
         ...p,
         clientName: p.client_id ? clientMap[p.client_id] ?? null : null,
         progress: projectProgress((phases ?? []) as SchedulePhase[]),
+        coverPhotoUrl,
       };
     })
   );
