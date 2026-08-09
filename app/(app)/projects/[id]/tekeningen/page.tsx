@@ -20,7 +20,7 @@ export default async function TekeningenPage({ params }: { params: { id: string 
   const withUrls: DrawingWithUrl[] = await Promise.all(
     rows.map(async (d) => {
       let signedUrl: string | null = null;
-      if (d.file_path && d.file_type === "image") {
+      if (d.file_path) {
         const { data } = await supabase.storage.from("project-files").createSignedUrl(d.file_path, 3600);
         signedUrl = data?.signedUrl ?? null;
       }
