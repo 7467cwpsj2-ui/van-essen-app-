@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import { Download, FileText, Plus, Trash2 } from "lucide-react";
 import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { FilePreview } from "@/components/FilePreview";
 import { Lightbox } from "@/components/Lightbox";
@@ -80,11 +80,19 @@ export function DrawingsPanel({
         {drawings.map((d) => (
           <div key={d.id} className="drawing-card">
             {d.file_type === "pdf" ? (
-              <div className="drawing-icon">
-                <FileText size={20} />
-              </div>
+              d.signedUrl ? (
+                <a href={d.signedUrl} target="_blank" rel="noreferrer" className="thumb-btn drawing-pdf-link" title="Tekening openen">
+                  <div className="drawing-icon">
+                    <FileText size={20} />
+                  </div>
+                </a>
+              ) : (
+                <div className="drawing-icon">
+                  <FileText size={20} />
+                </div>
+              )
             ) : d.signedUrl ? (
-              <button type="button" className="thumb-btn" onClick={() => setPreview(d.signedUrl)}>
+              <button type="button" className="thumb-btn" onClick={() => setPreview(d.signedUrl)} title="Tekening bekijken">
                 <img src={d.signedUrl} alt="" className="drawing-thumb" />
               </button>
             ) : null}
@@ -102,6 +110,18 @@ export function DrawingsPanel({
                 onSet={(patch) => setDrawingVisibility(projectId, d.id, patch).catch((e) => alert(e.message))}
               />
             </div>
+            {d.signedUrl && (
+              <a
+                href={d.signedUrl}
+                target="_blank"
+                rel="noreferrer"
+                download
+                className="icon-btn ghost"
+                title="Downloaden"
+              >
+                <Download size={14} />
+              </a>
+            )}
             {(role === "eigenaar" || d.uploader_id === currentUserId) && (
               <button
                 className="icon-btn danger ghost"

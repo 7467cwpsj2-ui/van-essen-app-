@@ -1078,6 +1078,26 @@ textarea {
   justify-content: center;
   cursor: pointer;
 }
+.lightbox-download {
+  position: absolute;
+  top: 18px;
+  right: 66px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+}
+.drawing-pdf-link {
+  text-decoration: none;
+  color: inherit;
+}
 .file-capture-row {
   display: flex;
   gap: 8px;
