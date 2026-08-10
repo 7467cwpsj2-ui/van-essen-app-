@@ -1619,6 +1619,7 @@ textarea {
   display: grid;
   grid-auto-rows: 36px;
   width: max-content;
+  position: relative;
 }
 .gantt-cell {
   display: flex;
@@ -1661,19 +1662,14 @@ textarea {
   color: #fff;
 }
 .gantt-today-line {
-  position: relative;
-  pointer-events: none;
-  z-index: 2;
-}
-.gantt-today-line::before {
-  content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  left: 50%;
   width: 2px;
+  margin-left: -1px;
   background: var(--danger);
-  transform: translateX(-50%);
+  pointer-events: none;
+  z-index: 0;
 }
 .gantt-row-label {
   position: sticky;

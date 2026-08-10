@@ -131,13 +131,7 @@ export function BouwplanningPanel({
               );
             })}
 
-            {todayIdx >= 0 && (
-              <div
-                className="gantt-today-line"
-                style={{ gridColumn: todayIdx + 2, gridRow: `1 / span ${phases.length + 1}` }}
-                title="Vandaag"
-              />
-            )}
+            {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${180 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
           </div>
         </div>
       )}
