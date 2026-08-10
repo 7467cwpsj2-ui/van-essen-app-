@@ -61,6 +61,8 @@ export function ClientChoicesPanel({
                 <div className="choice-btns">
                   <button
                     className="btn-primary"
+                    disabled={!(choiceDrafts[c.id] || "").trim()}
+                    title={(choiceDrafts[c.id] || "").trim() ? undefined : "Typ eerst je keuze/reactie hierboven"}
                     onClick={() => run(() => decideClientChoice(projectId, c.id, "gekozen", choiceDrafts[c.id] || null))}
                   >
                     Kiezen
