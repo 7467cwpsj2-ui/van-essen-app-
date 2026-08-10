@@ -150,7 +150,7 @@ export function PlanningPanel({
             >
               <option value="eigenaar">{role === "eigenaar" ? "Mijzelf" : "Eigenaar"}</option>
               <option value="team">Team</option>
-              <option value="klant">Klant</option>
+              {role === "eigenaar" && <option value="klant">Klant</option>}
             </select>
             <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
             <button className="btn-primary" onClick={addTask}>

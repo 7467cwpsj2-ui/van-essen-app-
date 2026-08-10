@@ -38,8 +38,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0007_reminders.sql`, `0008_task_multi_assignee.sql`,
 `0009_minderwerk_days.sql`, `0010_working_days.sql`,
 `0011_push_notifications.sql`, `0012_project_cover_photo.sql`,
-`0013_fix_user_delete.sql`, en klik telkens Run), of met de Supabase
-CLI:
+`0013_fix_user_delete.sql`, `0014_task_klant_owner_only.sql`, en klik
+telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

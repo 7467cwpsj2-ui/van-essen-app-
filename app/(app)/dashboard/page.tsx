@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Building2, Camera, CheckCircle2, Clock, TrendingDown, TrendingUp } from "lucide-react";
-import { requireUser } from "@/lib/auth";
+import { canSeeModule, requireUser } from "@/lib/auth";
 import { getDashboardExtras, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
 import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
@@ -56,7 +56,7 @@ export default async function DashboardPage() {
           <div className="dash-card-value">{extras.todayTasks.length}</div>
           <div className="dash-card-title">Te doen vandaag</div>
         </Link>
-        {current.profile.role !== "klant" && (
+        {current.profile.role !== "klant" && canSeeModule(current, "meerwerk") && (
           <Link href="/meerwerk" className="dash-card">
             <div className="dash-card-icon">
               <TrendingUp size={16} />
@@ -67,13 +67,15 @@ export default async function DashboardPage() {
             </div>
           </Link>
         )}
-        <Link href="/opleverpunten" className="dash-card">
-          <div className="dash-card-icon">
-            <CheckCircle2 size={16} />
-          </div>
-          <div className="dash-card-value">{extras.openCompletionPoints}</div>
-          <div className="dash-card-title">Opleverpunten open</div>
-        </Link>
+        {canSeeModule(current, "opleverpunten") && (
+          <Link href="/opleverpunten" className="dash-card">
+            <div className="dash-card-icon">
+              <CheckCircle2 size={16} />
+            </div>
+            <div className="dash-card-value">{extras.openCompletionPoints}</div>
+            <div className="dash-card-title">Opleverpunten open</div>
+          </Link>
+        )}
       </div>
 
       <div className="dash-panels">
