@@ -98,7 +98,7 @@ export function DossierPanel({
         {isLocked ? <Lock size={16} /> : <CheckCircle2 size={16} />}
         {statusLabel}
         <div className="dossier-status-actions no-print">
-          <a href={`/api/projects/${projectId}/dossier-pdf`} className="btn-primary">
+          <a href={`/api/projects/${projectId}/dossier-pdf`} target="_blank" rel="noreferrer" className="btn-primary">
             <Download size={13} /> Download PDF
           </a>
           <button type="button" className="btn-ghost" onClick={() => window.print()}>
