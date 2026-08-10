@@ -1157,6 +1157,31 @@ textarea {
   border-radius: var(--radius-sm);
   display: block;
 }
+.cp-thumb-pdf {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-2);
+  color: var(--brand);
+  text-decoration: none;
+}
+.cp-review {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: var(--panel-2);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+}
+.cp-review-hint {
+  font-size: 12px;
+  color: var(--text-faint);
+  flex-basis: 100%;
+}
 .lightbox-overlay {
   position: fixed;
   inset: 0;

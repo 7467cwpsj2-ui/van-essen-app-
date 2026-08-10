@@ -221,17 +221,19 @@ export interface Note {
   created_at: string;
 }
 
-export type CompletionPointStatus = "open" | "gereed" | "goedgekeurd";
+export type CompletionPointStatus = "nieuw" | "open" | "gereed" | "goedgekeurd";
 
 export interface CompletionPoint {
   id: string;
   project_id: string;
   description: string;
+  note: string | null;
   responsible_team_member_id: string | null;
   responsible_name: string | null;
   deadline: string | null;
   status: CompletionPointStatus;
   photo_path: string | null;
+  file_type: "image" | "pdf" | null;
   created_at: string;
 }
 
