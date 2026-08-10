@@ -82,6 +82,10 @@ Vul in met de waarden uit Project Settings → API in het Supabase-dashboard:
   pushmeldingen — genereer een sleutelpaar met `npx web-push
   generate-vapid-keys`; zonder deze variabelen blijft push simpelweg
   uitgeschakeld, de rest van de app werkt gewoon door)
+- `CRON_SECRET` (optioneel maar aanbevolen, beveiligt de dagelijkse
+  deadline-herinnering — zie `vercel.json`; verzin een lange
+  willekeurige waarde en zet 'm ook als environment variable in Vercel,
+  die stuurt 'm dan automatisch mee bij het aanroepen van de cron)
 
 ### 4. Draaien
 
