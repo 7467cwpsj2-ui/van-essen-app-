@@ -208,7 +208,7 @@ export interface ExtraWork {
   created_at: string;
 }
 
-export type NoteVisibility = "prive" | "team" | "klant";
+export type NoteVisibility = "prive" | "team" | "klant" | "alleen_klant";
 
 export interface Note {
   id: string;

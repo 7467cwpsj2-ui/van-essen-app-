@@ -36,6 +36,8 @@ export async function createNote(projectId: string, text: string, visibility: No
       getProjectClientUserIds(projectId, current.id),
     ]);
     recipients = Array.from(new Set([...internal, ...clients]));
+  } else if (visibility === "alleen_klant") {
+    recipients = await getProjectClientUserIds(projectId, current.id);
   }
   if (recipients.length) {
     const projectName = await getProjectName(projectId);
@@ -63,6 +65,8 @@ export async function setNoteVisibility(projectId: string, id: string, visibilit
       getProjectClientUserIds(projectId, current.id),
     ]);
     recipients = Array.from(new Set([...internal, ...clients]));
+  } else if (visibility === "alleen_klant") {
+    recipients = await getProjectClientUserIds(projectId, current.id);
   }
   if (recipients.length) {
     const projectName = await getProjectName(projectId);

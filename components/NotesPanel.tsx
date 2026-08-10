@@ -5,8 +5,8 @@ import { Trash2, Users, UserCheck } from "lucide-react";
 import { createNote, deleteNote, markNoteReviewed, setNoteVisibility } from "@/lib/actions/notes";
 import type { Note, NoteVisibility, Role } from "@/types/database";
 
-const VIS_LABEL: Record<NoteVisibility, string> = { prive: "Alleen ik", team: "Team", klant: "Team + klant" };
-const VIS_CLASS: Record<NoteVisibility, string> = { prive: "vis-private", team: "vis-public", klant: "vis-klant" };
+const VIS_LABEL: Record<NoteVisibility, string> = { prive: "Alleen ik", team: "Team", klant: "Team + klant", alleen_klant: "Alleen klant" };
+const VIS_CLASS: Record<NoteVisibility, string> = { prive: "vis-private", team: "vis-public", klant: "vis-klant", alleen_klant: "vis-klant" };
 
 export function NotesPanel({
   projectId,
@@ -35,7 +35,7 @@ export function NotesPanel({
   const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
 
   const visibilityOptions: NoteVisibility[] =
-    role === "eigenaar" ? ["prive", "team", "klant"] : role === "team" ? ["prive", "team"] : ["prive"];
+    role === "eigenaar" ? ["prive", "team", "klant", "alleen_klant"] : role === "team" ? ["prive", "team"] : ["prive"];
 
   return (
     <div className="panel">
@@ -65,6 +65,7 @@ export function NotesPanel({
                     <option value="prive">Alleen ik</option>
                     <option value="team">Team</option>
                     <option value="klant">Team + klant</option>
+                    <option value="alleen_klant">Alleen klant</option>
                   </select>
                 )}
                 {(role === "eigenaar" || n.author_id === currentUserId) && (
