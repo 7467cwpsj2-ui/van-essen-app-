@@ -48,6 +48,8 @@ export function BouwplanningPanel({
     const max = Math.max(...phases.map((i) => new Date(i.end_date).getTime()));
     for (let t = min; t <= max; t += DAY_MS) days.push(new Date(t));
   }
+  const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
+  const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
 
   return (
     <div className="panel">
@@ -66,7 +68,7 @@ export function BouwplanningPanel({
               return (
                 <div
                   key={idx}
-                  className={"gantt-cell gantt-head" + (wd === 0 || wd === 6 ? " weekend" : "")}
+                  className={"gantt-cell gantt-head" + (wd === 0 || wd === 6 ? " weekend" : "") + (idx === todayIdx ? " today" : "")}
                   title={d.toISOString().slice(0, 10)}
                 >
                   <span className="gantt-head-day">{d.getUTCDate()}</span>
@@ -128,6 +130,8 @@ export function BouwplanningPanel({
                 </div>
               );
             })}
+
+            {todayIdx >= 0 && <div className="gantt-today-line" style={{ gridColumn: todayIdx + 2, gridRow: "1 / -1" }} title="Vandaag" />}
           </div>
         </div>
       )}
