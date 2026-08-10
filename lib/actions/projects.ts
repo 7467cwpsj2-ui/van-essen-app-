@@ -37,6 +37,17 @@ export async function updateProjectStatus(id: string, status: ProjectStatus) {
   revalidatePath("/dashboard");
 }
 
+export async function updateProjectDetails(id: string, data: { name: string; address: string | null }) {
+  await requireOwner();
+  const name = data.name.trim();
+  if (!name) throw new Error("Projectnaam is verplicht.");
+  const supabase = createClient();
+  const { error } = await supabase.from("projects").update({ name, address: data.address?.trim() || null }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${id}`);
+  revalidatePath("/dashboard");
+}
+
 export async function setCoverPhoto(id: string, filePath: string) {
   await requireOwner();
   const supabase = createClient();

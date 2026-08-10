@@ -6,6 +6,7 @@ import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
 import { RouteMenu } from "@/components/RouteMenu";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
+import { EditProjectButton } from "@/components/EditProjectButton";
 import { CoverPhotoControls } from "@/components/CoverPhotoControls";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
@@ -74,6 +75,7 @@ export default async function ProjectLayout({
             {current.profile.role === "eigenaar" && !isLocked && (
               <>
                 <CoverPhotoControls projectId={p.id} hasPhoto={!!coverPhotoUrl} />
+                <EditProjectButton projectId={p.id} name={p.name} address={p.address} />
                 <StatusSelect projectId={p.id} status={p.status} />
                 <DeleteProjectButton projectId={p.id} projectName={p.name} />
               </>
