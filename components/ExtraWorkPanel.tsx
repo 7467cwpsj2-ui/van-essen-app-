@@ -133,11 +133,15 @@ export function ExtraWorkPanel({
     }
   };
 
-  const meerwerkAkkoord = items.filter((w) => w.type === "meerwerk" && w.status === "akkoord").reduce((s, w) => s + Number(w.amount), 0);
-  const minderwerkAkkoord = items
-    .filter((w) => w.type === "minderwerk" && w.status === "akkoord")
-    .reduce((s, w) => s + Number(w.amount), 0);
-  const netto = meerwerkAkkoord - minderwerkAkkoord;
+  // Excl.- en incl.-btw bedragen bij elkaar optellen zou een bedrag
+  // opleveren dat niet meer klopt (appels en peren), dus per btw-soort
+  // een eigen totaal — en als een project maar één soort gebruikt (het
+  // gebruikelijke geval), verschijnt de andere sectie simpelweg niet.
+  const sumAkkoord = (type: ExtraWorkType, vatType: ExtraWorkVatType) =>
+    items.filter((w) => w.type === type && w.status === "akkoord" && w.vat_type === vatType).reduce((s, w) => s + Number(w.amount), 0);
+  const vatSections: { vatType: ExtraWorkVatType; meerwerk: number; minderwerk: number }[] = (["excl", "incl"] as const)
+    .map((vatType) => ({ vatType, meerwerk: sumAkkoord("meerwerk", vatType), minderwerk: sumAkkoord("minderwerk", vatType) }))
+    .filter(({ vatType }) => items.some((w) => w.status === "akkoord" && w.vat_type === vatType));
 
   return (
     <div className="panel">
@@ -149,17 +153,33 @@ export function ExtraWorkPanel({
         />
       )}
       <Lightbox src={sigPreview} onClose={() => setSigPreview(null)} />
-      <div className="netto-bar">
-        <div className="netto-item">
-          <TrendingUp size={14} /> Meerwerk (akkoord) <b>{fmtEuro(meerwerkAkkoord)}</b>
+      {vatSections.length === 0 ? (
+        <div className="netto-bar">
+          <div className="netto-item">
+            <TrendingUp size={14} /> Meerwerk (akkoord) <b>{fmtEuro(0)}</b>
+          </div>
+          <div className="netto-item">
+            <TrendingDown size={14} /> Minderwerk (akkoord) <b>{fmtEuro(0)}</b>
+          </div>
+          <div className="netto-item netto-total">
+            Netto bij te betalen <b>{fmtEuro(0)}</b>
+          </div>
         </div>
-        <div className="netto-item">
-          <TrendingDown size={14} /> Minderwerk (akkoord) <b>{fmtEuro(minderwerkAkkoord)}</b>
-        </div>
-        <div className="netto-item netto-total">
-          Netto bij te betalen <b>{fmtEuro(netto)}</b>
-        </div>
-      </div>
+      ) : (
+        vatSections.map(({ vatType, meerwerk, minderwerk }) => (
+          <div key={vatType} className="netto-bar">
+            <div className="netto-item">
+              <TrendingUp size={14} /> Meerwerk (akkoord, {VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(meerwerk)}</b>
+            </div>
+            <div className="netto-item">
+              <TrendingDown size={14} /> Minderwerk (akkoord, {VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(minderwerk)}</b>
+            </div>
+            <div className="netto-item netto-total">
+              Netto bij te betalen ({VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(meerwerk - minderwerk)}</b>
+            </div>
+          </div>
+        ))
+      )}
       {role === "klant" && (
         <div className="hint-bar">
           Zodra je een keuze maakt (akkoord of afwijzen), staat dit vast — alleen Van Essen Bouw &amp; Onderhoud kan het daarna nog
