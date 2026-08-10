@@ -47,29 +47,28 @@ export function ClientChoicesPanel({
             <div className="list-row-body">
               <div className="list-row-title">{c.category}</div>
               {c.description && <div className="list-row-sub">{c.description}</div>}
-              <div className="list-row-sub">
-                {c.deadline && <span className="mono">{c.deadline}</span>}
-                {c.choice_text && <span>Keuze: {c.choice_text}</span>}
-              </div>
+              {c.deadline && <div className="list-row-sub mono">{c.deadline}</div>}
+              {c.choice_text && <div className="list-row-answer">{c.choice_text}</div>}
             </div>
             {role === "klant" && c.status === "open" ? (
-              <div className="choice-btns">
-                <input
-                  className="access-name-input"
-                  placeholder="Toelichting (optioneel)"
-                  style={{ minWidth: 140 }}
+              <div className="choice-respond">
+                <textarea
+                  rows={3}
+                  placeholder="Jouw keuze / reactie — bijv. welke kleur, welk merk, opmerkingen…"
                   value={choiceDrafts[c.id] || ""}
                   onChange={(e) => setChoiceDrafts({ ...choiceDrafts, [c.id]: e.target.value })}
                 />
-                <button
-                  className="btn-primary"
-                  onClick={() => run(() => decideClientChoice(projectId, c.id, "gekozen", choiceDrafts[c.id] || null))}
-                >
-                  Kiezen
-                </button>
-                <button className="btn-ghost" onClick={() => run(() => decideClientChoice(projectId, c.id, "afgewezen", null))}>
-                  Afwijzen
-                </button>
+                <div className="choice-btns">
+                  <button
+                    className="btn-primary"
+                    onClick={() => run(() => decideClientChoice(projectId, c.id, "gekozen", choiceDrafts[c.id] || null))}
+                  >
+                    Kiezen
+                  </button>
+                  <button className="btn-ghost" onClick={() => run(() => decideClientChoice(projectId, c.id, "afgewezen", null))}>
+                    Afwijzen
+                  </button>
+                </div>
               </div>
             ) : (
               <span className={"stamp " + STATUS_CLASS[c.status]}>{STATUS_LABEL[c.status]}</span>
