@@ -1689,6 +1689,16 @@ textarea {
   color: var(--text);
   white-space: nowrap;
 }
+.gantt-conflict-icon {
+  display: inline-flex;
+  color: var(--danger);
+  margin-left: 5px;
+  vertical-align: -2px;
+}
+.conflict-bar {
+  color: #a4362c;
+  background: rgba(200, 68, 58, 0.1);
+}
 .gantt-row-sub {
   display: flex;
   gap: 8px;

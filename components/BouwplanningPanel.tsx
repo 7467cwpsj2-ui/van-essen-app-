@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { AssigneeInput } from "@/components/AssigneeInput";
 import { createPhase, deletePhase } from "@/lib/actions/schedule";
 import { endDateForWorkingDays } from "@/lib/workingDays";
@@ -14,18 +14,25 @@ function fmtDate(iso: string) {
   return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso + "T00:00:00Z"));
 }
 
+export interface PhaseConflict {
+  projectName: string;
+  title: string;
+}
+
 export function BouwplanningPanel({
   projectId,
   phases,
   tasks,
   teamMembers,
   canEdit,
+  conflicts = {},
 }: {
   projectId: string;
   phases: SchedulePhase[];
   tasks: Task[];
   teamMembers: { id: string; name: string; trade: string | null }[];
   canEdit: boolean;
+  conflicts?: Record<string, PhaseConflict[]>;
 }) {
   const [form, setForm] = useState({ title: "", assignee: "", start: "", days: "" });
   const [, startTransition] = useTransition();
@@ -57,6 +64,13 @@ export function BouwplanningPanel({
         Bouwplanning — het grote geheel per fase. De taken in &quot;Planning&quot; zijn hieraan gekoppeld en tellen automatisch mee als
         voortgang.
       </div>
+      {Object.keys(conflicts).length > 0 && (
+        <div className="hint-bar conflict-bar">
+          <AlertTriangle size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
+          Let op: sommige fases hieronder overlappen met een planning op een ander project voor dezelfde persoon — zie het
+          waarschuwingsicoontje bij de betreffende fase.
+        </div>
+      )}
       {phases.length === 0 ? (
         <div className="empty-hint">Nog geen bouwplanning toegevoegd.</div>
       ) : (
@@ -90,7 +104,22 @@ export function BouwplanningPanel({
               return (
                 <div key={i.id} style={{ display: "contents" }}>
                   <div className="gantt-cell gantt-row-label">
-                    <div className="gantt-row-title">{i.title}</div>
+                    <div className="gantt-row-title">
+                      {i.title}
+                      {conflicts[i.id] && (
+                        <span
+                          className="gantt-conflict-icon"
+                          title={
+                            "Dubbele boeking voor " +
+                            i.assignee +
+                            ": " +
+                            conflicts[i.id].map((c) => `${c.title} (${c.projectName})`).join(", ")
+                          }
+                        >
+                          <AlertTriangle size={12} />
+                        </span>
+                      )}
+                    </div>
                     <div className="gantt-row-sub">
                       {i.assignee && <span>{i.assignee}</span>}
                       {linked.length > 0 && (
