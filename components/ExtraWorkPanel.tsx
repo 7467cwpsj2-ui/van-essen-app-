@@ -7,7 +7,7 @@ import { Lightbox } from "@/components/Lightbox";
 import { createClient } from "@/lib/supabase/client";
 import { approveExtraWork, createExtraWork, deleteExtraWork, rejectExtraWork, resetExtraWork } from "@/lib/actions/extraWork";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
-import type { ExtraWork, ExtraWorkStatus, ExtraWorkType, Role, SchedulePhase } from "@/types/database";
+import { VAT_TYPE_LABEL, type ExtraWork, type ExtraWorkStatus, type ExtraWorkType, type ExtraWorkVatType, type Role, type SchedulePhase } from "@/types/database";
 
 const STATUS_LABEL: Record<ExtraWorkStatus, string> = { open: "open", akkoord: "akkoord", afgewezen: "afgewezen" };
 
@@ -34,6 +34,7 @@ export function ExtraWorkPanel({
     type: "meerwerk" as ExtraWorkType,
     description: "",
     amount: "",
+    vatType: "excl" as ExtraWorkVatType,
     extraDays: "",
     phaseId: "",
     explanation: "",
@@ -65,11 +66,12 @@ export function ExtraWorkPanel({
         type: form.type,
         description: form.description,
         amount: Number(form.amount),
+        vatType: form.vatType,
         explanation: form.explanation || null,
         extraDays: days || null,
         phaseId: days > 0 ? form.phaseId : null,
       });
-      setForm({ type: "meerwerk", description: "", amount: "", extraDays: "", phaseId: "", explanation: "" });
+      setForm({ type: "meerwerk", description: "", amount: "", vatType: "excl", extraDays: "", phaseId: "", explanation: "" });
     } catch (err) {
       alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
     } finally {
@@ -174,7 +176,8 @@ export function ExtraWorkPanel({
               <div className="work-body">
                 <div className="work-desc">{w.description}</div>
                 <div className="work-sub mono">
-                  {w.type === "meerwerk" ? "+" : "−"} {fmtEuro(Number(w.amount))}
+                  {w.type === "meerwerk" ? "+" : "−"} {fmtEuro(Number(w.amount))}{" "}
+                  <span className="vat-pill">{VAT_TYPE_LABEL[w.vat_type]}</span>
                 </div>
                 {!!w.extra_days && (
                   <div className="work-sub">
@@ -249,6 +252,10 @@ export function ExtraWorkPanel({
             </select>
             <input placeholder="Omschrijving" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             <input type="number" placeholder="Bedrag €" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+            <select value={form.vatType} onChange={(e) => setForm({ ...form, vatType: e.target.value as ExtraWorkVatType })}>
+              <option value="excl">Excl. btw</option>
+              <option value="incl">Incl. btw</option>
+            </select>
             <textarea
               rows={2}
               placeholder="Korte toelichting voor de klant (optioneel)"

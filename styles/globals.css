@@ -1283,6 +1283,18 @@ textarea {
   border-radius: 20px;
   font-family: var(--font-mono);
 }
+.vat-pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-family: var(--font-mono);
+  background: var(--panel-2);
+  color: var(--text-faint);
+}
 .vis-review {
   background: var(--brand-soft);
   color: var(--brand-dim);

@@ -182,6 +182,9 @@ export interface Photo {
 
 export type ExtraWorkType = "meerwerk" | "minderwerk";
 export type ExtraWorkStatus = "open" | "akkoord" | "afgewezen";
+export type ExtraWorkVatType = "excl" | "incl";
+
+export const VAT_TYPE_LABEL: Record<ExtraWorkVatType, string> = { excl: "excl. btw", incl: "incl. btw" };
 
 export interface ExtraWork {
   id: string;
@@ -189,6 +192,7 @@ export interface ExtraWork {
   type: ExtraWorkType;
   description: string;
   amount: number;
+  vat_type: ExtraWorkVatType;
   status: ExtraWorkStatus;
   explanation: string | null;
   extra_days: number | null;

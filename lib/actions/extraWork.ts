@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getOwnerUserIds, getProjectClientUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
-import type { ExtraWorkType } from "@/types/database";
+import type { ExtraWorkType, ExtraWorkVatType } from "@/types/database";
 
 async function notifyOwnerAndClient(projectId: string, excludeUserId: string, title: string, body: string) {
   const [owners, clients] = await Promise.all([
@@ -23,6 +23,7 @@ export async function createExtraWork(
     type: ExtraWorkType;
     description: string;
     amount: number;
+    vatType: ExtraWorkVatType;
     explanation: string | null;
     extraDays: number | null;
     phaseId: string | null;
@@ -47,6 +48,7 @@ export async function createExtraWork(
     type: data.type,
     description: data.description.trim(),
     amount: data.amount,
+    vat_type: data.vatType,
     explanation: data.explanation?.trim() || null,
     extra_days: signedDays !== 0 ? signedDays : null,
     phase_id: signedDays !== 0 ? data.phaseId : null,
