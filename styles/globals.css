@@ -2461,6 +2461,11 @@ a.dash-panel-row:hover {
   font-weight: 600;
   border: 1px solid var(--border);
 }
+.dossier-status-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
 .dossier-status.pending {
   background: rgba(160, 143, 15, 0.1);
   color: #7a6a0e;

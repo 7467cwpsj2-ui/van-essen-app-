@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Lock, Plus, Printer, Trash2 } from "lucide-react";
+import { CheckCircle2, Download, Lock, Plus, Printer, Trash2 } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
 import { createClient } from "@/lib/supabase/client";
@@ -97,9 +97,14 @@ export function DossierPanel({
       <div className={"dossier-status " + statusClass}>
         {isLocked ? <Lock size={16} /> : <CheckCircle2 size={16} />}
         {statusLabel}
-        <button type="button" className="btn-ghost no-print" style={{ marginLeft: "auto" }} onClick={() => window.print()}>
-          <Printer size={13} /> Printen / PDF
-        </button>
+        <div className="dossier-status-actions no-print">
+          <a href={`/api/projects/${projectId}/dossier-pdf`} className="btn-primary">
+            <Download size={13} /> Download PDF
+          </a>
+          <button type="button" className="btn-ghost" onClick={() => window.print()}>
+            <Printer size={13} /> Printen
+          </button>
+        </div>
       </div>
 
       {!isLocked && !allApproved && completionPoints.length > 0 && (
