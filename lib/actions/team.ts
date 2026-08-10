@@ -5,6 +5,7 @@ import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
+import { getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
 import { defaultPermissions, type ModuleKey } from "@/types/database";
 
 export async function inviteTeamMember(formData: FormData) {
@@ -89,6 +90,16 @@ export async function toggleTeamProjectAccess(teamMemberId: string, projectId: s
   if (granted) {
     const { error } = await supabase.from("project_team_access").insert({ team_member_id: teamMemberId, project_id: projectId });
     if (error) throw new Error(error.message);
+
+    const recipients = await getTeamMemberUserIds(teamMemberId);
+    if (recipients.length) {
+      const projectName = await getProjectName(projectId);
+      await sendPushToUsers(recipients, {
+        title: "Nieuw project toegevoegd",
+        body: `Je hebt nu toegang tot ${projectName}.`,
+        url: `/projects/${projectId}/planning`,
+      });
+    }
   } else {
     const { error } = await supabase
       .from("project_team_access")
