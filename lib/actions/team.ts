@@ -107,7 +107,8 @@ export async function removeTeamMember(id: string) {
 
   const { data: profiles } = await supabase.from("profiles").select("id").eq("team_member_id", id);
   for (const p of profiles ?? []) {
-    await admin.auth.admin.deleteUser(p.id);
+    const { error: deleteUserError } = await admin.auth.admin.deleteUser(p.id);
+    if (deleteUserError) throw new Error(deleteUserError.message);
   }
   const { error } = await supabase.from("team_members").delete().eq("id", id);
   if (error) throw new Error(error.message);

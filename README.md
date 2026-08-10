@@ -37,8 +37,9 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0005_realtime.sql`, `0006_completion_point_photo.sql`,
 `0007_reminders.sql`, `0008_task_multi_assignee.sql`,
 `0009_minderwerk_days.sql`, `0010_working_days.sql`,
-`0011_push_notifications.sql`, `0012_project_cover_photo.sql`, en klik
-telkens Run), of met de Supabase CLI:
+`0011_push_notifications.sql`, `0012_project_cover_photo.sql`,
+`0013_fix_user_delete.sql`, en klik telkens Run), of met de Supabase
+CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>
