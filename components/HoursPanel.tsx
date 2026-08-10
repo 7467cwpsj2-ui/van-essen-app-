@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2 } from "lucide-react";
 import { createHourEntry, createWeekHourEntries, deleteHourEntry } from "@/lib/actions/hours";
 import { weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
@@ -10,8 +10,13 @@ function fmtShort(iso: string) {
   return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
 }
 
+function csvCell(v: string) {
+  return `"${v.replace(/"/g, '""')}"`;
+}
+
 export function HoursPanel({
   projectId,
+  projectName,
   role,
   currentTeamMemberId,
   isLocked,
@@ -19,6 +24,7 @@ export function HoursPanel({
   teamMembers,
 }: {
   projectId: string;
+  projectName: string;
   role: Role;
   currentTeamMemberId: string | null;
   isLocked: boolean;
@@ -59,6 +65,19 @@ export function HoursPanel({
     });
   };
 
+  const exportCsv = () => {
+    const rows = [...entries].sort((a, b) => (a.work_date < b.work_date ? -1 : 1));
+    const header = ["Teamlid", "Datum", "Uren", "Opmerking"].map(csvCell).join(";");
+    const lines = rows.map((e) => [nameFor(e.team_member_id), e.work_date, String(e.hours), e.note || ""].map(csvCell).join(";"));
+    const csv = String.fromCharCode(0xfeff) + [header, ...lines].join("\r\n");
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `uren-${projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const grandTotal = entries.reduce((s, e) => s + Number(e.hours), 0);
 
   const groups =
@@ -79,6 +98,11 @@ export function HoursPanel({
           <div className="dash-card-title">{role === "eigenaar" ? "Totaal uren (iedereen)" : "Mijn totaal uren"}</div>
         </div>
       </div>
+      {entries.length > 0 && (
+        <button type="button" className="btn-ghost" onClick={exportCsv} style={{ alignSelf: "flex-start" }}>
+          <Download size={13} /> Exporteren (CSV)
+        </button>
+      )}
 
       {groups.length === 0 && <div className="empty-hint">Nog geen uren geregistreerd.</div>}
       {groups.map((g) => {

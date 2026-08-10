@@ -12,12 +12,13 @@ export default async function UrenPage({ params }: { params: { id: string } }) {
   const [{ data: entries }, { data: teamMembers }, { data: project }] = await Promise.all([
     supabase.from("hours").select("*").eq("project_id", params.id).order("work_date", { ascending: false }),
     supabase.from("team_members").select("*").order("name"),
-    supabase.from("projects").select("delivery_signed_at").eq("id", params.id).single(),
+    supabase.from("projects").select("name,delivery_signed_at").eq("id", params.id).single(),
   ]);
 
   return (
     <HoursPanel
       projectId={params.id}
+      projectName={(project as Pick<Project, "name" | "delivery_signed_at"> | null)?.name ?? "project"}
       role={current.profile.role}
       currentTeamMemberId={current.profile.team_member_id}
       isLocked={!!(project as Pick<Project, "delivery_signed_at"> | null)?.delivery_signed_at}
