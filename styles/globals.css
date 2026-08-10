@@ -2302,6 +2302,20 @@ a.dash-panel-row:hover {
   color: var(--text);
   white-space: pre-wrap;
 }
+.note-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.note-edit textarea {
+  width: 100%;
+  font-size: 13px;
+}
+.note-edit-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
 .vis-private {
   background: rgba(200, 68, 58, 0.13);
   color: #a4362c;

@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Trash2, Users, UserCheck } from "lucide-react";
-import { createNote, deleteNote, markNoteReviewed, setNoteVisibility } from "@/lib/actions/notes";
+import { Check, Pencil, Trash2, Users, UserCheck, X } from "lucide-react";
+import { createNote, deleteNote, markNoteReviewed, setNoteVisibility, updateNoteText } from "@/lib/actions/notes";
 import type { Note, NoteVisibility, Role } from "@/types/database";
 
 const VIS_LABEL: Record<NoteVisibility, string> = { prive: "Alleen ik", team: "Team", klant: "Team + klant", alleen_klant: "Alleen klant" };
@@ -26,6 +26,8 @@ export function NotesPanel({
   const [text, setText] = useState("");
   const [visibility, setVisibility] = useState<NoteVisibility>("prive");
   const [visibleTeamMemberIds, setVisibleTeamMemberIds] = useState<string[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name;
@@ -51,6 +53,20 @@ export function NotesPanel({
   };
 
   const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
+
+  const startEdit = (n: Note) => {
+    setEditingId(n.id);
+    setEditDraft(n.text);
+  };
+
+  const saveEdit = (n: Note) => {
+    if (!editDraft.trim()) return;
+    const value = editDraft;
+    setEditingId(null);
+    startTransition(() => {
+      updateNoteText(projectId, n.id, value).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+    });
+  };
 
   const visibilityOptions: NoteVisibility[] =
     role === "eigenaar" ? ["prive", "team", "klant", "alleen_klant"] : role === "team" ? ["prive", "team"] : ["prive"];
@@ -86,13 +102,32 @@ export function NotesPanel({
                     <option value="alleen_klant">Alleen klant</option>
                   </select>
                 )}
+                {(role === "eigenaar" || n.author_id === currentUserId) && editingId !== n.id && (
+                  <button className="icon-btn ghost" onClick={() => startEdit(n)} title="Notitie bewerken">
+                    <Pencil size={13} />
+                  </button>
+                )}
                 {(role === "eigenaar" || n.author_id === currentUserId) && (
                   <button className="icon-btn danger ghost note-del" onClick={() => run(() => deleteNote(projectId, n.id))}>
                     <Trash2 size={13} />
                   </button>
                 )}
               </div>
-              <div className="note-text">{n.text}</div>
+              {editingId === n.id ? (
+                <div className="note-edit">
+                  <textarea rows={3} value={editDraft} onChange={(e) => setEditDraft(e.target.value)} autoFocus />
+                  <div className="note-edit-actions">
+                    <button className="btn-ghost" onClick={() => setEditingId(null)}>
+                      <X size={13} /> Annuleren
+                    </button>
+                    <button className="btn-primary" onClick={() => saveEdit(n)} disabled={!editDraft.trim()}>
+                      <Check size={13} /> Opslaan
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="note-text">{n.text}</div>
+              )}
               {needsReview && (
                 <div className="review-controls">
                   {n.visibility === "prive" ? (

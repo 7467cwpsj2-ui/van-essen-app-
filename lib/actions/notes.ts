@@ -60,6 +60,15 @@ export async function createNote(
   }
 }
 
+export async function updateNoteText(projectId: string, id: string, text: string) {
+  await requireUser();
+  if (!text.trim()) throw new Error("Tekst is verplicht.");
+  const supabase = createClient();
+  const { error } = await supabase.from("notes").update({ text: text.trim() }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/notities`);
+}
+
 export async function setNoteVisibility(projectId: string, id: string, visibility: NoteVisibility) {
   const current = await requireUser();
   const supabase = createClient();
