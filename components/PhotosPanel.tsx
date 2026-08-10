@@ -15,6 +15,14 @@ export interface PhotoWithUrl extends Photo {
   signedUrl: string | null;
 }
 
+interface PendingFile {
+  id: string;
+  blob: Blob;
+  fileType: "image" | "pdf";
+  fileName: string;
+  previewUrl: string;
+}
+
 const CATS: Record<PhotoCategory, string> = {
   voor: "Voor uitvoering",
   tijdens: "Tijdens uitvoering",
@@ -39,7 +47,7 @@ export function PhotosPanel({
     note: "",
     shareWithClient: false,
   });
-  const [pending, setPending] = useState<{ blob: Blob; fileType: "image" | "pdf"; fileName: string; previewUrl: string } | null>(null);
+  const [pending, setPending] = useState<PendingFile[]>([]);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
 
@@ -47,7 +55,7 @@ export function PhotosPanel({
     setBusy(true);
     try {
       const result = await processUploadedFile(file);
-      setPending(result);
+      setPending((prev) => [...prev, { id: crypto.randomUUID(), ...result }]);
       setForm((f) => ({ ...f, title: f.title || file.name.replace(/\.[^.]+$/, "") }));
     } catch (err) {
       alert(err instanceof Error ? err.message : "Verwerken mislukt.");
@@ -56,27 +64,35 @@ export function PhotosPanel({
     }
   };
 
-  const addPhoto = async () => {
-    if (!form.title.trim() || !pending) return;
+  const removePending = (id: string) => setPending((prev) => prev.filter((p) => p.id !== id));
+
+  const addPhotos = async () => {
+    if (pending.length === 0) return;
+    if (pending.length === 1 && !form.title.trim()) return;
     setBusy(true);
     try {
       const supabase = createClient();
-      const ext = pending.fileName.split(".").pop() || "jpg";
-      const path = `${projectId}/photos/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, pending.blob, {
-        contentType: "image/jpeg",
-      });
-      if (uploadError) throw new Error(uploadError.message);
-      await createPhoto(projectId, {
-        title: form.title,
-        category: form.category,
-        note: form.note || null,
-        filePath: path,
-        fileType: pending.fileType,
-        shareWithClient: form.shareWithClient,
-      });
+      await Promise.all(
+        pending.map(async (p) => {
+          const ext = p.fileName.split(".").pop() || "jpg";
+          const path = `${projectId}/photos/${crypto.randomUUID()}.${ext}`;
+          const { error: uploadError } = await supabase.storage.from("project-files").upload(path, p.blob, {
+            contentType: "image/jpeg",
+          });
+          if (uploadError) throw new Error(uploadError.message);
+          const title = pending.length === 1 ? form.title : form.title ? `${form.title} — ${p.fileName.replace(/\.[^.]+$/, "")}` : p.fileName.replace(/\.[^.]+$/, "");
+          await createPhoto(projectId, {
+            title,
+            category: form.category,
+            note: form.note || null,
+            filePath: path,
+            fileType: p.fileType,
+            shareWithClient: form.shareWithClient,
+          });
+        })
+      );
       setForm({ title: "", category: "tijdens", note: "", shareWithClient: false });
-      setPending(null);
+      setPending([]);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Uploaden mislukt.");
     } finally {
@@ -131,16 +147,27 @@ export function PhotosPanel({
         ))}
       </div>
       <div className="add-form">
-        <div className="add-form-title">Foto toevoegen</div>
-        <FileCaptureButtons accept="image/*" onPicked={handlePicked} busy={busy} />
-        <FilePreview
-          previewUrl={pending?.previewUrl ?? null}
-          fileType={pending?.fileType ?? null}
-          fileName={pending?.fileName ?? null}
-          onClear={() => setPending(null)}
-        />
+        <div className="add-form-title">Foto&apos;s toevoegen</div>
+        <FileCaptureButtons accept="image/*" onPicked={handlePicked} busy={busy} multiple />
+        {pending.length > 0 && (
+          <div className="pending-file-grid">
+            {pending.map((p) => (
+              <FilePreview
+                key={p.id}
+                previewUrl={p.previewUrl}
+                fileType={p.fileType}
+                fileName={p.fileName}
+                onClear={() => removePending(p.id)}
+              />
+            ))}
+          </div>
+        )}
         <div className="add-form-grid">
-          <input placeholder="Titel / omschrijving" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <input
+            placeholder={pending.length > 1 ? "Titel-voorvoegsel (optioneel)" : "Titel / omschrijving"}
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
           <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as PhotoCategory })}>
             {Object.entries(CATS).map(([k, v]) => (
               <option key={k} value={k}>
@@ -159,10 +186,13 @@ export function PhotosPanel({
               Ook zichtbaar voor klant
             </label>
           )}
-          <button className="btn-primary" onClick={addPhoto} disabled={busy || !pending}>
-            <Plus size={14} /> Toevoegen
+          <button className="btn-primary" onClick={addPhotos} disabled={busy || pending.length === 0 || (pending.length === 1 && !form.title.trim())}>
+            <Plus size={14} /> {pending.length > 1 ? `${pending.length} foto's toevoegen` : "Toevoegen"}
           </button>
         </div>
+        {pending.length > 1 && (
+          <div className="hint-bar small">Elke foto krijgt zijn eigen titel op basis van de bestandsnaam{form.title ? ", met jouw tekst ervoor" : ""}.</div>
+        )}
       </div>
     </div>
   );

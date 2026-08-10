@@ -678,12 +678,38 @@ textarea {
   padding: 4px;
 }
 
+.tabs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 18px;
+}
 .tabs {
   display: flex;
   gap: 4px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 18px;
   flex-wrap: wrap;
+}
+.project-search {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-faint);
+  padding: 6px 10px;
+  margin-bottom: 4px;
+}
+.project-search input {
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-size: 12.5px;
+  width: 220px;
+  max-width: 40vw;
+}
+.project-search input:focus {
+  outline: none;
 }
 .tab-btn {
   display: flex;
@@ -1295,6 +1321,11 @@ textarea {
   border-radius: 6px;
   padding: 6px 10px;
   width: fit-content;
+}
+.pending-file-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 .file-preview-img {
   max-height: 60px;

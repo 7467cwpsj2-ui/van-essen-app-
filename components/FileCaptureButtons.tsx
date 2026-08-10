@@ -7,24 +7,26 @@ export function FileCaptureButtons({
   accept,
   onPicked,
   busy,
+  multiple,
 }: {
   accept: string;
   onPicked: (file: File) => void;
   busy: boolean;
+  multiple?: boolean;
 }) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files ?? []);
     e.target.value = "";
-    if (file) onPicked(file);
+    files.forEach(onPicked);
   };
 
   return (
     <div className="file-capture-row">
       <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleChange} />
-      <input ref={uploadRef} type="file" accept={accept} style={{ display: "none" }} onChange={handleChange} />
+      <input ref={uploadRef} type="file" accept={accept} multiple={multiple} style={{ display: "none" }} onChange={handleChange} />
       <button type="button" className="btn-ghost" onClick={() => cameraRef.current?.click()} disabled={busy}>
         <Camera size={14} /> Foto maken
       </button>
