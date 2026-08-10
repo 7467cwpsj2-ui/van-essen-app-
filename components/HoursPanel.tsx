@@ -2,8 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { Plus, Trash2 } from "lucide-react";
-import { createHourEntry, deleteHourEntry } from "@/lib/actions/hours";
+import { createHourEntry, createWeekHourEntries, deleteHourEntry } from "@/lib/actions/hours";
+import { weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
+
+function fmtShort(iso: string) {
+  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
+}
 
 export function HoursPanel({
   projectId,
@@ -20,6 +25,7 @@ export function HoursPanel({
   entries: HourEntry[];
   teamMembers: { id: string; name: string }[];
 }) {
+  const [mode, setMode] = useState<"dag" | "week">("dag");
   const [form, setForm] = useState({ teamMemberId: currentTeamMemberId || "", workDate: "", hours: "", note: "" });
   const [, startTransition] = useTransition();
 
@@ -28,12 +34,21 @@ export function HoursPanel({
   const add = () => {
     if (!form.workDate || !Number(form.hours)) return;
     startTransition(() => {
-      createHourEntry(projectId, {
-        teamMemberId: form.teamMemberId,
-        workDate: form.workDate,
-        hours: Number(form.hours),
-        note: form.note || null,
-      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      if (mode === "week") {
+        createWeekHourEntries(projectId, {
+          teamMemberId: form.teamMemberId,
+          weekDate: form.workDate,
+          hoursPerDay: Number(form.hours),
+          note: form.note || null,
+        }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      } else {
+        createHourEntry(projectId, {
+          teamMemberId: form.teamMemberId,
+          workDate: form.workDate,
+          hours: Number(form.hours),
+          note: form.note || null,
+        }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      }
     });
     setForm({ teamMemberId: currentTeamMemberId || form.teamMemberId, workDate: "", hours: "", note: "" });
   };
@@ -102,6 +117,14 @@ export function HoursPanel({
       {!isLocked && (
         <div className="add-form">
           <div className="add-form-title">Uren registreren</div>
+          <div className="mode-toggle">
+            <button type="button" className={mode === "dag" ? "active" : ""} onClick={() => setMode("dag")}>
+              Per dag
+            </button>
+            <button type="button" className={mode === "week" ? "active" : ""} onClick={() => setMode("week")}>
+              Hele week
+            </button>
+          </div>
           <div className="add-form-grid">
             {role === "eigenaar" && (
               <select value={form.teamMemberId} onChange={(e) => setForm({ ...form, teamMemberId: e.target.value })}>
@@ -113,13 +136,16 @@ export function HoursPanel({
                 ))}
               </select>
             )}
-            <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
+            <label className="field-with-label">
+              <span className="field-label">{mode === "week" ? "Een dag in die week" : "Datum"}</span>
+              <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
+            </label>
             <input
               type="number"
               step="0.5"
               min="0"
               max="24"
-              placeholder="Uren"
+              placeholder={mode === "week" ? "Uren per dag" : "Uren"}
               value={form.hours}
               onChange={(e) => setForm({ ...form, hours: e.target.value })}
             />
@@ -128,6 +154,12 @@ export function HoursPanel({
               <Plus size={14} /> Toevoegen
             </button>
           </div>
+          {mode === "week" && form.workDate && (
+            <div className="hint-bar small">
+              Dit registreert {form.hours || "…"} uur op elke werkdag van ma {fmtShort(weekdaysOfWeek(form.workDate)[0])} t/m vr{" "}
+              {fmtShort(weekdaysOfWeek(form.workDate)[4])} (weekend telt niet mee).
+            </div>
+          )}
         </div>
       )}
     </div>
