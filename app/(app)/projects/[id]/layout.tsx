@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { Lock, MapPin } from "lucide-react";
+import { Lock, MapPin, Search } from "lucide-react";
 import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { ProjectTabs } from "@/components/ProjectTabs";
@@ -101,13 +101,19 @@ export default async function ProjectLayout({
         </div>
       )}
 
-      <ProjectTabs
-        projectId={p.id}
-        visibleTabs={visibleTabs}
-        showPrivateChat={showPrivateChat}
-        showHours={showHours}
-        showCalc={showCalc}
-      />
+      <div className="tabs-row">
+        <ProjectTabs
+          projectId={p.id}
+          visibleTabs={visibleTabs}
+          showPrivateChat={showPrivateChat}
+          showHours={showHours}
+          showCalc={showCalc}
+        />
+        <form action={`/projects/${p.id}/zoeken`} className="project-search">
+          <Search size={14} />
+          <input type="text" name="q" placeholder="Zoeken in chat, notities, documenten…" />
+        </form>
+      </div>
       {children}
     </div>
   );
