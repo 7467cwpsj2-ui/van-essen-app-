@@ -912,6 +912,10 @@ textarea {
   align-items: center;
   gap: 4px;
 }
+.task-overdue {
+  color: var(--danger);
+  font-weight: 600;
+}
 .phase-group {
   display: flex;
   flex-direction: column;
@@ -952,6 +956,18 @@ textarea {
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 8px;
   align-items: center;
+}
+.field-with-label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.field-label {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  font-family: var(--font-mono);
 }
 .add-form input,
 .add-form select,

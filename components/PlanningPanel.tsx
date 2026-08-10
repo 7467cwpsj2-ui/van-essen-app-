@@ -81,6 +81,8 @@ export function PlanningPanel({
     setForm({ title: "", assigneeType: "eigenaar", assigneeTeamMemberIds: [], dueDate: "" });
   };
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+
   const sorted = [...tasks].sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
     if (a.due_date && b.due_date) return a.due_date.localeCompare(b.due_date);
@@ -115,7 +117,11 @@ export function PlanningPanel({
                 <div className="task-title">{t.title}</div>
                 <div className="task-meta">
                   <span className={"vis-pill " + VIS_CLASS[t.assignee_type]}>{assigneeLabel(t)}</span>
-                  {t.due_date && <span className="mono">{fmtDate(t.due_date)}</span>}
+                  {t.due_date && (
+                    <span className={"mono" + (!t.done && t.due_date < todayIso ? " task-overdue" : "")}>
+                      Deadline: {fmtDate(t.due_date)}
+                    </span>
+                  )}
                   {t.done && t.done_by && <span>Afgevinkt door {t.done_by}</span>}
                 </div>
               </div>
@@ -152,7 +158,10 @@ export function PlanningPanel({
               <option value="team">Team</option>
               {role === "eigenaar" && <option value="klant">Klant</option>}
             </select>
-            <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+            <label className="field-with-label">
+              <span className="field-label">Deadline (optioneel)</span>
+              <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+            </label>
             <button className="btn-primary" onClick={addTask}>
               <Plus size={14} /> Toevoegen
             </button>
