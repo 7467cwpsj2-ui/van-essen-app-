@@ -217,6 +217,7 @@ export interface Note {
   author_id: string | null;
   author_name: string | null;
   visibility: NoteVisibility;
+  visible_team_member_ids: string[];
   reviewed: boolean;
   created_at: string;
 }

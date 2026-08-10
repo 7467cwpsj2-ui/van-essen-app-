@@ -40,8 +40,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0011_push_notifications.sql`, `0012_project_cover_photo.sql`,
 `0013_fix_user_delete.sql`, `0014_task_klant_owner_only.sql`,
 `0015_extra_work_vat.sql`, `0016_client_completion_points.sql`,
-`0017_note_client_only_visibility.sql`, en klik telkens Run), of met de
-Supabase CLI:
+`0017_note_client_only_visibility.sql`, `0018_note_team_members.sql`, en
+klik telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

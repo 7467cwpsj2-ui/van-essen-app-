@@ -3,14 +3,19 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { getOwnerUserIds, getProjectClientUserIds, getProjectInternalUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
+import { getOwnerUserIds, getProjectClientUserIds, getProjectInternalUserIds, getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
 import type { NoteVisibility } from "@/types/database";
 
 function truncate(text: string, max = 120) {
   return text.length > max ? text.slice(0, max - 1) + "…" : text;
 }
 
-export async function createNote(projectId: string, text: string, visibility: NoteVisibility) {
+export async function createNote(
+  projectId: string,
+  text: string,
+  visibility: NoteVisibility,
+  visibleTeamMemberIds: string[] = []
+) {
   const current = await requireUser();
   if (!text.trim()) throw new Error("Tekst is verplicht.");
   const supabase = createClient();
@@ -20,6 +25,7 @@ export async function createNote(projectId: string, text: string, visibility: No
     author_id: current.id,
     author_name: current.profile.name,
     visibility,
+    visible_team_member_ids: visibility === "team" ? visibleTeamMemberIds : [],
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/notities`);
@@ -29,7 +35,12 @@ export async function createNote(projectId: string, text: string, visibility: No
     // Niet-eigenaar-notities gaan altijd eerst langs de eigenaar ter beoordeling.
     recipients = await getOwnerUserIds(current.id);
   } else if (visibility === "team") {
-    recipients = await getProjectInternalUserIds(projectId, current.id);
+    if (visibleTeamMemberIds.length > 0) {
+      const lists = await Promise.all(visibleTeamMemberIds.map((id) => getTeamMemberUserIds(id, current.id)));
+      recipients = Array.from(new Set(lists.flat()));
+    } else {
+      recipients = await getProjectInternalUserIds(projectId, current.id);
+    }
   } else if (visibility === "klant") {
     const [internal, clients] = await Promise.all([
       getProjectInternalUserIds(projectId, current.id),

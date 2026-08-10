@@ -12,24 +12,42 @@ export function NotesPanel({
   projectId,
   role,
   currentUserId,
+  currentTeamMemberId,
   notes,
+  teamMembers,
 }: {
   projectId: string;
   role: Role;
   currentUserId: string;
+  currentTeamMemberId: string | null;
   notes: Note[];
+  teamMembers: { id: string; name: string }[];
 }) {
   const [text, setText] = useState("");
   const [visibility, setVisibility] = useState<NoteVisibility>("prive");
+  const [visibleTeamMemberIds, setVisibleTeamMemberIds] = useState<string[]>([]);
   const [, startTransition] = useTransition();
+
+  const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name;
+
+  const toggleFormMember = (id: string) =>
+    setVisibleTeamMemberIds((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+
+  const visLabel = (n: Note) => {
+    if (n.visibility === "team" && n.visible_team_member_ids.length > 0) {
+      return n.visible_team_member_ids.map((id) => teamMemberName(id) || "?").join(", ");
+    }
+    return VIS_LABEL[n.visibility];
+  };
 
   const add = () => {
     if (!text.trim()) return;
     const value = text;
     setText("");
     startTransition(() => {
-      createNote(projectId, value, visibility).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      createNote(projectId, value, visibility, visibleTeamMemberIds).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
+    setVisibleTeamMemberIds([]);
   };
 
   const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
@@ -54,7 +72,7 @@ export function NotesPanel({
               <div className="note-top">
                 <span className="note-author">{n.author_name || "—"}</span>
                 <span className="note-date mono">{new Date(n.created_at).toLocaleDateString("nl-NL")}</span>
-                <span className={"vis-pill " + VIS_CLASS[n.visibility]}>{VIS_LABEL[n.visibility]}</span>
+                <span className={"vis-pill " + VIS_CLASS[n.visibility]}>{visLabel(n)}</span>
                 {needsReview && <span className="vis-pill vis-review">nieuw · nog controleren</span>}
                 {role === "eigenaar" && !needsReview && (
                   <select
@@ -107,7 +125,13 @@ export function NotesPanel({
         <textarea rows={3} placeholder="Typ je notitie…" value={text} onChange={(e) => setText(e.target.value)} />
         <div className="add-form-grid">
           {visibilityOptions.length > 1 && (
-            <select value={visibility} onChange={(e) => setVisibility(e.target.value as NoteVisibility)}>
+            <select
+              value={visibility}
+              onChange={(e) => {
+                setVisibility(e.target.value as NoteVisibility);
+                setVisibleTeamMemberIds([]);
+              }}
+            >
               {visibilityOptions.map((v) => (
                 <option key={v} value={v}>
                   {VIS_LABEL[v]}
@@ -119,6 +143,35 @@ export function NotesPanel({
             Toevoegen
           </button>
         </div>
+        {visibility === "team" && teamMembers.length > 0 && (
+          <div className="task-team-picker">
+            <div className="task-team-picker-hint">Niemand aangevinkt = het hele team kan deze notitie zien.</div>
+            <div className="task-team-picker-grid">
+              {role === "team" && currentTeamMemberId && (
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={visibleTeamMemberIds.includes(currentTeamMemberId)}
+                    onChange={() => toggleFormMember(currentTeamMemberId)}
+                  />
+                  Mijzelf
+                </label>
+              )}
+              {teamMembers
+                .filter((m) => m.id !== currentTeamMemberId)
+                .map((m) => (
+                  <label key={m.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={visibleTeamMemberIds.includes(m.id)}
+                      onChange={() => toggleFormMember(m.id)}
+                    />
+                    {m.name}
+                  </label>
+                ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
