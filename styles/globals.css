@@ -1714,7 +1714,6 @@ textarea {
   justify-content: center;
   gap: 1px;
   padding: 4px 10px;
-  position: relative;
 }
 .gantt-row-title {
   font-size: 12px;
