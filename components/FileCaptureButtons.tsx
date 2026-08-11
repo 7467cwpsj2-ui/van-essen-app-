@@ -28,9 +28,13 @@ export function FileCaptureButtons({
   if (variant === "icon") {
     return (
       <>
+        <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: "none" }} onChange={handleChange} />
         <input ref={uploadRef} type="file" accept={accept} multiple={multiple} style={{ display: "none" }} onChange={handleChange} />
-        <button type="button" className="icon-btn ghost" onClick={() => uploadRef.current?.click()} disabled={busy} title="Foto of bestand toevoegen">
-          {busy ? <Loader2 className="spin" size={16} /> : <Paperclip size={16} />}
+        <button type="button" className="icon-btn ghost" onClick={() => cameraRef.current?.click()} disabled={busy} title="Foto maken of kiezen">
+          {busy ? <Loader2 className="spin" size={16} /> : <Camera size={16} />}
+        </button>
+        <button type="button" className="icon-btn ghost" onClick={() => uploadRef.current?.click()} disabled={busy} title="Bestand toevoegen">
+          <Paperclip size={16} />
         </button>
       </>
     );
