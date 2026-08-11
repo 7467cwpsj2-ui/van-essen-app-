@@ -44,7 +44,7 @@ function readImageCompressed(file: File, maxDim = 1600, quality = 0.8): Promise<
 
 export async function processUploadedFile(file: File): Promise<ProcessedFile> {
   if (file.type === "application/pdf") {
-    if (file.size > 15 * 1024 * 1024) throw new Error("Dit PDF-bestand is te groot (max 15MB).");
+    if (file.size > 50 * 1024 * 1024) throw new Error("Dit PDF-bestand is te groot (max 50MB).");
     return { blob: file, fileType: "pdf", fileName: file.name, previewUrl: URL.createObjectURL(file) };
   }
   const blob = await readImageCompressed(file);
