@@ -11,12 +11,16 @@ export interface AssigneeTeamMember {
 }
 
 export function AssigneeInput({
-  value,
-  onChange,
+  assignee,
+  assigneeTeamMemberIds,
+  onChangeAssignee,
+  onChangeTeamMemberIds,
   teamMembers,
 }: {
-  value: string;
-  onChange: (value: string) => void;
+  assignee: string;
+  assigneeTeamMemberIds: string[];
+  onChangeAssignee: (value: string) => void;
+  onChangeTeamMemberIds: (ids: string[]) => void;
   teamMembers: AssigneeTeamMember[];
 }) {
   const ownStaff = teamMembers.filter((m) => m.member_type === "personeel");
@@ -24,15 +28,22 @@ export function AssigneeInput({
   const contractorNames = contractors.map((m) => m.name);
 
   const [category, setCategory] = useState<"onderaannemer" | "personeel">(
-    ownStaff.some((m) => m.name === value) ? "personeel" : "onderaannemer"
+    assigneeTeamMemberIds.length > 0 ? "personeel" : "onderaannemer"
   );
-  const [customMode, setCustomMode] = useState(!!value && category === "onderaannemer" && !contractorNames.includes(value));
+  const [customMode, setCustomMode] = useState(!!assignee && category === "onderaannemer" && !contractorNames.includes(assignee));
 
   const switchCategory = (next: "onderaannemer" | "personeel") => {
     if (next === category) return;
     setCategory(next);
     setCustomMode(false);
-    onChange("");
+    onChangeAssignee("");
+    onChangeTeamMemberIds([]);
+  };
+
+  const toggleStaff = (id: string) => {
+    onChangeTeamMemberIds(
+      assigneeTeamMemberIds.includes(id) ? assigneeTeamMemberIds.filter((x) => x !== id) : [...assigneeTeamMemberIds, id]
+    );
   };
 
   return (
@@ -47,25 +58,29 @@ export function AssigneeInput({
       </div>
 
       {category === "personeel" ? (
-        <select value={value} onChange={(e) => onChange(e.target.value)}>
-          <option value="">Niet toegewezen</option>
-          {ownStaff.map((m) => (
-            <option key={m.id} value={m.name}>
-              {m.name}
-              {m.trade ? ` — ${m.trade}` : ""}
-            </option>
-          ))}
-        </select>
+        ownStaff.length === 0 ? (
+          <div className="empty-hint small">Nog geen eigen personeel toegevoegd op de Personeel-pagina.</div>
+        ) : (
+          <div className="assignee-staff-list">
+            {ownStaff.map((m) => (
+              <label key={m.id} className="checkbox-label">
+                <input type="checkbox" checked={assigneeTeamMemberIds.includes(m.id)} onChange={() => toggleStaff(m.id)} />
+                {m.name}
+                {m.trade ? ` — ${m.trade}` : ""}
+              </label>
+            ))}
+          </div>
+        )
       ) : customMode ? (
         <div className="assignee-custom">
-          <input placeholder="Naam / bedrijf" value={value} onChange={(e) => onChange(e.target.value)} />
+          <input placeholder="Naam / bedrijf" value={assignee} onChange={(e) => onChangeAssignee(e.target.value)} />
           {contractors.length > 0 && (
             <button
               type="button"
               className="link-btn"
               onClick={() => {
                 setCustomMode(false);
-                onChange("");
+                onChangeAssignee("");
               }}
             >
               Kies uit lijst
@@ -74,13 +89,13 @@ export function AssigneeInput({
         </div>
       ) : (
         <select
-          value={value}
+          value={assignee}
           onChange={(e) => {
             if (e.target.value === "__custom__") {
               setCustomMode(true);
-              onChange("");
+              onChangeAssignee("");
             } else {
-              onChange(e.target.value);
+              onChangeAssignee(e.target.value);
             }
           }}
         >

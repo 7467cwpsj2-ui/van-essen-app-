@@ -7,6 +7,12 @@ function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
+function identities(assignee: string | null, teamMemberIds: string[]): string[] {
+  if (teamMemberIds.length > 0) return teamMemberIds.map((id) => `id:${id}`);
+  const name = assignee?.trim();
+  return name ? [`name:${name.toLowerCase()}`] : [];
+}
+
 export default async function BouwplanningPage({ params }: { params: { id: string } }) {
   const current = await requireUser();
   if (!canSeeModule(current, "bouwplanning")) {
@@ -20,9 +26,9 @@ export default async function BouwplanningPage({ params }: { params: { id: strin
     supabase.from("team_members").select("*").order("name"),
     supabase
       .from("schedule_phases")
-      .select("id,project_id,title,assignee,start_date,end_date,projects(name)")
+      .select("id,project_id,title,assignee,assignee_team_member_ids,start_date,end_date,projects(name)")
       .neq("project_id", params.id)
-      .not("assignee", "is", null),
+      .or("assignee.not.is.null,assignee_team_member_ids.neq.{}"),
   ]);
 
   const rows = (phases ?? []) as SchedulePhase[];
@@ -30,6 +36,7 @@ export default async function BouwplanningPage({ params }: { params: { id: strin
     id: string;
     title: string;
     assignee: string | null;
+    assignee_team_member_ids: string[];
     start_date: string;
     end_date: string;
     projects: { name: string } | null;
@@ -37,10 +44,12 @@ export default async function BouwplanningPage({ params }: { params: { id: strin
 
   const conflicts: Record<string, PhaseConflict[]> = {};
   for (const phase of rows) {
-    const name = phase.assignee?.trim().toLowerCase();
-    if (!name) continue;
+    const mine = identities(phase.assignee, phase.assignee_team_member_ids);
+    if (mine.length === 0) continue;
     const matches = others.filter(
-      (o) => o.assignee?.trim().toLowerCase() === name && overlaps(phase.start_date, phase.end_date, o.start_date, o.end_date)
+      (o) =>
+        overlaps(phase.start_date, phase.end_date, o.start_date, o.end_date) &&
+        identities(o.assignee, o.assignee_team_member_ids).some((id) => mine.includes(id))
     );
     if (matches.length) {
       conflicts[phase.id] = matches.map((m) => ({ projectName: m.projects?.name ?? "een ander project", title: m.title }));

@@ -8,31 +8,45 @@ export default async function PlanningOverzichtPage() {
   if (current.profile.role !== "eigenaar") notFound();
 
   const supabase = createClient();
-  const { data } = await supabase
-    .from("schedule_phases")
-    .select("id,project_id,title,assignee,start_date,end_date,projects(name,planning_color)")
-    .order("start_date");
+  const [{ data }, { data: teamMembers }] = await Promise.all([
+    supabase
+      .from("schedule_phases")
+      .select("id,project_id,title,assignee,assignee_team_member_ids,start_date,end_date,projects(name,planning_color)")
+      .order("start_date"),
+    supabase.from("team_members").select("id,name"),
+  ]);
+
+  const nameById = new Map((teamMembers ?? []).map((m) => [m.id as string, m.name as string]));
 
   const raw = (data ?? []) as unknown as {
     id: string;
     project_id: string;
     title: string;
     assignee: string | null;
+    assignee_team_member_ids: string[];
     start_date: string;
     end_date: string;
     projects: { name: string; planning_color: string | null } | null;
   }[];
 
-  const rows: PlanningRow[] = raw.map((r) => ({
-    id: r.id,
-    title: r.title,
-    projectId: r.project_id,
-    projectName: r.projects?.name ?? "onbekend project",
-    projectColor: r.projects?.planning_color ?? null,
-    assignee: r.assignee?.trim() || null,
-    start_date: r.start_date,
-    end_date: r.end_date,
-  }));
+  const rows: PlanningRow[] = [];
+  for (const r of raw) {
+    const base = {
+      title: r.title,
+      projectId: r.project_id,
+      projectName: r.projects?.name ?? "onbekend project",
+      projectColor: r.projects?.planning_color ?? null,
+      start_date: r.start_date,
+      end_date: r.end_date,
+    };
+    if (r.assignee_team_member_ids.length > 0) {
+      for (const memberId of r.assignee_team_member_ids) {
+        rows.push({ id: `${r.id}:${memberId}`, ...base, assignee: nameById.get(memberId) ?? "Onbekend personeelslid" });
+      }
+    } else {
+      rows.push({ id: r.id, ...base, assignee: r.assignee?.trim() || null });
+    }
+  }
 
   rows.sort((a, b) => {
     if (!a.assignee && b.assignee) return 1;

@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function createPhase(
   projectId: string,
-  data: { title: string; assignee: string | null; start: string; end: string }
+  data: { title: string; assignee: string | null; assigneeTeamMemberIds: string[]; start: string; end: string }
 ) {
   await requireUser();
   if (!data.title.trim() || !data.start || !data.end) throw new Error("Titel, startdatum en einddatum zijn verplicht.");
@@ -14,7 +14,8 @@ export async function createPhase(
   const { error } = await supabase.from("schedule_phases").insert({
     project_id: projectId,
     title: data.title.trim(),
-    assignee: data.assignee || null,
+    assignee: data.assigneeTeamMemberIds.length > 0 ? null : data.assignee || null,
+    assignee_team_member_ids: data.assigneeTeamMemberIds,
     start_date: data.start,
     end_date: data.end,
   });

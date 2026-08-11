@@ -34,19 +34,27 @@ export function BouwplanningPanel({
   canEdit: boolean;
   conflicts?: Record<string, PhaseConflict[]>;
 }) {
-  const [form, setForm] = useState({ title: "", assignee: "", start: "", days: "" });
+  const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
   const [, startTransition] = useTransition();
+
+  const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
+  const phaseAssigneeLabel = (p: SchedulePhase) =>
+    p.assignee_team_member_ids.length > 0 ? p.assignee_team_member_ids.map(teamMemberName).join(", ") : p.assignee;
 
   const computedEnd = form.start && Number(form.days) >= 1 ? endDateForWorkingDays(form.start, Number(form.days)) : "";
 
   const addItem = () => {
     if (!form.title.trim() || !form.start || !computedEnd) return;
     startTransition(() => {
-      createPhase(projectId, { title: form.title, assignee: form.assignee, start: form.start, end: computedEnd }).catch((err) =>
-        alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
-      );
+      createPhase(projectId, {
+        title: form.title,
+        assignee: form.assignee,
+        assigneeTeamMemberIds: form.assigneeTeamMemberIds,
+        start: form.start,
+        end: computedEnd,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ title: "", assignee: "", start: "", days: "" });
+    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
   };
 
   let days: Date[] = [];
@@ -111,7 +119,7 @@ export function BouwplanningPanel({
                           className="gantt-conflict-icon"
                           title={
                             "Dubbele boeking voor " +
-                            i.assignee +
+                            phaseAssigneeLabel(i) +
                             ": " +
                             conflicts[i.id].map((c) => `${c.title} (${c.projectName})`).join(", ")
                           }
@@ -121,7 +129,7 @@ export function BouwplanningPanel({
                       )}
                     </div>
                     <div className="gantt-row-sub">
-                      {i.assignee && <span>{i.assignee}</span>}
+                      {phaseAssigneeLabel(i) && <span>{phaseAssigneeLabel(i)}</span>}
                       {linked.length > 0 && (
                         <span className="gantt-progress-tag">
                           {done}/{linked.length} taken
@@ -175,7 +183,13 @@ export function BouwplanningPanel({
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
             />
-            <AssigneeInput value={form.assignee} onChange={(v) => setForm({ ...form, assignee: v })} teamMembers={teamMembers} />
+            <AssigneeInput
+              assignee={form.assignee}
+              assigneeTeamMemberIds={form.assigneeTeamMemberIds}
+              onChangeAssignee={(v) => setForm({ ...form, assignee: v })}
+              onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
+              teamMembers={teamMembers}
+            />
             <input
               type="date"
               value={form.start}
