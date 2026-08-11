@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { Fragment, useState, useTransition } from "react";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { createPhase, deletePhase } from "@/lib/actions/schedule";
@@ -110,7 +110,7 @@ export function BouwplanningPanel({
                 return t >= start && t <= end && wd !== 0 && wd !== 6;
               });
               return (
-                <div key={i.id} style={{ display: "contents" }}>
+                <Fragment key={i.id}>
                   <div className="gantt-cell gantt-row-label">
                     <div className="gantt-row-title">
                       {i.title}
@@ -164,7 +164,7 @@ export function BouwplanningPanel({
                       />
                     );
                   })}
-                </div>
+                </Fragment>
               );
             })}
 

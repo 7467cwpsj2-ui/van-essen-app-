@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
@@ -159,7 +159,7 @@ export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
               const hasConflict = cells.some((c) => c.blockKey?.startsWith("conflict:"));
 
               return (
-                <div key={person} style={{ display: "contents" }}>
+                <Fragment key={person}>
                   <div className="gantt-cell gantt-row-label">
                     <div className="gantt-row-title">
                       {person}
@@ -189,7 +189,7 @@ export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
                       />
                     );
                   })}
-                </div>
+                </Fragment>
               );
             })}
 
