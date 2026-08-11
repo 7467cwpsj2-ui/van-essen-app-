@@ -1,18 +1,20 @@
 "use client";
 
 import { useRef } from "react";
-import { Camera, Loader2, Upload } from "lucide-react";
+import { Camera, Loader2, Paperclip, Upload } from "lucide-react";
 
 export function FileCaptureButtons({
   accept,
   onPicked,
   busy,
   multiple,
+  variant = "default",
 }: {
   accept: string;
   onPicked: (file: File) => void;
   busy: boolean;
   multiple?: boolean;
+  variant?: "default" | "icon";
 }) {
   const cameraRef = useRef<HTMLInputElement>(null);
   const uploadRef = useRef<HTMLInputElement>(null);
@@ -22,6 +24,17 @@ export function FileCaptureButtons({
     e.target.value = "";
     files.forEach(onPicked);
   };
+
+  if (variant === "icon") {
+    return (
+      <>
+        <input ref={uploadRef} type="file" accept={accept} multiple={multiple} style={{ display: "none" }} onChange={handleChange} />
+        <button type="button" className="icon-btn ghost" onClick={() => uploadRef.current?.click()} disabled={busy} title="Foto of bestand toevoegen">
+          {busy ? <Loader2 className="spin" size={16} /> : <Paperclip size={16} />}
+        </button>
+      </>
+    );
+  }
 
   return (
     <div className="file-capture-row">

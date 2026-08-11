@@ -280,6 +280,8 @@ export interface OwnerClientMessage {
   author_id: string | null;
   author_name: string | null;
   text: string;
+  file_path: string | null;
+  file_type: "image" | "pdf" | null;
   created_at: string;
 }
 

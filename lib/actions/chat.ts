@@ -41,15 +41,22 @@ export async function deleteChatMessage(projectId: string, id: string) {
   revalidatePath(`/projects/${projectId}/chat`);
 }
 
-export async function sendPrivateMessage(projectId: string, text: string) {
+export async function sendPrivateMessage(
+  projectId: string,
+  text: string,
+  file?: { path: string; type: "image" | "pdf" } | null
+) {
   const current = await requireUser();
-  if (!text.trim()) return;
+  const trimmed = text.trim();
+  if (!trimmed && !file) return;
   const supabase = createClient();
   const { error } = await supabase.from("owner_client_messages").insert({
     project_id: projectId,
     author_id: current.id,
     author_name: current.profile.name,
-    text: text.trim(),
+    text: trimmed,
+    file_path: file?.path ?? null,
+    file_type: file?.type ?? null,
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/privechat`);
@@ -62,7 +69,7 @@ export async function sendPrivateMessage(projectId: string, text: string) {
     const projectName = await getProjectName(projectId);
     await sendPushToUsers(recipients, {
       title: `${current.profile.name} — ${projectName}`,
-      body: truncate(text.trim()),
+      body: trimmed ? truncate(trimmed) : file?.type === "image" ? "📷 Foto" : "📄 Bestand",
       url: `/projects/${projectId}/privechat`,
     });
   }

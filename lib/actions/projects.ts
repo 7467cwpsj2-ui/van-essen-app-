@@ -7,7 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProjectStatus } from "@/types/database";
 
-const STORAGE_FOLDERS = ["drawings", "photos", "signatures", "delivery", "cover", "extra-work"];
+const STORAGE_FOLDERS = ["drawings", "photos", "signatures", "delivery", "cover", "extra-work", "privechat"];
 
 export async function createProject(formData: FormData) {
   const current = await requireOwner();
