@@ -81,11 +81,11 @@ export function AppShell({
               <Plus size={14} /> Nieuw project
             </Link>
             <Link
-              href="/team"
-              className={"toegang-toggle" + (pathname === "/team" ? " active" : "")}
+              href="/personeel"
+              className={"toegang-toggle" + (pathname === "/personeel" ? " active" : "")}
               onClick={() => setSidebarOpen(false)}
             >
-              <Users size={14} /> Team
+              <Users size={14} /> Personeel
             </Link>
             <Link
               href="/clients"

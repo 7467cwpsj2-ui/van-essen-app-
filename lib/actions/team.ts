@@ -44,7 +44,7 @@ export async function inviteTeamMember(formData: FormData) {
     throw new Error(profileError.message);
   }
 
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
 
 export async function updateTeamMemberDetails(id: string, patch: { name?: string; trade?: string | null }) {
@@ -55,7 +55,7 @@ export async function updateTeamMemberDetails(id: string, patch: { name?: string
   if (patch.name) {
     await supabase.from("profiles").update({ name: patch.name }).eq("team_member_id", id);
   }
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
 
 export async function toggleTeamModulePermission(id: string, moduleKey: ModuleKey, value: boolean) {
@@ -65,7 +65,7 @@ export async function toggleTeamModulePermission(id: string, moduleKey: ModuleKe
   const permissions = { ...(member?.permissions ?? defaultPermissions()), [moduleKey]: value };
   const { error } = await supabase.from("team_members").update({ permissions }).eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
 
 export async function toggleTeamCanEditSchedule(id: string, value: boolean) {
@@ -73,7 +73,7 @@ export async function toggleTeamCanEditSchedule(id: string, value: boolean) {
   const supabase = createClient();
   const { error } = await supabase.from("team_members").update({ can_edit_schedule: value }).eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
 
 export async function toggleTeamSeesAllProjects(id: string, value: boolean) {
@@ -81,7 +81,7 @@ export async function toggleTeamSeesAllProjects(id: string, value: boolean) {
   const supabase = createClient();
   const { error } = await supabase.from("team_members").update({ sees_all_projects: value }).eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
 
 export async function toggleTeamProjectAccess(teamMemberId: string, projectId: string, granted: boolean) {
@@ -108,7 +108,7 @@ export async function toggleTeamProjectAccess(teamMemberId: string, projectId: s
       .eq("project_id", projectId);
     if (error) throw new Error(error.message);
   }
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
 
 export async function removeTeamMember(id: string) {
@@ -123,5 +123,5 @@ export async function removeTeamMember(id: string) {
   }
   const { error } = await supabase.from("team_members").delete().eq("id", id);
   if (error) throw new Error(error.message);
-  revalidatePath("/team");
+  revalidatePath("/personeel");
 }
