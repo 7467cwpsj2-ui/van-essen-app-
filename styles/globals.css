@@ -1066,6 +1066,11 @@ textarea {
   gap: 14px;
   margin: 2px 0;
 }
+.assignee-input {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
 .assignee-custom {
   display: flex;
   gap: 6px;

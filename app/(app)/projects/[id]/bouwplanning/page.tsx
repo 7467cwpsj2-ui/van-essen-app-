@@ -52,7 +52,7 @@ export default async function BouwplanningPage({ params }: { params: { id: strin
       projectId={params.id}
       phases={rows}
       tasks={(tasks ?? []) as Task[]}
-      teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, trade: m.trade }))}
+      teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, trade: m.trade, member_type: m.member_type }))}
       canEdit={canEditSchedule(current)}
       conflicts={conflicts}
     />

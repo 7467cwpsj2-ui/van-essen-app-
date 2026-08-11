@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
-import { AssigneeInput } from "@/components/AssigneeInput";
+import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { createPhase, deletePhase } from "@/lib/actions/schedule";
 import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { SchedulePhase, Task } from "@/types/database";
@@ -30,7 +30,7 @@ export function BouwplanningPanel({
   projectId: string;
   phases: SchedulePhase[];
   tasks: Task[];
-  teamMembers: { id: string; name: string; trade: string | null }[];
+  teamMembers: AssigneeTeamMember[];
   canEdit: boolean;
   conflicts?: Record<string, PhaseConflict[]>;
 }) {
