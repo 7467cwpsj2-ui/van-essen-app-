@@ -1739,29 +1739,6 @@ textarea {
   border-bottom-right-radius: 5px;
   margin-right: 2px;
 }
-.planning-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-.planning-legend-item {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-faint);
-}
-.planning-legend-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
-.planning-row-first {
-  border-top: 2px solid var(--border);
-}
 .gantt-row-title-link {
   color: inherit;
   text-decoration: none;
