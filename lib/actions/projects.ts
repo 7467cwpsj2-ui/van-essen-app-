@@ -37,6 +37,15 @@ export async function updateProjectStatus(id: string, status: ProjectStatus) {
   revalidatePath("/dashboard");
 }
 
+export async function updateProjectPlanningColor(id: string, color: string) {
+  await requireOwner();
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Ongeldige kleur.");
+  const supabase = createClient();
+  const { error } = await supabase.from("projects").update({ planning_color: color }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/planning-overzicht");
+}
+
 export async function updateProjectDetails(id: string, data: { name: string; address: string | null }) {
   await requireOwner();
   const name = data.name.trim();

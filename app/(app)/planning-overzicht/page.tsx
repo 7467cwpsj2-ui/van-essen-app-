@@ -10,7 +10,7 @@ export default async function PlanningOverzichtPage() {
   const supabase = createClient();
   const { data } = await supabase
     .from("schedule_phases")
-    .select("id,project_id,title,assignee,start_date,end_date,projects(name)")
+    .select("id,project_id,title,assignee,start_date,end_date,projects(name,planning_color)")
     .order("start_date");
 
   const raw = (data ?? []) as unknown as {
@@ -20,7 +20,7 @@ export default async function PlanningOverzichtPage() {
     assignee: string | null;
     start_date: string;
     end_date: string;
-    projects: { name: string } | null;
+    projects: { name: string; planning_color: string | null } | null;
   }[];
 
   const rows: PlanningRow[] = raw.map((r) => ({
@@ -28,6 +28,7 @@ export default async function PlanningOverzichtPage() {
     title: r.title,
     projectId: r.project_id,
     projectName: r.projects?.name ?? "onbekend project",
+    projectColor: r.projects?.planning_color ?? null,
     assignee: r.assignee?.trim() || null,
     start_date: r.start_date,
     end_date: r.end_date,

@@ -1753,18 +1753,30 @@ textarea {
   align-items: center;
   gap: 6px;
   font-size: 11px;
+}
+.planning-legend-swatch {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.planning-legend-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.planning-legend-swatch::-webkit-color-swatch {
+  border: none;
+  border-radius: 3px;
+}
+.planning-legend-label {
   color: var(--text-faint);
   text-decoration: none;
 }
-.planning-legend-item:hover {
+.planning-legend-label:hover {
   color: var(--brand);
-}
-.planning-legend-dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
 }
 
 /* ---------- rollen & rechten ---------- */

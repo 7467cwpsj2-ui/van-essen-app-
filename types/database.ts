@@ -114,6 +114,7 @@ export interface Project {
   delivery_signature_path: string | null;
   actual_cost: number;
   cover_photo_path: string | null;
+  planning_color: string | null;
 }
 
 export interface SchedulePhase {

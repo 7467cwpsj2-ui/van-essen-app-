@@ -42,8 +42,9 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0015_extra_work_vat.sql`, `0016_client_completion_points.sql`,
 `0017_note_client_only_visibility.sql`, `0018_note_team_members.sql`,
 `0019_note_edit_text.sql`, `0020_tasks_visible_to_assignee_only.sql`,
-`0021_extra_work_attachment.sql`, `0022_privechat_attachments.sql`, en
-klik telkens Run), of met de Supabase CLI:
+`0021_extra_work_attachment.sql`, `0022_privechat_attachments.sql`,
+`0023_project_planning_color.sql`, en klik telkens Run), of met de
+Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

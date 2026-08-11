@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { updateProjectPlanningColor } from "@/lib/actions/projects";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
@@ -19,6 +20,7 @@ export interface PlanningRow {
   title: string;
   projectId: string;
   projectName: string;
+  projectColor: string | null;
   assignee: string | null;
   start_date: string;
   end_date: string;
@@ -48,6 +50,24 @@ function ScrollToToday({ todayIdx, children }: { todayIdx: number; children: Rea
 
 export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
+  const [, startTransition] = useTransition();
+
+  const initialColors = useMemo(() => {
+    const map: Record<string, string> = {};
+    for (const r of rows) {
+      if (!map[r.projectId]) map[r.projectId] = r.projectColor || colorForProject(r.projectId);
+    }
+    return map;
+  }, [rows]);
+  const [colors, setColors] = useState<Record<string, string>>(initialColors);
+  const colorOf = (projectId: string) => colors[projectId] ?? initialColors[projectId] ?? colorForProject(projectId);
+
+  const handleColorChange = (projectId: string, value: string) => {
+    setColors((prev) => ({ ...prev, [projectId]: value }));
+    startTransition(() => {
+      updateProjectPlanningColor(projectId, value).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+    });
+  };
 
   const assigned = rows.filter((r) => r.assignee);
   const people = Array.from(new Set(assigned.map((r) => r.assignee as string))).sort((a, b) => a.localeCompare(b, "nl"));
@@ -67,16 +87,24 @@ export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
   return (
     <div className="panel">
       <div className="hint-bar">
-        Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project. Zo zie je in één oogopslag wie
-        waar en wanneer loopt, en of iemand op hetzelfde moment dubbel is ingepland (gestreepte cel).
+        Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project. Klik op een kleurbolletje
+        hieronder om de kleur van een project zelf aan te passen.
       </div>
       {legend.length > 0 && (
         <div className="planning-legend">
           {legend.map(([id, name]) => (
-            <Link key={id} href={`/projects/${id}/bouwplanning`} className="planning-legend-item">
-              <span className="planning-legend-dot" style={{ background: colorForProject(id) }} />
-              {name}
-            </Link>
+            <div key={id} className="planning-legend-item">
+              <input
+                type="color"
+                value={colorOf(id)}
+                onChange={(e) => handleColorChange(id, e.target.value)}
+                className="planning-legend-swatch"
+                title={`Kleur voor ${name} aanpassen`}
+              />
+              <Link href={`/projects/${id}/bouwplanning`} className="planning-legend-label">
+                {name}
+              </Link>
+            </div>
           ))}
         </div>
       )}
@@ -114,16 +142,16 @@ export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
                 const matches = personRows.filter((r) => r.start_date <= iso && iso <= r.end_date);
                 if (matches.length === 0) return { blockKey: null, background: null, label: "" };
                 if (matches.length === 1) {
-                  const color = colorForProject(matches[0].projectId);
+                  const color = colorOf(matches[0].projectId);
                   return { blockKey: matches[0].projectId, background: color, label: `${matches[0].projectName} — ${matches[0].title}` };
                 }
-                const colors = Array.from(new Set(matches.map((m) => colorForProject(m.projectId))));
+                const usedColors = Array.from(new Set(matches.map((m) => colorOf(m.projectId))));
                 const stripe =
-                  colors.length === 1
-                    ? colors[0]
-                    : `repeating-linear-gradient(45deg, ${colors[0]}, ${colors[0]} 6px, ${colors[1]} 6px, ${colors[1]} 12px)`;
+                  usedColors.length === 1
+                    ? usedColors[0]
+                    : `repeating-linear-gradient(45deg, ${usedColors[0]}, ${usedColors[0]} 6px, ${usedColors[1]} 6px, ${usedColors[1]} 12px)`;
                 return {
-                  blockKey: "conflict:" + colors.join(","),
+                  blockKey: "conflict:" + usedColors.join(","),
                   background: stripe,
                   label: "Dubbel ingepland: " + matches.map((m) => `${m.projectName} — ${m.title}`).join(" / "),
                 };
