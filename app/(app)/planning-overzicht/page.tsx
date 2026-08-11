@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import { TeamPlanningPanel, type PlanningGroup, type PlanningRow } from "@/components/TeamPlanningPanel";
+import { TeamPlanningPanel, type PlanningRow } from "@/components/TeamPlanningPanel";
 
 export default async function PlanningOverzichtPage() {
   const current = await requireUser();
@@ -13,7 +13,7 @@ export default async function PlanningOverzichtPage() {
     .select("id,project_id,title,assignee,start_date,end_date,projects(name)")
     .order("start_date");
 
-  const rows = (data ?? []) as unknown as {
+  const raw = (data ?? []) as unknown as {
     id: string;
     project_id: string;
     title: string;
@@ -23,30 +23,25 @@ export default async function PlanningOverzichtPage() {
     projects: { name: string } | null;
   }[];
 
-  const groupMap = new Map<string, PlanningGroup>();
-  const unassigned: PlanningRow[] = [];
+  const rows: PlanningRow[] = raw.map((r) => ({
+    id: r.id,
+    title: r.title,
+    projectId: r.project_id,
+    projectName: r.projects?.name ?? "onbekend project",
+    assignee: r.assignee?.trim() || null,
+    start_date: r.start_date,
+    end_date: r.end_date,
+  }));
 
-  for (const r of rows) {
-    const row: PlanningRow = {
-      id: r.id,
-      title: r.title,
-      projectId: r.project_id,
-      projectName: r.projects?.name ?? "onbekend project",
-      start_date: r.start_date,
-      end_date: r.end_date,
-    };
-    const name = r.assignee?.trim();
-    if (!name) {
-      unassigned.push(row);
-      continue;
+  rows.sort((a, b) => {
+    if (!a.assignee && b.assignee) return 1;
+    if (a.assignee && !b.assignee) return -1;
+    if (a.assignee && b.assignee) {
+      const cmp = a.assignee.localeCompare(b.assignee, "nl");
+      if (cmp !== 0) return cmp;
     }
-    const key = name.toLowerCase();
-    if (!groupMap.has(key)) groupMap.set(key, { assignee: name, rows: [] });
-    groupMap.get(key)!.rows.push(row);
-  }
+    return a.start_date.localeCompare(b.start_date);
+  });
 
-  const groups = Array.from(groupMap.values()).sort((a, b) => a.assignee.localeCompare(b.assignee, "nl"));
-  if (unassigned.length > 0) groups.push({ assignee: "Nog niet toegewezen", rows: unassigned });
-
-  return <TeamPlanningPanel groups={groups} />;
+  return <TeamPlanningPanel rows={rows} />;
 }

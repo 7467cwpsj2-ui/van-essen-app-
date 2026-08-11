@@ -1739,17 +1739,28 @@ textarea {
   border-bottom-right-radius: 5px;
   margin-right: 2px;
 }
-.planning-overzicht-group {
-  margin-bottom: 22px;
+.planning-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
 }
-.planning-overzicht-group:last-child {
-  margin-bottom: 0;
+.planning-legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--text-faint);
 }
-.planning-overzicht-name {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 8px;
+.planning-legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.planning-row-first {
+  border-top: 2px solid var(--border);
 }
 .gantt-row-title-link {
   color: inherit;
