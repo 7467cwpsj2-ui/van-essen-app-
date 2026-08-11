@@ -17,7 +17,7 @@ export default async function AlleTeDoenPage() {
     supabase.from("team_members").select("*").order("name"),
   ]);
 
-  const teamMemberOptions = ((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }));
+  const teamMemberOptions = ((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, member_type: m.member_type }));
 
   const sections = await Promise.all(
     (projects ?? []).map(async (p) => {

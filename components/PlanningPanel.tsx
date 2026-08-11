@@ -3,9 +3,11 @@
 import { useState, useTransition } from "react";
 import { CheckCircle2, Circle, Plus, Trash2 } from "lucide-react";
 import { createTask, deleteTask, toggleTask } from "@/lib/actions/tasks";
-import { TASK_ASSIGNEE_LABEL, type Role, type Task, type TaskAssigneeType } from "@/types/database";
+import { TASK_ASSIGNEE_LABEL, type Role, type Task, type TaskAssigneeType, type TeamMemberType } from "@/types/database";
 
 const VIS_CLASS: Record<TaskAssigneeType, string> = { eigenaar: "vis-private", team: "vis-public", klant: "vis-klant" };
+
+type UiAssigneeType = TaskAssigneeType | "personeel";
 
 function fmtDate(iso: string | null) {
   if (!iso) return "";
@@ -26,10 +28,10 @@ export function PlanningPanel({
   currentTeamMemberId: string | null;
   isLocked: boolean;
   tasks: Task[];
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; member_type: TeamMemberType }[];
   hideAddForm?: boolean;
 }) {
-  const [form, setForm] = useState<{ title: string; assigneeType: TaskAssigneeType; assigneeTeamMemberIds: string[]; dueDate: string }>({
+  const [form, setForm] = useState<{ title: string; assigneeType: UiAssigneeType; assigneeTeamMemberIds: string[]; dueDate: string }>({
     title: "",
     assigneeType: "eigenaar",
     assigneeTeamMemberIds: [],
@@ -38,6 +40,9 @@ export function PlanningPanel({
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name;
+  const currentMemberType = teamMembers.find((m) => m.id === currentTeamMemberId)?.member_type;
+  const pickerCategory: TeamMemberType = form.assigneeType === "personeel" ? "personeel" : "onderaannemer";
+  const pickerMembers = teamMembers.filter((m) => m.member_type === pickerCategory);
 
   const assigneeLabel = (t: Task) => {
     if (t.assignee_type !== "team") return TASK_ASSIGNEE_LABEL[t.assignee_type];
@@ -70,11 +75,12 @@ export function PlanningPanel({
 
   const addTask = () => {
     if (!form.title.trim()) return;
+    const isStaffPick = form.assigneeType === "team" || form.assigneeType === "personeel";
     startTransition(() => {
       createTask(projectId, {
         title: form.title,
-        assigneeType: form.assigneeType,
-        assigneeTeamMemberIds: form.assigneeType === "team" ? form.assigneeTeamMemberIds : [],
+        assigneeType: form.assigneeType === "personeel" ? "team" : form.assigneeType,
+        assigneeTeamMemberIds: isStaffPick ? form.assigneeTeamMemberIds : [],
         dueDate: form.dueDate || null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
@@ -146,16 +152,21 @@ export function PlanningPanel({
             />
             <select
               value={form.assigneeType}
-              onChange={(e) =>
+              onChange={(e) => {
+                const next = e.target.value as UiAssigneeType;
+                const nextCategory: TeamMemberType = next === "personeel" ? "personeel" : "onderaannemer";
+                const autoSelf =
+                  (next === "team" || next === "personeel") && role === "team" && currentTeamMemberId && currentMemberType === nextCategory;
                 setForm({
                   ...form,
-                  assigneeType: e.target.value as TaskAssigneeType,
-                  assigneeTeamMemberIds: e.target.value === "team" && role === "team" && currentTeamMemberId ? [currentTeamMemberId] : [],
-                })
-              }
+                  assigneeType: next,
+                  assigneeTeamMemberIds: autoSelf ? [currentTeamMemberId as string] : [],
+                });
+              }}
             >
               <option value="eigenaar">{role === "eigenaar" ? "Mijzelf" : "Eigenaar"}</option>
-              <option value="team">Team</option>
+              <option value="team">Team / onderaannemer</option>
+              <option value="personeel">Eigen personeel</option>
               {role === "eigenaar" && <option value="klant">Klant</option>}
             </select>
             <label className="field-with-label">
@@ -166,11 +177,17 @@ export function PlanningPanel({
               <Plus size={14} /> Toevoegen
             </button>
           </div>
-          {form.assigneeType === "team" && teamMembers.length > 0 && (
+          {(form.assigneeType === "team" || form.assigneeType === "personeel") && (
             <div className="task-team-picker">
-              <div className="task-team-picker-hint">Niemand aangevinkt = iedereen in het team kan het afvinken.</div>
+              <div className="task-team-picker-hint">
+                {pickerMembers.length === 0
+                  ? form.assigneeType === "personeel"
+                    ? "Nog geen eigen personeel toegevoegd op de Personeel-pagina."
+                    : "Nog geen team/onderaannemers toegevoegd."
+                  : "Niemand aangevinkt = iedereen in deze groep kan het afvinken."}
+              </div>
               <div className="task-team-picker-grid">
-                {role === "team" && currentTeamMemberId && (
+                {role === "team" && currentTeamMemberId && currentMemberType === pickerCategory && (
                   <label className="checkbox-label">
                     <input
                       type="checkbox"
@@ -180,7 +197,7 @@ export function PlanningPanel({
                     Mijzelf
                   </label>
                 )}
-                {teamMembers
+                {pickerMembers
                   .filter((m) => m.id !== currentTeamMemberId)
                   .map((m) => (
                     <label key={m.id} className="checkbox-label">

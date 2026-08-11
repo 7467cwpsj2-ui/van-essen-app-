@@ -23,7 +23,7 @@ export default async function PlanningPage({ params }: { params: { id: string } 
       currentTeamMemberId={current.profile.team_member_id}
       isLocked={!!(project as Pick<Project, "delivery_signed_at"> | null)?.delivery_signed_at}
       tasks={(tasks ?? []) as Task[]}
-      teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }))}
+      teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, member_type: m.member_type }))}
     />
   );
 }
