@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Building2,
+  CalendarRange,
   LayoutDashboard,
   Plus,
   Users,
@@ -92,6 +93,13 @@ export function AppShell({
               onClick={() => setSidebarOpen(false)}
             >
               <ShieldCheck size={14} /> Klanten
+            </Link>
+            <Link
+              href="/planning-overzicht"
+              className={"toegang-toggle" + (pathname === "/planning-overzicht" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <CalendarRange size={14} /> Algemene planning
             </Link>
           </>
         )}

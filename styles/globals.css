@@ -1739,6 +1739,25 @@ textarea {
   border-bottom-right-radius: 5px;
   margin-right: 2px;
 }
+.planning-overzicht-group {
+  margin-bottom: 22px;
+}
+.planning-overzicht-group:last-child {
+  margin-bottom: 0;
+}
+.planning-overzicht-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+.gantt-row-title-link {
+  color: inherit;
+  text-decoration: none;
+}
+.gantt-row-title-link:hover {
+  text-decoration: underline;
+}
 
 /* ---------- rollen & rechten ---------- */
 
