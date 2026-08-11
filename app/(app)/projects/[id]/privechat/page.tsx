@@ -16,12 +16,18 @@ export default async function PrivateChatPage({ params }: { params: { id: string
     .eq("project_id", params.id)
     .order("created_at", { ascending: true });
 
+  const hint =
+    current.profile.role === "eigenaar"
+      ? "Privégesprek tussen jou en de klant — je team ziet dit nooit."
+      : "Privégesprek tussen jou en Van Essen Bouw & Onderhoud — hun team ziet dit nooit.";
+
   return (
     <ChatPanel
       currentUserId={current.id}
       messages={(messages ?? []) as OwnerClientMessage[]}
       onSend={sendPrivateMessage.bind(null, params.id)}
-      hint="Dit gesprek is privé tussen jou en de klant — het team ziet dit nooit."
+      hint={hint}
+      isPrivate
       projectId={params.id}
       realtimeTable="owner_client_messages"
     />

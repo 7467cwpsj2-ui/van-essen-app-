@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Send } from "lucide-react";
+import { Lock, Send } from "lucide-react";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 
 export interface ChatItem {
@@ -17,6 +17,7 @@ export function ChatPanel({
   messages,
   onSend,
   hint,
+  isPrivate,
   projectId,
   realtimeTable,
 }: {
@@ -24,6 +25,7 @@ export function ChatPanel({
   messages: ChatItem[];
   onSend: (text: string) => Promise<void>;
   hint?: string;
+  isPrivate?: boolean;
   projectId: string;
   realtimeTable: string;
 }) {
@@ -43,7 +45,12 @@ export function ChatPanel({
 
   return (
     <div className="panel">
-      {hint && <div className="hint-bar">{hint}</div>}
+      {hint && (
+        <div className={"hint-bar" + (isPrivate ? " hint-private" : "")}>
+          {isPrivate && <Lock size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />}
+          {hint}
+        </div>
+      )}
       {messages.length === 0 && <div className="empty-hint">Nog geen berichten.</div>}
       <div className="chat-list">
         {messages.map((m) => (

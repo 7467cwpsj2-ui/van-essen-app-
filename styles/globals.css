@@ -840,6 +840,12 @@ textarea {
 .hint-bar.small {
   font-size: 11px;
 }
+.hint-private {
+  background: var(--brand-soft);
+  border-color: rgba(28, 127, 196, 0.3);
+  color: var(--brand-dim);
+  font-weight: 600;
+}
 
 .overview-group {
   margin-bottom: 6px;
