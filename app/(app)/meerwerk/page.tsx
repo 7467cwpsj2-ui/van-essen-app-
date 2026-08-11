@@ -20,7 +20,11 @@ export default async function AlleMeerwerkPage() {
         supabase.from("extra_work").select("*").eq("project_id", p.id).eq("status", "open").order("created_at", { ascending: false }),
         supabase.from("schedule_phases").select("*").eq("project_id", p.id).order("start_date"),
       ]);
-      const withSignatures: ExtraWorkWithSignature[] = ((items ?? []) as ExtraWork[]).map((w) => ({ ...w, signatureUrl: null }));
+      const withSignatures: ExtraWorkWithSignature[] = ((items ?? []) as ExtraWork[]).map((w) => ({
+        ...w,
+        signatureUrl: null,
+        attachmentUrl: null,
+      }));
       return { project: p, items: withSignatures, phases: (phases ?? []) as SchedulePhase[] };
     })
   );

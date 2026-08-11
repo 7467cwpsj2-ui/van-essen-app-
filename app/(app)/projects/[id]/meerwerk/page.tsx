@@ -23,7 +23,12 @@ export default async function MeerwerkPage({ params }: { params: { id: string } 
         const { data } = await supabase.storage.from("project-files").createSignedUrl(w.signature_path, 3600);
         signatureUrl = data?.signedUrl ?? null;
       }
-      return { ...w, signatureUrl };
+      let attachmentUrl: string | null = null;
+      if (w.photo_path) {
+        const { data } = await supabase.storage.from("project-files").createSignedUrl(w.photo_path, 3600);
+        attachmentUrl = data?.signedUrl ?? null;
+      }
+      return { ...w, signatureUrl, attachmentUrl };
     })
   );
 

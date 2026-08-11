@@ -195,6 +195,8 @@ export interface ExtraWork {
   vat_type: ExtraWorkVatType;
   status: ExtraWorkStatus;
   explanation: string | null;
+  photo_path: string | null;
+  file_type: "image" | "pdf" | null;
   extra_days: number | null;
   phase_id: string | null;
   schedule_cutoff: string | null;

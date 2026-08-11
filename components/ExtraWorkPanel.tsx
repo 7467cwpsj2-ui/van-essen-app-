@@ -1,9 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
+import { FileText, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
+import { FileCaptureButtons } from "@/components/FileCaptureButtons";
+import { FilePreview } from "@/components/FilePreview";
+import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
 import { approveExtraWork, createExtraWork, deleteExtraWork, rejectExtraWork, resetExtraWork } from "@/lib/actions/extraWork";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
@@ -15,6 +18,7 @@ const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency
 
 export interface ExtraWorkWithSignature extends ExtraWork {
   signatureUrl: string | null;
+  attachmentUrl: string | null;
 }
 
 export function ExtraWorkPanel({
@@ -39,19 +43,24 @@ export function ExtraWorkPanel({
     phaseId: "",
     explanation: "",
   });
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [pending, setPending] = useState<{ blob: Blob; fileType: "image" | "pdf"; fileName: string; previewUrl: string } | null>(null);
   const [signingId, setSigningId] = useState<string | null>(null);
   const [sigPreview, setSigPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useRealtimeRefresh("extra_work", projectId);
 
-  const toggleExplain = (id: string) =>
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
+  const handlePicked = async (file: File) => {
+    setBusy(true);
+    try {
+      const result = await processUploadedFile(file);
+      setPending(result);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Verwerken mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const addItem = async () => {
     if (!form.description.trim() || !form.amount) return;
@@ -62,16 +71,32 @@ export function ExtraWorkPanel({
     }
     setBusy(true);
     try {
+      let filePath: string | null = null;
+      let fileType: "image" | "pdf" | null = null;
+      if (pending) {
+        const supabase = createClient();
+        const ext = pending.fileName.split(".").pop() || (pending.fileType === "pdf" ? "pdf" : "jpg");
+        const path = `${projectId}/extra-work/${crypto.randomUUID()}.${ext}`;
+        const { error: uploadError } = await supabase.storage.from("project-files").upload(path, pending.blob, {
+          contentType: pending.fileType === "pdf" ? "application/pdf" : "image/jpeg",
+        });
+        if (uploadError) throw new Error(uploadError.message);
+        filePath = path;
+        fileType = pending.fileType;
+      }
       await createExtraWork(projectId, {
         type: form.type,
         description: form.description,
         amount: Number(form.amount),
         vatType: form.vatType,
         explanation: form.explanation || null,
+        filePath,
+        fileType,
         extraDays: days || null,
         phaseId: days > 0 ? form.phaseId : null,
       });
       setForm({ type: "meerwerk", description: "", amount: "", vatType: "excl", extraDays: "", phaseId: "", explanation: "" });
+      setPending(null);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
     } finally {
@@ -223,12 +248,17 @@ export function ExtraWorkPanel({
                     Afgewezen door {w.rejected_by} op {w.rejected_date}
                   </div>
                 )}
-                {w.explanation && (
-                  <button type="button" className="explain-toggle" onClick={() => toggleExplain(w.id)}>
-                    <ChevronDown size={12} className={expandedIds.has(w.id) ? "open" : ""} /> Uitgebreide beschrijving
-                  </button>
-                )}
-                {w.explanation && expandedIds.has(w.id) && <div className="work-explanation">{w.explanation}</div>}
+                {w.explanation && <div className="work-explanation">{w.explanation}</div>}
+                {w.attachmentUrl &&
+                  (w.file_type === "pdf" ? (
+                    <a href={w.attachmentUrl} target="_blank" rel="noreferrer" className="work-attachment-link">
+                      <FileText size={13} /> Bijlage openen
+                    </a>
+                  ) : (
+                    <button type="button" className="thumb-btn" onClick={() => setSigPreview(w.attachmentUrl)}>
+                      <img src={w.attachmentUrl} alt="" className="work-attachment-thumb" />
+                    </button>
+                  ))}
               </div>
               {role === "eigenaar" ? (
                 <select
@@ -309,6 +339,16 @@ export function ExtraWorkPanel({
             <button className="btn-primary" onClick={addItem} disabled={busy}>
               Toevoegen
             </button>
+          </div>
+          <div className="field-with-label">
+            <span className="field-label">Foto of bestand (optioneel — klant kan dit inzien)</span>
+            <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
+            <FilePreview
+              previewUrl={pending?.previewUrl ?? null}
+              fileType={pending?.fileType ?? null}
+              fileName={pending?.fileName ?? null}
+              onClear={() => setPending(null)}
+            />
           </div>
           {phases.length > 0 && Number(form.extraDays) > 0 && (
             <div className="hint-bar small">

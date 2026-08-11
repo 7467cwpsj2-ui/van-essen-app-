@@ -25,6 +25,8 @@ export async function createExtraWork(
     amount: number;
     vatType: ExtraWorkVatType;
     explanation: string | null;
+    filePath: string | null;
+    fileType: "image" | "pdf" | null;
     extraDays: number | null;
     phaseId: string | null;
   }
@@ -50,6 +52,8 @@ export async function createExtraWork(
     amount: data.amount,
     vat_type: data.vatType,
     explanation: data.explanation?.trim() || null,
+    photo_path: data.filePath,
+    file_type: data.fileType,
     extra_days: signedDays !== 0 ? signedDays : null,
     phase_id: signedDays !== 0 ? data.phaseId : null,
     schedule_cutoff: scheduleCutoff,
