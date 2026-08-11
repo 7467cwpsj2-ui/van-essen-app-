@@ -72,7 +72,7 @@ export function ProjectTabs({
   const extraTabs: ExtraTab[] = [
     { key: "uren", label: "Uren", icon: <Clock size={14} />, visible: showHours },
     { key: "nacalculatie", label: "Nacalculatie", icon: <TrendingUp size={14} />, visible: showCalc },
-    { key: "privechat", label: "Privé: klant & eigenaar", icon: <Lock size={14} />, visible: showPrivateChat },
+    { key: "privechat", label: "Privéchat", icon: <Lock size={14} />, visible: showPrivateChat },
   ];
 
   return (
