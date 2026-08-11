@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
 
@@ -21,136 +24,151 @@ export interface PlanningRow {
   end_date: string;
 }
 
-interface PlanningGroup {
-  assignee: string;
-  rows: PlanningRow[];
+interface DayCell {
+  blockKey: string | null;
+  background: string | null;
+  label: string;
 }
 
 function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
-export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
-  const groupMap = new Map<string, PlanningGroup>();
-  for (const r of rows) {
-    const key = r.assignee ? r.assignee.toLowerCase() : "￿";
-    if (!groupMap.has(key)) groupMap.set(key, { assignee: r.assignee ?? "Nog niet toegewezen", rows: [] });
-    groupMap.get(key)!.rows.push(r);
-  }
-  const groups = Array.from(groupMap.values()).sort((a, b) => {
-    if (a.assignee === "Nog niet toegewezen") return 1;
-    if (b.assignee === "Nog niet toegewezen") return -1;
-    return a.assignee.localeCompare(b.assignee, "nl");
-  });
+function ScrollToToday({ todayIdx, children }: { todayIdx: number; children: React.ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (ref.current && todayIdx >= 0) ref.current.scrollLeft = Math.max(0, (todayIdx - 3) * 30);
+  }, [todayIdx]);
+  return (
+    <div className="gantt-scroll" ref={ref}>
+      {children}
+    </div>
+  );
+}
 
+export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
+
+  const assigned = rows.filter((r) => r.assignee);
+  const people = Array.from(new Set(assigned.map((r) => r.assignee as string))).sort((a, b) => a.localeCompare(b, "nl"));
+
+  const days: Date[] = [];
+  if (assigned.length) {
+    const min = Math.min(...assigned.map((r) => new Date(r.start_date).getTime()));
+    const max = Math.max(...assigned.map((r) => new Date(r.end_date).getTime()));
+    for (let t = min; t <= max; t += DAY_MS) days.push(new Date(t));
+  }
+  const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
+
+  const legend = Array.from(new Map(assigned.map((r) => [r.projectId, r.projectName])).entries()).sort((a, b) =>
+    a[1].localeCompare(b[1], "nl")
+  );
 
   return (
     <div className="panel">
       <div className="hint-bar">
-        Bouwplanning van al je projecten samen, gegroepeerd per persoon — zo zie je per teamlid of onderaannemer waar en wanneer hij
-        loopt, en of hij op hetzelfde moment op twee projecten staat ingepland.
+        Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project. Zo zie je in één oogopslag wie
+        waar en wanneer loopt, en of iemand op hetzelfde moment dubbel is ingepland (gestreepte cel).
       </div>
-      {groups.length === 0 && <div className="empty-hint">Nog geen bouwplanning met een toegewezen persoon gevonden.</div>}
-      {groups.map((group) => {
-        const conflictIds = new Set<string>();
-        for (const a of group.rows) {
-          for (const b of group.rows) {
-            if (a.id !== b.id && overlaps(a.start_date, a.end_date, b.start_date, b.end_date)) conflictIds.add(a.id);
-          }
-        }
+      {legend.length > 0 && (
+        <div className="planning-legend">
+          {legend.map(([id, name]) => (
+            <Link key={id} href={`/projects/${id}/bouwplanning`} className="planning-legend-item">
+              <span className="planning-legend-dot" style={{ background: colorForProject(id) }} />
+              {name}
+            </Link>
+          ))}
+        </div>
+      )}
+      {people.length === 0 ? (
+        <div className="empty-hint">Nog geen bouwplanning met een toegewezen persoon gevonden.</div>
+      ) : (
+        <ScrollToToday todayIdx={todayIdx}>
+          <div className="gantt-grid" style={{ gridTemplateColumns: `160px repeat(${days.length}, 30px)` }}>
+            <div className="gantt-cell gantt-corner" />
+            {days.map((d, idx) => {
+              const wd = d.getUTCDay();
+              return (
+                <div
+                  key={idx}
+                  className={
+                    "gantt-cell gantt-head" +
+                    (wd === 0 || wd === 6 ? " weekend" : "") +
+                    (idx === todayIdx ? " today" : "") +
+                    (d.getUTCDate() === 1 ? " month-start" : "")
+                  }
+                  title={d.toISOString().slice(0, 10)}
+                >
+                  <span className="gantt-head-day">{d.getUTCDate()}</span>
+                  <span className="gantt-head-wd">{WEEKDAY_LETTERS[wd]}</span>
+                </div>
+              );
+            })}
 
-        const sortedRows = [...group.rows].sort((a, b) => a.start_date.localeCompare(b.start_date));
-        const days: Date[] = [];
-        const min = Math.min(...sortedRows.map((r) => new Date(r.start_date).getTime()));
-        const max = Math.max(...sortedRows.map((r) => new Date(r.end_date).getTime()));
-        for (let t = min; t <= max; t += DAY_MS) days.push(new Date(t));
-        const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
+            {people.map((person) => {
+              const personRows = assigned.filter((r) => r.assignee === person);
+              const cells: DayCell[] = days.map((d) => {
+                const wd = d.getUTCDay();
+                if (wd === 0 || wd === 6) return { blockKey: null, background: null, label: "" };
+                const iso = d.toISOString().slice(0, 10);
+                const matches = personRows.filter((r) => r.start_date <= iso && iso <= r.end_date);
+                if (matches.length === 0) return { blockKey: null, background: null, label: "" };
+                if (matches.length === 1) {
+                  const color = colorForProject(matches[0].projectId);
+                  return { blockKey: matches[0].projectId, background: color, label: `${matches[0].projectName} — ${matches[0].title}` };
+                }
+                const colors = Array.from(new Set(matches.map((m) => colorForProject(m.projectId))));
+                const stripe =
+                  colors.length === 1
+                    ? colors[0]
+                    : `repeating-linear-gradient(45deg, ${colors[0]}, ${colors[0]} 6px, ${colors[1]} 6px, ${colors[1]} 12px)`;
+                return {
+                  blockKey: "conflict:" + colors.join(","),
+                  background: stripe,
+                  label: "Dubbel ingepland: " + matches.map((m) => `${m.projectName} — ${m.title}`).join(" / "),
+                };
+              });
+              const hasConflict = cells.some((c) => c.blockKey?.startsWith("conflict:"));
 
-        return (
-          <div key={group.assignee} className="planning-person-block">
-            <div className="planning-person-name">
-              {group.assignee}
-              {conflictIds.size > 0 && (
-                <span className="gantt-conflict-icon" title="Deze persoon staat op hetzelfde moment op meerdere projecten ingepland.">
-                  <AlertTriangle size={12} />
-                </span>
-              )}
-            </div>
-            <div className="gantt-scroll">
-              <div className="gantt-grid" style={{ gridTemplateColumns: `180px repeat(${days.length}, 30px)` }}>
-                <div className="gantt-cell gantt-corner" />
-                {days.map((d, idx) => {
-                  const wd = d.getUTCDay();
-                  return (
-                    <div
-                      key={idx}
-                      className={"gantt-cell gantt-head" + (wd === 0 || wd === 6 ? " weekend" : "") + (idx === todayIdx ? " today" : "")}
-                      title={d.toISOString().slice(0, 10)}
-                    >
-                      <span className="gantt-head-day">{d.getUTCDate()}</span>
-                      <span className="gantt-head-wd">{WEEKDAY_LETTERS[wd]}</span>
+              return (
+                <div key={person} style={{ display: "contents" }}>
+                  <div className="gantt-cell gantt-row-label">
+                    <div className="gantt-row-title">
+                      {person}
+                      {hasConflict && (
+                        <span className="gantt-conflict-icon" title="Deze persoon staat op hetzelfde moment op meerdere projecten ingepland.">
+                          <AlertTriangle size={12} />
+                        </span>
+                      )}
                     </div>
-                  );
-                })}
+                  </div>
+                  {cells.map((cell, idx) => {
+                    const isFirst = cell.blockKey !== null && cells[idx - 1]?.blockKey !== cell.blockKey;
+                    const isLast = cell.blockKey !== null && cells[idx + 1]?.blockKey !== cell.blockKey;
+                    const wd = days[idx].getUTCDay();
+                    return (
+                      <div
+                        key={idx}
+                        className={
+                          "gantt-cell gantt-daycell" +
+                          (cell.blockKey !== null ? " filled" : "") +
+                          (isFirst ? " first" : "") +
+                          (isLast ? " last" : "") +
+                          (wd === 0 || wd === 6 ? " weekend" : "")
+                        }
+                        style={cell.background ? { background: cell.background } : undefined}
+                        title={cell.label}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
 
-                {sortedRows.map((r) => {
-                  const start = new Date(r.start_date).getTime();
-                  const end = new Date(r.end_date).getTime();
-                  const filledFlags = days.map((d) => {
-                    const t = d.getTime();
-                    const wd = d.getUTCDay();
-                    return t >= start && t <= end && wd !== 0 && wd !== 6;
-                  });
-                  const color = colorForProject(r.projectId);
-                  return (
-                    <div key={r.id} style={{ display: "contents" }}>
-                      <div className="gantt-cell gantt-row-label">
-                        <div className="gantt-row-title">
-                          <span className="planning-dot" style={{ background: color }} />
-                          <Link href={`/projects/${r.projectId}/bouwplanning`} className="gantt-row-title-link">
-                            {r.projectName}
-                          </Link>
-                          {conflictIds.has(r.id) && (
-                            <span className="gantt-conflict-icon" title="Overlapt met een andere planning van deze persoon.">
-                              <AlertTriangle size={12} />
-                            </span>
-                          )}
-                        </div>
-                        <div className="gantt-row-sub">
-                          <span>{r.title}</span>
-                        </div>
-                      </div>
-                      {days.map((d, idx) => {
-                        const wd = d.getUTCDay();
-                        const filled = filledFlags[idx];
-                        const isFirst = filled && !filledFlags[idx - 1];
-                        const isLast = filled && !filledFlags[idx + 1];
-                        return (
-                          <div
-                            key={idx}
-                            className={
-                              "gantt-cell gantt-daycell" +
-                              (filled ? " filled" : "") +
-                              (isFirst ? " first" : "") +
-                              (isLast ? " last" : "") +
-                              (wd === 0 || wd === 6 ? " weekend" : "")
-                            }
-                            style={filled ? { background: color } : undefined}
-                            title={filled ? `${r.projectName} — ${r.title}: ${r.start_date} – ${r.end_date}` : ""}
-                          />
-                        );
-                      })}
-                    </div>
-                  );
-                })}
-
-                {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${180 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
-              </div>
-            </div>
+            {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${160 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
           </div>
-        );
-      })}
+        </ScrollToToday>
+      )}
     </div>
   );
 }
