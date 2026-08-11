@@ -225,7 +225,7 @@ export function ExtraWorkPanel({
                 )}
                 {w.explanation && (
                   <button type="button" className="explain-toggle" onClick={() => toggleExplain(w.id)}>
-                    <ChevronDown size={12} className={expandedIds.has(w.id) ? "open" : ""} /> Toelichting
+                    <ChevronDown size={12} className={expandedIds.has(w.id) ? "open" : ""} /> Uitgebreide beschrijving
                   </button>
                 )}
                 {w.explanation && expandedIds.has(w.id) && <div className="work-explanation">{w.explanation}</div>}
@@ -276,12 +276,15 @@ export function ExtraWorkPanel({
               <option value="excl">Excl. btw</option>
               <option value="incl">Incl. btw</option>
             </select>
-            <textarea
-              rows={2}
-              placeholder="Korte toelichting voor de klant (optioneel)"
-              value={form.explanation}
-              onChange={(e) => setForm({ ...form, explanation: e.target.value })}
-            />
+            <label className="field-with-label">
+              <span className="field-label">Uitgebreide beschrijving (optioneel — klant kan dit inzien)</span>
+              <textarea
+                rows={3}
+                placeholder="Leg hier uit wat er precies gebeurt en waarom, zodat de klant het goed kan beoordelen…"
+                value={form.explanation}
+                onChange={(e) => setForm({ ...form, explanation: e.target.value })}
+              />
+            </label>
             {phases.length > 0 && (
               <>
                 <input
