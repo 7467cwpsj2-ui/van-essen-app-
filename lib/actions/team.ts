@@ -6,19 +6,21 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
-import { defaultPermissions, type ModuleKey } from "@/types/database";
+import { defaultPermissions, type ModuleKey, type TeamMemberType } from "@/types/database";
 
 export async function inviteTeamMember(formData: FormData) {
   await requireOwner();
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim();
   const trade = String(formData.get("trade") || "").trim() || null;
+  const memberTypeRaw = String(formData.get("member_type") || "");
+  const memberType: TeamMemberType = memberTypeRaw === "personeel" ? "personeel" : "onderaannemer";
   if (!name || !email) throw new Error("Naam en e-mailadres zijn verplicht.");
 
   const supabase = createClient();
   const { data: member, error: memberError } = await supabase
     .from("team_members")
-    .insert({ name, trade, permissions: permissionsFromFormData(formData), sees_all_projects: true })
+    .insert({ name, trade, permissions: permissionsFromFormData(formData), sees_all_projects: true, member_type: memberType })
     .select()
     .single();
   if (memberError || !member) throw new Error(memberError?.message || "Kon teamlid niet aanmaken.");
@@ -72,6 +74,14 @@ export async function toggleTeamCanEditSchedule(id: string, value: boolean) {
   await requireOwner();
   const supabase = createClient();
   const { error } = await supabase.from("team_members").update({ can_edit_schedule: value }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/personeel");
+}
+
+export async function updateTeamMemberType(id: string, memberType: TeamMemberType) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from("team_members").update({ member_type: memberType }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/personeel");
 }

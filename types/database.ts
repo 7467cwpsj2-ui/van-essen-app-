@@ -74,6 +74,8 @@ export interface Profile {
   created_at: string;
 }
 
+export type TeamMemberType = "personeel" | "onderaannemer";
+
 export interface TeamMember {
   id: string;
   name: string;
@@ -81,6 +83,7 @@ export interface TeamMember {
   permissions: Permissions;
   can_edit_schedule: boolean;
   sees_all_projects: boolean;
+  member_type: TeamMemberType;
   created_at: string;
 }
 

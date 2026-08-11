@@ -24,19 +24,32 @@ export default async function PersoneelPage() {
   const teamMembers = (members ?? []) as TeamMember[];
   const projectList = ((projects ?? []) as Pick<Project, "id" | "name">[]).map((p) => ({ id: p.id, name: p.name }));
 
+  const ownStaff = teamMembers.filter((m) => m.member_type === "personeel");
+  const contractors = teamMembers.filter((m) => m.member_type !== "personeel");
+
   return (
     <div className="panel access-panel">
       <div className="hint-bar">
         <ShieldCheck size={14} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
-        Personeelsleden loggen in met hun eigen e-mailadres. Ze zien alleen de onderdelen en projecten die je hier vrijgeeft, en
-        verschijnen automatisch als keuze bij de bouwplanning en de algemene planning.
+        Iedereen logt in met zijn eigen e-mailadres en ziet alleen de onderdelen en projecten die je hier vrijgeeft. Kies bij het
+        uitnodigen (of later) of iemand eigen personeel of team/onderaannemer is.
       </div>
 
       <div className="access-block">
-        <div className="access-block-title">Van Essen Bouw & Onderhoud</div>
-        {teamMembers.length === 0 && <div className="empty-hint">Nog geen personeelsleden uitgenodigd.</div>}
+        <div className="access-block-title">Van Essen Bouw & Onderhoud — eigen personeel</div>
+        {ownStaff.length === 0 && <div className="empty-hint">Nog geen eigen personeel toegevoegd.</div>}
         <div className="access-list">
-          {teamMembers.map((m) => (
+          {ownStaff.map((m) => (
+            <TeamMemberRow key={m.id} member={m} projects={projectList} access={accessByMember[m.id] || []} />
+          ))}
+        </div>
+      </div>
+
+      <div className="access-block">
+        <div className="access-block-title">Team &amp; onderaannemers</div>
+        {contractors.length === 0 && <div className="empty-hint">Nog geen team/onderaannemers toegevoegd.</div>}
+        <div className="access-list">
+          {contractors.map((m) => (
             <TeamMemberRow key={m.id} member={m} projects={projectList} access={accessByMember[m.id] || []} />
           ))}
         </div>

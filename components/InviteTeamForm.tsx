@@ -27,6 +27,16 @@ export function InviteTeamForm() {
         <input name="email" type="email" placeholder="E-mailadres" required />
         <input name="trade" placeholder="Vak (optioneel)" />
       </div>
+      <div className="radio-row">
+        <label className="checkbox-label">
+          <input type="radio" name="member_type" value="personeel" />
+          Eigen personeel (Van Essen Bouw &amp; Onderhoud)
+        </label>
+        <label className="checkbox-label">
+          <input type="radio" name="member_type" value="onderaannemer" defaultChecked />
+          Team / onderaannemer
+        </label>
+      </div>
       <div className="hint-bar small">Kies meteen wat dit teamlid mag zien — je kunt dit later altijd nog aanpassen.</div>
       <div className="perm-grid">
         {MODULE_KEYS.map((key) => (

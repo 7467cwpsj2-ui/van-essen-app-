@@ -10,8 +10,9 @@ import {
   toggleTeamProjectAccess,
   toggleTeamSeesAllProjects,
   updateTeamMemberDetails,
+  updateTeamMemberType,
 } from "@/lib/actions/team";
-import type { ModuleKey, TeamMember } from "@/types/database";
+import type { ModuleKey, TeamMember, TeamMemberType } from "@/types/database";
 
 const TRADES = [
   "Timmerman",
@@ -59,7 +60,12 @@ export function TeamMemberRow({
       <button type="button" className="access-summary" onClick={() => setExpanded((v) => !v)}>
         <span className="access-avatar">{(member.name || "?").slice(0, 1).toUpperCase()}</span>
         <span className="access-summary-main">
-          <span className="access-summary-name">{member.name}</span>
+          <span className="access-summary-name">
+            {member.name}
+            <span className={"member-type-pill" + (member.member_type === "personeel" ? " personeel" : "")}>
+              {member.member_type === "personeel" ? "Eigen personeel" : "Onderaannemer"}
+            </span>
+          </span>
           <span className="access-summary-sub">
             {member.trade || "Overig"} ·{" "}
             {member.sees_all_projects ? "alle projecten" : `${projectCount} project${projectCount === 1 ? "" : "en"}`}
@@ -110,6 +116,26 @@ export function TeamMemberRow({
             >
               <Trash2 size={13} />
             </button>
+          </div>
+          <div className="radio-row">
+            <label className="checkbox-label">
+              <input
+                type="radio"
+                name={`member_type_${member.id}`}
+                checked={member.member_type === "personeel"}
+                onChange={() => run(() => updateTeamMemberType(member.id, "personeel" as TeamMemberType))}
+              />
+              Eigen personeel
+            </label>
+            <label className="checkbox-label">
+              <input
+                type="radio"
+                name={`member_type_${member.id}`}
+                checked={member.member_type === "onderaannemer"}
+                onChange={() => run(() => updateTeamMemberType(member.id, "onderaannemer" as TeamMemberType))}
+              />
+              Team / onderaannemer
+            </label>
           </div>
           <PermGrid perm={member.permissions} onToggle={(key: ModuleKey) => run(() => toggleTeamModulePermission(member.id, key, !member.permissions[key]))} />
           <label className="checkbox-label edit-right">
