@@ -1746,6 +1746,28 @@ textarea {
 .gantt-row-title-link:hover {
   text-decoration: underline;
 }
+.planning-person-block {
+  margin-bottom: 22px;
+}
+.planning-person-block:last-child {
+  margin-bottom: 0;
+}
+.planning-person-name {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+}
+.planning-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
 
 /* ---------- rollen & rechten ---------- */
 
