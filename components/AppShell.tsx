@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
 import { PushPrompt } from "@/components/PushPrompt";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { signOut } from "@/lib/actions/auth";
 import type { ProjectStatus, Role } from "@/types/database";
@@ -64,10 +65,14 @@ export function AppShell({
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />} Menu
         </button>
         <Brandmark />
+        <ThemeToggle />
       </div>
 
       <aside className={"sidebar" + (sidebarOpen ? " open" : "")}>
-        <Brandmark />
+        <div className="sidebar-top">
+          <Brandmark />
+          <ThemeToggle />
+        </div>
         <Link
           href="/dashboard"
           className={"toegang-toggle" + (pathname === "/dashboard" ? " active" : "")}
