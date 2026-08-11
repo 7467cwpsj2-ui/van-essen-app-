@@ -1,8 +1,9 @@
 "use client";
 
-import { Fragment, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { Fragment, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle } from "lucide-react";
+import { ScrollToToday } from "@/components/ScrollToToday";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
 
 const DAY_MS = 86400000;
@@ -34,18 +35,6 @@ interface DayCell {
 
 function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return aStart <= bEnd && bStart <= aEnd;
-}
-
-function ScrollToToday({ todayIdx, children }: { todayIdx: number; children: React.ReactNode }) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (ref.current && todayIdx >= 0) ref.current.scrollLeft = Math.max(0, (todayIdx - 3) * 30);
-  }, [todayIdx]);
-  return (
-    <div className="gantt-scroll" ref={ref}>
-      {children}
-    </div>
-  );
 }
 
 export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {

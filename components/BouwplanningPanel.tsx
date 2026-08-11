@@ -3,6 +3,7 @@
 import { Fragment, useState, useTransition } from "react";
 import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
+import { ScrollToToday } from "@/components/ScrollToToday";
 import { createPhase, deletePhase } from "@/lib/actions/schedule";
 import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { SchedulePhase, Task } from "@/types/database";
@@ -82,7 +83,7 @@ export function BouwplanningPanel({
       {phases.length === 0 ? (
         <div className="empty-hint">Nog geen bouwplanning toegevoegd.</div>
       ) : (
-        <div className="gantt-scroll">
+        <ScrollToToday todayIdx={todayIdx}>
           <div className="gantt-grid" style={{ gridTemplateColumns: `180px repeat(${days.length}, 30px)` }}>
             <div className="gantt-cell gantt-corner" />
             {days.map((d, idx) => {
@@ -170,7 +171,7 @@ export function BouwplanningPanel({
 
             {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${180 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
           </div>
-        </div>
+        </ScrollToToday>
       )}
       {!canEdit && phases.length > 0 && <div className="hint-bar small">Je kunt deze bouwplanning bekijken, maar niet wijzigen.</div>}
 
