@@ -118,6 +118,7 @@ export interface Project {
   actual_cost: number;
   cover_photo_path: string | null;
   planning_color: string | null;
+  review_request_sent_at: string | null;
 }
 
 export interface SchedulePhase {

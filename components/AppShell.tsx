@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Plus,
   Users,
+  Settings,
   ShieldCheck,
   LogOut,
   ChevronDown,
@@ -105,6 +106,13 @@ export function AppShell({
               onClick={() => setSidebarOpen(false)}
             >
               <CalendarRange size={14} /> Algemene planning
+            </Link>
+            <Link
+              href="/instellingen"
+              className={"toegang-toggle" + (pathname === "/instellingen" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Settings size={14} /> Instellingen
             </Link>
           </>
         )}
