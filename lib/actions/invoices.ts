@@ -2,12 +2,16 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import { PDFParse } from "pdf-parse";
+import { revalidatePath } from "next/cache";
 import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToUsers } from "@/lib/push";
 
 const MAX_SIZE = 20 * 1024 * 1024;
+const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
-export interface ParsedInvoice {
+export interface InvoiceResult {
+  autoFiled: boolean;
   supplier: string | null;
   workAddress: string | null;
   amount: number | null;
@@ -24,8 +28,8 @@ function normalize(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-export async function parseInvoicePdf(formData: FormData): Promise<ParsedInvoice> {
-  await requireOwner();
+export async function parseInvoicePdf(formData: FormData): Promise<InvoiceResult> {
+  const current = await requireOwner();
 
   if (!process.env.ANTHROPIC_API_KEY) {
     throw new Error("Factuur-uitlezen is nog niet ingesteld — er ontbreekt een ANTHROPIC_API_KEY in de omgevingsvariabelen.");
@@ -76,17 +80,15 @@ ${text.slice(0, 6000)}
 
   const supabase = createClient();
   const { data: projectRows } = await supabase.from("projects").select("id,name,address").order("name");
-  const projects = ((projectRows ?? []) as { id: string; name: string; address: string | null }[]).map((p) => ({
-    id: p.id,
-    name: p.name,
-  }));
+  const rows = (projectRows ?? []) as { id: string; name: string; address: string | null }[];
+  const projects = rows.map((p) => ({ id: p.id, name: p.name }));
 
   let matchedProjectId: string | null = null;
   let matchedProjectName: string | null = null;
   const workAddress = parsed.work_address ?? null;
   if (workAddress) {
     const target = normalize(workAddress);
-    for (const p of (projectRows ?? []) as { id: string; name: string; address: string | null }[]) {
+    for (const p of rows) {
       const addr = p.address ? normalize(p.address) : "";
       if (addr && target.length > 3 && (target.includes(addr) || addr.includes(target))) {
         matchedProjectId = p.id;
@@ -96,12 +98,24 @@ ${text.slice(0, 6000)}
     }
   }
 
-  return {
-    supplier: parsed.supplier ?? null,
-    workAddress,
-    amount: typeof parsed.amount === "number" ? parsed.amount : null,
-    matchedProjectId,
-    matchedProjectName,
-    projects,
-  };
+  const supplier = parsed.supplier ?? null;
+  const amount = typeof parsed.amount === "number" ? parsed.amount : null;
+
+  let autoFiled = false;
+  if (matchedProjectId && supplier && amount != null) {
+    const { error } = await supabase
+      .from("cost_items")
+      .insert({ project_id: matchedProjectId, description: supplier, amount });
+    if (!error) {
+      autoFiled = true;
+      revalidatePath(`/projects/${matchedProjectId}/nacalculatie`);
+      await sendPushToUsers([current.id], {
+        title: "Factuur automatisch verwerkt",
+        body: `${supplier} — ${fmtEuro(amount)} toegevoegd aan ${matchedProjectName}.`,
+        url: `/projects/${matchedProjectId}/nacalculatie`,
+      });
+    }
+  }
+
+  return { autoFiled, supplier, workAddress, amount, matchedProjectId, matchedProjectName, projects };
 }

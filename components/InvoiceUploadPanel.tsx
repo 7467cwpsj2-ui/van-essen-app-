@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from "react";
 import { CheckCircle2, FileText, Loader2, Upload } from "lucide-react";
-import { parseInvoicePdf, type ParsedInvoice } from "@/lib/actions/invoices";
+import { parseInvoicePdf, type InvoiceResult } from "@/lib/actions/invoices";
 import { createCostItem } from "@/lib/actions/calc";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
@@ -11,7 +11,7 @@ export function InvoiceUploadPanel() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [result, setResult] = useState<ParsedInvoice | null>(null);
+  const [result, setResult] = useState<InvoiceResult | null>(null);
   const [projectId, setProjectId] = useState("");
   const [supplier, setSupplier] = useState("");
   const [amount, setAmount] = useState("");
@@ -38,9 +38,11 @@ export function InvoiceUploadPanel() {
       formData.append("file", file);
       const parsed = await parseInvoicePdf(formData);
       setResult(parsed);
-      setSupplier(parsed.supplier || "");
-      setAmount(parsed.amount != null ? String(parsed.amount) : "");
-      setProjectId(parsed.matchedProjectId || "");
+      if (!parsed.autoFiled) {
+        setSupplier(parsed.supplier || "");
+        setAmount(parsed.amount != null ? String(parsed.amount) : "");
+        setProjectId(parsed.matchedProjectId || "");
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Uitlezen mislukt.");
     } finally {
@@ -60,8 +62,9 @@ export function InvoiceUploadPanel() {
   return (
     <div className="panel">
       <div className="hint-bar">
-        Sleep een factuur (PDF) hierheen of kies een bestand. De app leest de leverancier, het werkadres en het bedrag uit, probeert
-        automatisch het juiste project te vinden, en zet het klaar als kostenpost bij de nacalculatie — jij bevestigt met één klik.
+        Sleep een factuur (PDF) hierheen of kies een bestand. Herkent de app de leverancier, het werkadres én het bedrag met genoeg
+        zekerheid, dan wordt de kostenpost direct toegevoegd aan de nacalculatie — met een pushmelding ter controle. Lukt dat niet
+        volledig, dan vraagt de app je het zelf even aan te vullen.
       </div>
 
       {!result && !saved && (
@@ -92,19 +95,32 @@ export function InvoiceUploadPanel() {
 
       {error && <div className="login-error">{error}</div>}
 
-      {result && !saved && (
+      {result?.autoFiled && (
+        <div className="add-form">
+          <div className="hint-bar small">
+            <CheckCircle2 size={13} style={{ display: "inline", marginRight: 5, verticalAlign: -2 }} />
+            Automatisch toegevoegd aan de nacalculatie van <b>{result.matchedProjectName}</b>: {result.supplier} —{" "}
+            {fmtEuro(result.amount ?? 0)}.
+          </div>
+          <button className="btn-ghost" onClick={reset} style={{ alignSelf: "flex-start" }}>
+            <Upload size={13} /> Nog een factuur uploaden
+          </button>
+        </div>
+      )}
+
+      {result && !result.autoFiled && !saved && (
         <div className="add-form">
           <div className="add-form-title">
             <FileText size={13} style={{ display: "inline", marginRight: 5, verticalAlign: -2 }} />
-            Controleer en bevestig
+            Niet zeker genoeg — vul aan en bevestig
           </div>
-          {!result.matchedProjectId && (
-            <div className="hint-bar small">
-              {result.workAddress
-                ? `Geen project gevonden voor werkadres "${result.workAddress}" — kies er zelf een.`
-                : "Geen werkadres op de factuur gevonden — kies zelf het juiste project."}
-            </div>
-          )}
+          <div className="hint-bar small">
+            {!result.matchedProjectId && result.workAddress
+              ? `Geen project gevonden voor werkadres "${result.workAddress}" — kies er zelf een.`
+              : !result.matchedProjectId
+                ? "Geen werkadres op de factuur gevonden — kies zelf het juiste project."
+                : "Leverancier of bedrag kon niet met zekerheid gelezen worden — controleer hieronder."}
+          </div>
           <div className="add-form-grid">
             <label className="field-with-label">
               <span className="field-label">Project</span>
