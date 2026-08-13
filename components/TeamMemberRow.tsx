@@ -40,6 +40,7 @@ export function TeamMemberRow({
   const isKnownTrade = TRADES.includes(member.trade || "");
   const [tradeSel, setTradeSel] = useState(isKnownTrade ? member.trade! : "Overig");
   const [customTrade, setCustomTrade] = useState(isKnownTrade ? "" : member.trade || "");
+  const [hourlyRate, setHourlyRate] = useState(member.hourly_rate != null ? String(member.hourly_rate) : "");
   const [, startTransition] = useTransition();
 
   const projectCount = member.sees_all_projects ? projects.length : access.length;
@@ -117,6 +118,20 @@ export function TeamMemberRow({
               <Trash2 size={13} />
             </button>
           </div>
+          <label className="field-with-label">
+            <span className="field-label">Uurtarief (voor nacalculatie, optioneel)</span>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="bv. 45.00"
+              value={hourlyRate}
+              onChange={(e) => setHourlyRate(e.target.value)}
+              onBlur={() =>
+                run(() => updateTeamMemberDetails(member.id, { hourly_rate: hourlyRate.trim() ? Number(hourlyRate) : null }))
+              }
+            />
+          </label>
           <div className="radio-row">
             <label className="checkbox-label">
               <input

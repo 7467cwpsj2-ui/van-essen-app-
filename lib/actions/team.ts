@@ -49,7 +49,7 @@ export async function inviteTeamMember(formData: FormData) {
   revalidatePath("/personeel");
 }
 
-export async function updateTeamMemberDetails(id: string, patch: { name?: string; trade?: string | null }) {
+export async function updateTeamMemberDetails(id: string, patch: { name?: string; trade?: string | null; hourly_rate?: number | null }) {
   await requireOwner();
   const supabase = createClient();
   const { error } = await supabase.from("team_members").update(patch).eq("id", id);
@@ -58,6 +58,7 @@ export async function updateTeamMemberDetails(id: string, patch: { name?: string
     await supabase.from("profiles").update({ name: patch.name }).eq("team_member_id", id);
   }
   revalidatePath("/personeel");
+  revalidatePath("/projects", "layout");
 }
 
 export async function toggleTeamModulePermission(id: string, moduleKey: ModuleKey, value: boolean) {

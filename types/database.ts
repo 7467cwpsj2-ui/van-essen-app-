@@ -84,6 +84,15 @@ export interface TeamMember {
   can_edit_schedule: boolean;
   sees_all_projects: boolean;
   member_type: TeamMemberType;
+  hourly_rate: number | null;
+  created_at: string;
+}
+
+export interface CostItem {
+  id: string;
+  project_id: string;
+  description: string;
+  amount: number;
   created_at: string;
 }
 
