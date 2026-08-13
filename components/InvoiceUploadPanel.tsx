@@ -7,12 +7,12 @@ import { createCostItem } from "@/lib/actions/calc";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
-export function InvoiceUploadPanel() {
+export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fixedProjectName }: { projectId?: string; projectName?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<InvoiceResult | null>(null);
-  const [projectId, setProjectId] = useState("");
+  const [projectId, setProjectId] = useState(fixedProjectId || "");
   const [supplier, setSupplier] = useState("");
   const [amount, setAmount] = useState("");
   const [saved, setSaved] = useState(false);
@@ -24,7 +24,7 @@ export function InvoiceUploadPanel() {
     setSaved(false);
     setSupplier("");
     setAmount("");
-    setProjectId("");
+    setProjectId(fixedProjectId || "");
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -36,12 +36,12 @@ export function InvoiceUploadPanel() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const parsed = await parseInvoicePdf(formData);
+      const parsed = await parseInvoicePdf(formData, fixedProjectId);
       setResult(parsed);
       if (!parsed.autoFiled) {
         setSupplier(parsed.supplier || "");
         setAmount(parsed.amount != null ? String(parsed.amount) : "");
-        setProjectId(parsed.matchedProjectId || "");
+        setProjectId(fixedProjectId || parsed.matchedProjectId || "");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Uitlezen mislukt.");
@@ -60,11 +60,20 @@ export function InvoiceUploadPanel() {
   };
 
   return (
-    <div className="panel">
+    <div className={fixedProjectId ? "add-form" : "panel"}>
       <div className="hint-bar">
-        Sleep een factuur (PDF) hierheen of kies een bestand. Herkent de app de leverancier, het werkadres én het bedrag met genoeg
-        zekerheid, dan wordt de kostenpost direct toegevoegd aan de nacalculatie — met een pushmelding ter controle. Lukt dat niet
-        volledig, dan vraagt de app je het zelf even aan te vullen.
+        {fixedProjectId ? (
+          <>
+            Sleep een factuur (PDF) hierheen of kies een bestand — wordt met genoeg zekerheid leverancier en bedrag herkend, dan komt
+            het er direct als kostenpost bij voor <b>{fixedProjectName}</b>.
+          </>
+        ) : (
+          <>
+            Sleep een factuur (PDF) hierheen of kies een bestand. Herkent de app de leverancier, het werkadres én het bedrag met
+            genoeg zekerheid, dan wordt de kostenpost direct toegevoegd aan de nacalculatie — met een pushmelding ter controle. Lukt
+            dat niet volledig, dan vraagt de app je het zelf even aan te vullen.
+          </>
+        )}
       </div>
 
       {!result && !saved && (
@@ -115,24 +124,28 @@ export function InvoiceUploadPanel() {
             Niet zeker genoeg — vul aan en bevestig
           </div>
           <div className="hint-bar small">
-            {!result.matchedProjectId && result.workAddress
-              ? `Geen project gevonden voor werkadres "${result.workAddress}" — kies er zelf een.`
-              : !result.matchedProjectId
-                ? "Geen werkadres op de factuur gevonden — kies zelf het juiste project."
-                : "Leverancier of bedrag kon niet met zekerheid gelezen worden — controleer hieronder."}
+            {fixedProjectId
+              ? "Leverancier of bedrag kon niet met zekerheid gelezen worden — controleer hieronder."
+              : !result.matchedProjectId && result.workAddress
+                ? `Geen project gevonden voor werkadres "${result.workAddress}" — kies er zelf een.`
+                : !result.matchedProjectId
+                  ? "Geen werkadres op de factuur gevonden — kies zelf het juiste project."
+                  : "Leverancier of bedrag kon niet met zekerheid gelezen worden — controleer hieronder."}
           </div>
           <div className="add-form-grid">
-            <label className="field-with-label">
-              <span className="field-label">Project</span>
-              <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
-                <option value="">Kies project</option>
-                {result.projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            </label>
+            {!fixedProjectId && (
+              <label className="field-with-label">
+                <span className="field-label">Project</span>
+                <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+                  <option value="">Kies project</option>
+                  {result.projects.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
             <label className="field-with-label">
               <span className="field-label">Leverancier</span>
               <input value={supplier} onChange={(e) => setSupplier(e.target.value)} placeholder="Naam leverancier" />
@@ -156,8 +169,8 @@ export function InvoiceUploadPanel() {
       {saved && (
         <div className="add-form">
           <div className="hint-bar small">
-            Toegevoegd aan de nacalculatie van {result?.projects.find((p) => p.id === projectId)?.name}: {supplier} —{" "}
-            {fmtEuro(Number(amount) || 0)}.
+            Toegevoegd aan de nacalculatie van {fixedProjectName || result?.projects.find((p) => p.id === projectId)?.name}:{" "}
+            {supplier} — {fmtEuro(Number(amount) || 0)}.
           </div>
           <button className="btn-ghost" onClick={reset} style={{ alignSelf: "flex-start" }}>
             <Upload size={13} /> Nog een factuur uploaden

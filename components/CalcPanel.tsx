@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { createCostItem, deleteCostItem, updateCalc } from "@/lib/actions/calc";
+import { InvoiceUploadPanel } from "@/components/InvoiceUploadPanel";
 import type { CostItem, Project } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
@@ -167,26 +168,30 @@ export function CalcPanel({
       </div>
 
       {!isLocked && (
-        <div className="add-form">
-          <div className="add-form-grid">
-            <input
-              placeholder="Omschrijving (bv. Materiaal bij leverancier X)"
-              value={itemDescription}
-              onChange={(e) => setItemDescription(e.target.value)}
-            />
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Bedrag"
-              value={itemAmount}
-              onChange={(e) => setItemAmount(e.target.value)}
-            />
-            <button className="btn-primary" onClick={addItem}>
-              <Plus size={14} /> Toevoegen
-            </button>
+        <>
+          <InvoiceUploadPanel projectId={projectId} projectName={project.name} />
+          <div className="add-form">
+            <div className="add-form-title">Handmatig een kostenpost toevoegen</div>
+            <div className="add-form-grid">
+              <input
+                placeholder="Omschrijving (bv. Materiaal bij leverancier X)"
+                value={itemDescription}
+                onChange={(e) => setItemDescription(e.target.value)}
+              />
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="Bedrag"
+                value={itemAmount}
+                onChange={(e) => setItemAmount(e.target.value)}
+              />
+              <button className="btn-primary" onClick={addItem}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );

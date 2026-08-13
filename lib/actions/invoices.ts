@@ -28,7 +28,7 @@ function normalize(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-export async function parseInvoicePdf(formData: FormData): Promise<InvoiceResult> {
+export async function parseInvoicePdf(formData: FormData, targetProjectId?: string): Promise<InvoiceResult> {
   const current = await requireOwner();
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -86,7 +86,11 @@ ${text.slice(0, 6000)}
   let matchedProjectId: string | null = null;
   let matchedProjectName: string | null = null;
   const workAddress = parsed.work_address ?? null;
-  if (workAddress) {
+  if (targetProjectId) {
+    const target = rows.find((p) => p.id === targetProjectId);
+    matchedProjectId = target?.id ?? targetProjectId;
+    matchedProjectName = target?.name ?? null;
+  } else if (workAddress) {
     const target = normalize(workAddress);
     for (const p of rows) {
       const addr = p.address ? normalize(p.address) : "";
