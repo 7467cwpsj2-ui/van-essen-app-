@@ -1,39 +1,45 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, SunMoon } from "lucide-react";
 
-type Theme = "light" | "dark";
+type Pref = "system" | "light" | "dark";
 
-function systemTheme(): Theme {
-  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+const ORDER: Pref[] = ["system", "light", "dark"];
+const LABEL: Record<Pref, string> = { system: "Systeem (automatisch)", light: "Licht", dark: "Donker" };
+const ICON: Record<Pref, typeof Sun> = { system: SunMoon, light: Sun, dark: Moon };
+
+function applyTheme(pref: Pref) {
+  if (pref === "system") {
+    document.documentElement.removeAttribute("data-theme");
+    localStorage.removeItem("theme");
+  } else {
+    document.documentElement.setAttribute("data-theme", pref);
+    localStorage.setItem("theme", pref);
+  }
 }
 
 export function ThemeToggle() {
-  const [theme, setTheme] = useState<Theme | null>(null);
+  const [pref, setPref] = useState<Pref | null>(null);
 
   useEffect(() => {
     const stored = localStorage.getItem("theme");
-    setTheme(stored === "light" || stored === "dark" ? stored : systemTheme());
+    setPref(stored === "light" || stored === "dark" ? stored : "system");
   }, []);
 
-  if (theme === null) return <span className="icon-btn ghost" style={{ visibility: "hidden" }} />;
+  if (pref === null) return <span className="icon-btn ghost" style={{ visibility: "hidden" }} />;
 
-  const toggle = () => {
-    const next: Theme = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("theme", next);
-    document.documentElement.setAttribute("data-theme", next);
+  const cycle = () => {
+    const next = ORDER[(ORDER.indexOf(pref) + 1) % ORDER.length];
+    setPref(next);
+    applyTheme(next);
   };
 
+  const Icon = ICON[pref];
+
   return (
-    <button
-      type="button"
-      className="icon-btn ghost"
-      onClick={toggle}
-      title={theme === "dark" ? "Naar licht thema" : "Naar donker thema"}
-    >
-      {theme === "dark" ? <Sun size={14} /> : <Moon size={14} />}
+    <button type="button" className="icon-btn ghost" onClick={cycle} title={`Thema: ${LABEL[pref]} — tik om te wisselen`}>
+      <Icon size={14} />
     </button>
   );
 }
