@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Building2,
   CalendarRange,
+  FileText,
   LayoutDashboard,
   Plus,
   Users,
@@ -106,6 +107,13 @@ export function AppShell({
               onClick={() => setSidebarOpen(false)}
             >
               <CalendarRange size={14} /> Algemene planning
+            </Link>
+            <Link
+              href="/facturen"
+              className={"toegang-toggle" + (pathname === "/facturen" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <FileText size={14} /> Facturen
             </Link>
             <Link
               href="/instellingen"
