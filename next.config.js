@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  // pdf-parse rechtstreeks laten draaien in Node i.p.v. door webpack
+  // laten bundelen — anders pakt de server-bundel soms per ongeluk de
+  // browser-variant van het pakket, wat op Vercel tot een build- of
+  // runtimefout kan leiden.
+  serverExternalPackages: ["pdf-parse"],
   // Unieke waarde per deploy — de client vergelijkt hiermee de versie die
   // hij nu draait met de versie die live staat (zie /api/version en
   // components/UpdateChecker.tsx), zodat een geïnstalleerde app zichzelf
