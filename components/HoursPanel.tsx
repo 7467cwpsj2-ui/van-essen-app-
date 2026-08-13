@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, Plus, Trash2 } from "lucide-react";
+import { Download, Plus, Trash2, Zap } from "lucide-react";
 import { createHourEntry, createWeekHourEntries, deleteHourEntry } from "@/lib/actions/hours";
 import { weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
@@ -31,11 +31,24 @@ export function HoursPanel({
   entries: HourEntry[];
   teamMembers: { id: string; name: string }[];
 }) {
+  const todayIso = new Date().toISOString().slice(0, 10);
   const [mode, setMode] = useState<"dag" | "week">("dag");
-  const [form, setForm] = useState({ teamMemberId: currentTeamMemberId || "", workDate: "", hours: "", note: "" });
+  const [form, setForm] = useState({ teamMemberId: currentTeamMemberId || "", workDate: todayIso, hours: "", note: "" });
   const [, startTransition] = useTransition();
 
   const nameFor = (id: string) => teamMembers.find((m) => m.id === id)?.name || "—";
+
+  const quickAdd = (hours: number) => {
+    if (role === "eigenaar" && !form.teamMemberId) {
+      alert("Kies hieronder eerst een teamlid.");
+      return;
+    }
+    startTransition(() => {
+      createHourEntry(projectId, { teamMemberId: form.teamMemberId, workDate: todayIso, hours, note: null }).catch((err) =>
+        alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
+      );
+    });
+  };
 
   const add = () => {
     if (!form.workDate || !Number(form.hours)) return;
@@ -56,7 +69,7 @@ export function HoursPanel({
         }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
       }
     });
-    setForm({ teamMemberId: currentTeamMemberId || form.teamMemberId, workDate: "", hours: "", note: "" });
+    setForm({ teamMemberId: currentTeamMemberId || form.teamMemberId, workDate: todayIso, hours: "", note: "" });
   };
 
   const remove = (id: string) => {
@@ -140,7 +153,28 @@ export function HoursPanel({
 
       {!isLocked && (
         <div className="add-form">
-          <div className="add-form-title">Uren registreren</div>
+          <div className="add-form-title">Snel vandaag toevoegen</div>
+          {role === "eigenaar" && (
+            <select value={form.teamMemberId} onChange={(e) => setForm({ ...form, teamMemberId: e.target.value })}>
+              <option value="">Kies teamlid</option>
+              {teamMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          )}
+          <div className="quick-hours-row">
+            {[4, 6, 8].map((h) => (
+              <button key={h} type="button" className="btn-ghost" onClick={() => quickAdd(h)}>
+                <Zap size={13} /> {h} uur
+              </button>
+            ))}
+          </div>
+
+          <div className="add-form-title" style={{ marginTop: 6 }}>
+            Andere datum / aantal / opmerking
+          </div>
           <div className="mode-toggle">
             <button type="button" className={mode === "dag" ? "active" : ""} onClick={() => setMode("dag")}>
               Per dag
@@ -150,16 +184,6 @@ export function HoursPanel({
             </button>
           </div>
           <div className="add-form-grid">
-            {role === "eigenaar" && (
-              <select value={form.teamMemberId} onChange={(e) => setForm({ ...form, teamMemberId: e.target.value })}>
-                <option value="">Kies teamlid</option>
-                {teamMembers.map((m) => (
-                  <option key={m.id} value={m.id}>
-                    {m.name}
-                  </option>
-                ))}
-              </select>
-            )}
             <label className="field-with-label">
               <span className="field-label">{mode === "week" ? "Een dag in die week" : "Datum"}</span>
               <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />

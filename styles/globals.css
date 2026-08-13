@@ -1019,6 +1019,11 @@ textarea {
   flex-direction: column;
   gap: 8px;
 }
+.quick-hours-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
 .mode-toggle {
   display: inline-flex;
   gap: 2px;
