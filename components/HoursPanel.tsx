@@ -1,9 +1,9 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Download, Plus, Trash2, Zap } from "lucide-react";
+import { ChevronDown, Download, Plus, Trash2, Zap } from "lucide-react";
 import { createHourEntry, createWeekHourEntries, deleteHourEntry } from "@/lib/actions/hours";
-import { weekdaysOfWeek } from "@/lib/workingDays";
+import { mondayOfWeek, weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
 
 function fmtShort(iso: string) {
@@ -12,6 +12,28 @@ function fmtShort(iso: string) {
 
 function csvCell(v: string) {
   return `"${v.replace(/"/g, '""')}"`;
+}
+
+interface WeekGroup {
+  monday: string;
+  rows: HourEntry[];
+  total: number;
+}
+
+function groupByWeek(rows: HourEntry[]): WeekGroup[] {
+  const map = new Map<string, HourEntry[]>();
+  for (const r of rows) {
+    const monday = mondayOfWeek(r.work_date);
+    if (!map.has(monday)) map.set(monday, []);
+    map.get(monday)!.push(r);
+  }
+  return Array.from(map.entries())
+    .map(([monday, rows]) => ({
+      monday,
+      rows: [...rows].sort((a, b) => (a.work_date < b.work_date ? 1 : -1)),
+      total: rows.reduce((s, e) => s + Number(e.hours), 0),
+    }))
+    .sort((a, b) => (a.monday < b.monday ? 1 : -1));
 }
 
 export function HoursPanel({
@@ -32,11 +54,18 @@ export function HoursPanel({
   teamMembers: { id: string; name: string }[];
 }) {
   const todayIso = new Date().toISOString().slice(0, 10);
+  const currentWeekMonday = mondayOfWeek(todayIso);
   const [mode, setMode] = useState<"dag" | "week">("dag");
   const [form, setForm] = useState({ teamMemberId: currentTeamMemberId || "", workDate: todayIso, hours: "", note: "" });
+  const [showDetail, setShowDetail] = useState(false);
+  const [openWeeks, setOpenWeeks] = useState<Record<string, boolean>>({});
   const [, startTransition] = useTransition();
 
   const nameFor = (id: string) => teamMembers.find((m) => m.id === id)?.name || "—";
+
+  const toggleWeek = (key: string, defaultOpen: boolean) => {
+    setOpenWeeks((prev) => ({ ...prev, [key]: !(prev[key] ?? defaultOpen) }));
+  };
 
   const quickAdd = (hours: number) => {
     if (role === "eigenaar" && !form.teamMemberId) {
@@ -98,9 +127,9 @@ export function HoursPanel({
       ? Array.from(new Set(entries.map((e) => e.team_member_id))).map((id) => ({
           id,
           name: nameFor(id),
-          rows: entries.filter((e) => e.team_member_id === id).sort((a, b) => (a.work_date < b.work_date ? 1 : -1)),
+          rows: entries.filter((e) => e.team_member_id === id),
         }))
-      : [{ id: "self", name: "Mijn uren", rows: [...entries].sort((a, b) => (a.work_date < b.work_date ? 1 : -1)) }];
+      : [{ id: "self", name: "Mijn uren", rows: entries }];
 
   return (
     <div className="panel">
@@ -120,6 +149,7 @@ export function HoursPanel({
       {groups.length === 0 && <div className="empty-hint">Nog geen uren geregistreerd.</div>}
       {groups.map((g) => {
         const total = g.rows.reduce((s, e) => s + Number(e.hours), 0);
+        const weeks = groupByWeek(g.rows);
         return (
           <div key={g.id}>
             {role === "eigenaar" && (
@@ -127,26 +157,45 @@ export function HoursPanel({
                 {g.name} · <span className="mono">{total} uur</span>
               </div>
             )}
-            <div className="task-list">
-              {g.rows.map((e) => {
-                const canDelete = !isLocked && (role === "eigenaar" || e.team_member_id === currentTeamMemberId);
-                return (
-                  <div key={e.id} className="task-row">
-                    <div className="task-body">
-                      <div className="task-title mono">
-                        {e.work_date} · {e.hours} uur
-                      </div>
-                      {e.note && <div className="task-meta">{e.note}</div>}
+            {weeks.map((wg) => {
+              const key = `${g.id}:${wg.monday}`;
+              const defaultOpen = wg.monday === currentWeekMonday;
+              const open = openWeeks[key] ?? defaultOpen;
+              const sunday = new Date(new Date(wg.monday + "T00:00:00Z").getTime() + 6 * 86400000).toISOString().slice(0, 10);
+              return (
+                <div key={key} className="hours-week-group">
+                  <button type="button" className="hours-week-header" onClick={() => toggleWeek(key, defaultOpen)}>
+                    <ChevronDown size={13} className={"access-chevron" + (open ? " open" : "")} />
+                    <span>
+                      Week van {fmtShort(wg.monday)} t/m {fmtShort(sunday)}
+                    </span>
+                    <span className="mono">{wg.total} uur</span>
+                  </button>
+                  {open && (
+                    <div className="task-list">
+                      {wg.rows.map((e) => {
+                        const canDelete = !isLocked && (role === "eigenaar" || e.team_member_id === currentTeamMemberId);
+                        return (
+                          <div key={e.id} className="task-row">
+                            <div className="task-body">
+                              <div className="task-title mono">
+                                {e.work_date} · {e.hours} uur
+                              </div>
+                              {e.note && <div className="task-meta">{e.note}</div>}
+                            </div>
+                            {canDelete && (
+                              <button className="icon-btn danger ghost" onClick={() => remove(e.id)}>
+                                <Trash2 size={14} />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
-                    {canDelete && (
-                      <button className="icon-btn danger ghost" onClick={() => remove(e.id)}>
-                        <Trash2 size={14} />
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         );
       })}
@@ -172,41 +221,53 @@ export function HoursPanel({
             ))}
           </div>
 
-          <div className="add-form-title" style={{ marginTop: 6 }}>
-            Andere datum / aantal / opmerking
-          </div>
-          <div className="mode-toggle">
-            <button type="button" className={mode === "dag" ? "active" : ""} onClick={() => setMode("dag")}>
-              Per dag
+          {!showDetail ? (
+            <button type="button" className="link-btn" onClick={() => setShowDetail(true)} style={{ alignSelf: "flex-start" }}>
+              Andere datum, aantal of opmerking invoeren
             </button>
-            <button type="button" className={mode === "week" ? "active" : ""} onClick={() => setMode("week")}>
-              Hele week
-            </button>
-          </div>
-          <div className="add-form-grid">
-            <label className="field-with-label">
-              <span className="field-label">{mode === "week" ? "Een dag in die week" : "Datum"}</span>
-              <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
-            </label>
-            <input
-              type="number"
-              step="0.5"
-              min="0"
-              max="24"
-              placeholder={mode === "week" ? "Uren per dag" : "Uren"}
-              value={form.hours}
-              onChange={(e) => setForm({ ...form, hours: e.target.value })}
-            />
-            <input placeholder="Opmerking (optioneel)" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-            <button className="btn-primary" onClick={add}>
-              <Plus size={14} /> Toevoegen
-            </button>
-          </div>
-          {mode === "week" && form.workDate && (
-            <div className="hint-bar small">
-              Dit registreert {form.hours || "…"} uur op elke werkdag van ma {fmtShort(weekdaysOfWeek(form.workDate)[0])} t/m vr{" "}
-              {fmtShort(weekdaysOfWeek(form.workDate)[4])} (weekend telt niet mee).
-            </div>
+          ) : (
+            <>
+              <div className="add-form-title" style={{ marginTop: 6 }}>
+                Andere datum / aantal / opmerking
+              </div>
+              <div className="mode-toggle">
+                <button type="button" className={mode === "dag" ? "active" : ""} onClick={() => setMode("dag")}>
+                  Per dag
+                </button>
+                <button type="button" className={mode === "week" ? "active" : ""} onClick={() => setMode("week")}>
+                  Hele week
+                </button>
+              </div>
+              <div className="add-form-grid">
+                <label className="field-with-label">
+                  <span className="field-label">{mode === "week" ? "Een dag in die week" : "Datum"}</span>
+                  <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  placeholder={mode === "week" ? "Uren per dag" : "Uren"}
+                  value={form.hours}
+                  onChange={(e) => setForm({ ...form, hours: e.target.value })}
+                />
+                <input
+                  placeholder="Opmerking (optioneel)"
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                />
+                <button className="btn-primary" onClick={add}>
+                  <Plus size={14} /> Toevoegen
+                </button>
+              </div>
+              {mode === "week" && form.workDate && (
+                <div className="hint-bar small">
+                  Dit registreert {form.hours || "…"} uur op elke werkdag van ma {fmtShort(weekdaysOfWeek(form.workDate)[0])} t/m vr{" "}
+                  {fmtShort(weekdaysOfWeek(form.workDate)[4])} (weekend telt niet mee).
+                </div>
+              )}
+            </>
           )}
         </div>
       )}
