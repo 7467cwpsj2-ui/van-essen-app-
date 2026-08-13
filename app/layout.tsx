@@ -23,6 +23,7 @@ export const viewport: Viewport = {
   themeColor: "#33a8e8",
   width: "device-width",
   initialScale: 1,
+  colorScheme: "light dark",
 };
 
 const THEME_INIT_SCRIPT = `
