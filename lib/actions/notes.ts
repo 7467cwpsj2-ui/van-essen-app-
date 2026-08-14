@@ -72,7 +72,11 @@ export async function updateNoteText(projectId: string, id: string, text: string
 export async function setNoteVisibility(projectId: string, id: string, visibility: NoteVisibility) {
   const current = await requireUser();
   const supabase = createClient();
-  const { error } = await supabase.from("notes").update({ visibility, reviewed: true }).eq("id", id);
+  // Delen met team is de eerste van twee stappen — laat "reviewed" nog
+  // op false staan zodat de eigenaar daarna nog expliciet kan kiezen om
+  // ook met de klant te delen (of dat bewust niet te doen).
+  const reviewed = visibility !== "team";
+  const { error } = await supabase.from("notes").update({ visibility, reviewed }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/notities`);
 
