@@ -95,6 +95,8 @@ export interface CostItem {
   description: string;
   amount: number;
   vat_type: ExtraWorkVatType;
+  supplier: string | null;
+  invoice_number: string | null;
   created_at: string;
 }
 

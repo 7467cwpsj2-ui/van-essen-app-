@@ -17,13 +17,21 @@ export async function updateCalc(projectId: string, data: { quoteAmount: number;
   revalidatePath(`/projects/${projectId}/dossier`);
 }
 
-export async function createCostItem(projectId: string, data: { description: string; amount: number; vatType?: ExtraWorkVatType }) {
+export async function createCostItem(
+  projectId: string,
+  data: { description: string; amount: number; vatType?: ExtraWorkVatType; supplier?: string | null; invoiceNumber?: string | null }
+) {
   await requireOwner();
   if (!data.description.trim()) throw new Error("Omschrijving is verplicht.");
   const supabase = createClient();
-  const { error } = await supabase
-    .from("cost_items")
-    .insert({ project_id: projectId, description: data.description.trim(), amount: data.amount, vat_type: data.vatType ?? "excl" });
+  const { error } = await supabase.from("cost_items").insert({
+    project_id: projectId,
+    description: data.description.trim(),
+    amount: data.amount,
+    vat_type: data.vatType ?? "excl",
+    supplier: data.supplier?.trim() || null,
+    invoice_number: data.invoiceNumber?.trim() || null,
+  });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/nacalculatie`);
 }

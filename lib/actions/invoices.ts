@@ -13,6 +13,7 @@ const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency
 export interface InvoiceResult {
   autoFiled: boolean;
   supplier: string | null;
+  invoiceNumber: string | null;
   workAddress: string | null;
   amount: number | null;
   matchedProjectId: string | null;
@@ -56,8 +57,8 @@ export async function parseInvoicePdf(formData: FormData, targetProjectId?: stri
     messages: [
       {
         role: "user",
-        content: `Dit is de tekst van een factuur. Haal er drie dingen uit en antwoord ALLEEN met geldige JSON, verder niets:
-{"supplier": "naam van de leverancier/afzender van de factuur, of null als onduidelijk", "work_address": "het werk- of projectadres dat op de factuur genoemd staat (bijvoorbeeld bij 'werkadres', 'leveradres' of 'project'), niet het factuuradres van de klant zelf — of null als er geen apart werkadres genoemd wordt", "amount": het totaalbedrag inclusief btw als getal met een punt als decimaalteken (bijvoorbeeld 450.50), of null als onduidelijk}
+        content: `Dit is de tekst van een factuur. Haal er vier dingen uit en antwoord ALLEEN met geldige JSON, verder niets:
+{"supplier": "naam van de leverancier/afzender van de factuur, of null als onduidelijk", "invoice_number": "het factuurnummer, of null als er geen op de factuur staat", "work_address": "het werk- of projectadres dat op de factuur genoemd staat (bijvoorbeeld bij 'werkadres', 'leveradres' of 'project'), niet het factuuradres van de klant zelf — of null als er geen apart werkadres genoemd wordt", "amount": het totaalbedrag inclusief btw als getal met een punt als decimaalteken (bijvoorbeeld 450.50), of null als onduidelijk}
 
 Factuurtekst:
 """
@@ -70,7 +71,7 @@ ${text.slice(0, 6000)}
   const block = message.content.find((b) => b.type === "text");
   const raw = block && block.type === "text" ? block.text : "{}";
 
-  let parsed: { supplier?: string | null; work_address?: string | null; amount?: number | null } = {};
+  let parsed: { supplier?: string | null; invoice_number?: string | null; work_address?: string | null; amount?: number | null } = {};
   try {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     parsed = JSON.parse(jsonMatch ? jsonMatch[0] : raw);
@@ -103,13 +104,19 @@ ${text.slice(0, 6000)}
   }
 
   const supplier = parsed.supplier ?? null;
+  const invoiceNumber = parsed.invoice_number ?? null;
   const amount = typeof parsed.amount === "number" ? parsed.amount : null;
 
   let autoFiled = false;
   if (matchedProjectId && supplier && amount != null) {
-    const { error } = await supabase
-      .from("cost_items")
-      .insert({ project_id: matchedProjectId, description: supplier, amount, vat_type: "incl" });
+    const { error } = await supabase.from("cost_items").insert({
+      project_id: matchedProjectId,
+      description: supplier,
+      amount,
+      vat_type: "incl",
+      supplier,
+      invoice_number: invoiceNumber,
+    });
     if (!error) {
       autoFiled = true;
       revalidatePath(`/projects/${matchedProjectId}/nacalculatie`);
@@ -121,5 +128,5 @@ ${text.slice(0, 6000)}
     }
   }
 
-  return { autoFiled, supplier, workAddress, amount, matchedProjectId, matchedProjectName, projects };
+  return { autoFiled, supplier, invoiceNumber, workAddress, amount, matchedProjectId, matchedProjectName, projects };
 }

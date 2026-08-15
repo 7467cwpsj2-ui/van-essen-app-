@@ -38,6 +38,8 @@ export function CalcPanel({
   const [itemDescription, setItemDescription] = useState("");
   const [itemAmount, setItemAmount] = useState("");
   const [itemVatType, setItemVatType] = useState<ExtraWorkVatType>("excl");
+  const [itemSupplier, setItemSupplier] = useState("");
+  const [itemInvoiceNumber, setItemInvoiceNumber] = useState("");
   const [, startTransition] = useTransition();
 
   const begroot = Number(project.quote_amount) || 0;
@@ -59,13 +61,26 @@ export function CalcPanel({
   const addItem = () => {
     if (!itemDescription.trim() || !itemAmount) return;
     startTransition(() => {
-      createCostItem(projectId, { description: itemDescription, amount: Number(itemAmount) || 0, vatType: itemVatType }).catch((err) =>
-        alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
-      );
+      createCostItem(projectId, {
+        description: itemDescription,
+        amount: Number(itemAmount) || 0,
+        vatType: itemVatType,
+        supplier: itemSupplier,
+        invoiceNumber: itemInvoiceNumber,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
     setItemDescription("");
     setItemAmount("");
+    setItemSupplier("");
+    setItemInvoiceNumber("");
   };
+
+  const costBySupplier = costItems.reduce<Map<string, number>>((map, c) => {
+    const key = c.supplier?.trim() || "Overig";
+    map.set(key, (map.get(key) ?? 0) + Number(c.amount));
+    return map;
+  }, new Map());
+  const supplierTotals = Array.from(costBySupplier.entries()).sort((a, b) => b[1] - a[1]);
 
   return (
     <div className="panel">
@@ -174,6 +189,10 @@ export function CalcPanel({
             <div className="task-body">
               <div className="task-title">{c.description}</div>
               <div className="task-meta">
+                <span>
+                  {c.supplier && <>{c.supplier}</>}
+                  {c.invoice_number && <> · factuur {c.invoice_number}</>}
+                </span>
                 <span className="mono">{fmtEuro(c.amount)}</span>
                 <span className="vat-pill">{VAT_TYPE_LABEL[c.vat_type]}</span>
               </div>
@@ -189,6 +208,24 @@ export function CalcPanel({
           </div>
         ))}
       </div>
+
+      {supplierTotals.length > 0 && (
+        <>
+          <div className="add-form-title" style={{ marginTop: 4 }}>
+            Kosten per leverancier
+          </div>
+          <div className="task-list">
+            {supplierTotals.map(([supplier, total]) => (
+              <div key={supplier} className="task-row">
+                <div className="task-body">
+                  <div className="task-title">{supplier}</div>
+                </div>
+                <span className="mono">{fmtEuro(total)}</span>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
 
       {!isLocked && (
         <>
@@ -213,6 +250,12 @@ export function CalcPanel({
                 <option value="excl">{VAT_TYPE_LABEL.excl}</option>
                 <option value="incl">{VAT_TYPE_LABEL.incl}</option>
               </select>
+              <input placeholder="Leverancier (optioneel)" value={itemSupplier} onChange={(e) => setItemSupplier(e.target.value)} />
+              <input
+                placeholder="Factuurnummer (optioneel)"
+                value={itemInvoiceNumber}
+                onChange={(e) => setItemInvoiceNumber(e.target.value)}
+              />
               <button className="btn-primary" onClick={addItem}>
                 <Plus size={14} /> Toevoegen
               </button>
