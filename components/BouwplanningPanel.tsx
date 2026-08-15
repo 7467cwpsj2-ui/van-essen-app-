@@ -117,7 +117,7 @@ export function BouwplanningPanel({
         <div className="empty-hint">Nog geen bouwplanning toegevoegd.</div>
       ) : (
         <ScrollToToday todayIdx={todayIdx}>
-          <div className="gantt-grid" style={{ gridTemplateColumns: `180px repeat(${days.length}, 30px)` }}>
+          <div className="gantt-grid" style={{ gridTemplateColumns: `220px repeat(${days.length}, 30px)` }}>
             <div className="gantt-cell gantt-corner" />
             {days.map((d, idx) => {
               const wd = d.getUTCDay();
@@ -145,7 +145,7 @@ export function BouwplanningPanel({
               });
               return (
                 <Fragment key={i.id}>
-                  <div className="gantt-cell gantt-row-label">
+                  <div className={"gantt-cell gantt-row-label" + (canEdit ? " gantt-row-label-actions" : "")}>
                     <div className="gantt-row-title">
                       {i.title}
                       {i.fixed_date && (
@@ -219,7 +219,7 @@ export function BouwplanningPanel({
               );
             })}
 
-            {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${180 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
+            {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${220 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
           </div>
         </ScrollToToday>
       )}

@@ -1730,7 +1730,7 @@ textarea {
 }
 .gantt-grid {
   display: grid;
-  grid-auto-rows: 36px;
+  grid-auto-rows: 48px;
   width: max-content;
   position: relative;
 }
@@ -1795,14 +1795,21 @@ textarea {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 1px;
+  gap: 2px;
   padding: 4px 10px;
+  overflow: hidden;
+}
+.gantt-row-label-actions {
+  padding-right: 56px;
 }
 .gantt-row-title {
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .gantt-conflict-icon {
   display: inline-flex;
@@ -1826,6 +1833,9 @@ textarea {
   font-size: 10px;
   color: var(--text-faint);
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
 }
 .gantt-progress-tag {
   color: var(--brand);
@@ -1834,7 +1844,8 @@ textarea {
 .gantt-row-actions {
   position: absolute;
   right: 4px;
-  top: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   gap: 2px;
 }
