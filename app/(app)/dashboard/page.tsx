@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { Building2, Camera, CheckCircle2, Clock, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Camera, CheckCircle2, Clock, MapPin, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
-import { getDashboardExtras, getMySchedule, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
+import { getDashboardExtras, getMySchedule, getProjectsWithProgress, getTodayStaffSchedule, type ActivityItem } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
 import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
 
@@ -26,6 +26,7 @@ export default async function DashboardPage() {
   const extras = await getDashboardExtras(projects);
   const mySchedule =
     current.profile.role === "team" && current.profile.team_member_id ? await getMySchedule(current.profile.team_member_id) : [];
+  const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -82,6 +83,47 @@ export default async function DashboardPage() {
       </div>
 
       <div className="dash-panels">
+        {current.profile.role === "eigenaar" && (
+          <div className="dash-panel">
+            <div className="dash-panel-head">
+              <span>Personeel vandaag</span>
+              <Link href="/planning-overzicht" className="link-btn">
+                Bekijk alle
+              </Link>
+            </div>
+            {staffToday.length === 0 ? (
+              <div className="empty-hint small">Niemand van je eigen personeel staat vandaag ingepland.</div>
+            ) : (
+              <div className="dash-panel-list">
+                {staffToday.map((s, idx) => {
+                  const row = (
+                    <>
+                      <div className="dash-panel-row-icon">
+                        <MapPin size={14} />
+                      </div>
+                      <div className="dash-panel-row-body">
+                        <div className="dash-panel-row-title">{s.teamMemberName}</div>
+                        <div className="dash-panel-row-sub">
+                          {s.projectName} — {s.title}
+                        </div>
+                      </div>
+                    </>
+                  );
+                  return s.projectId ? (
+                    <Link key={`${s.teamMemberId}-${idx}`} href={`/projects/${s.projectId}/bouwplanning`} className="dash-panel-row">
+                      {row}
+                    </Link>
+                  ) : (
+                    <Link key={`${s.teamMemberId}-${idx}`} href="/planning-overzicht" className="dash-panel-row">
+                      {row}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         {current.profile.role === "team" && (
           <div className="dash-panel">
             <div className="dash-panel-head">

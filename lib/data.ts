@@ -115,6 +115,63 @@ export async function getMySchedule(teamMemberId: string): Promise<MyScheduleIte
   return items.slice(0, 8);
 }
 
+export interface StaffTodayItem {
+  teamMemberId: string;
+  teamMemberName: string;
+  title: string;
+  projectId: string | null;
+  projectName: string;
+}
+
+// Voor de eigenaar: welk eigen personeelslid staat vandaag waar
+// ingepland — bouwplanningfases + losse klussen samen, alleen
+// member_type 'personeel' (onderaannemers vallen hier bewust buiten).
+export async function getTodayStaffSchedule(): Promise<StaffTodayItem[]> {
+  const supabase = createClient();
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const [{ data: staff }, { data: phases }, { data: jobs }] = await Promise.all([
+    supabase.from("team_members").select("id,name").eq("member_type", "personeel"),
+    supabase
+      .from("schedule_phases")
+      .select("id,project_id,title,assignee_team_member_ids,start_date,end_date,projects(name)")
+      .lte("start_date", todayIso)
+      .gte("end_date", todayIso),
+    supabase
+      .from("quick_jobs")
+      .select("id,title,assignee_team_member_ids,start_date,end_date")
+      .lte("start_date", todayIso)
+      .gte("end_date", todayIso),
+  ]);
+
+  const staffRows = (staff ?? []) as { id: string; name: string }[];
+  const nameById = new Map(staffRows.map((s) => [s.id, s.name]));
+
+  const items: StaffTodayItem[] = [];
+  for (const p of (phases ?? []) as unknown as {
+    id: string;
+    project_id: string;
+    title: string;
+    assignee_team_member_ids: string[];
+    projects: { name: string } | null;
+  }[]) {
+    for (const memberId of p.assignee_team_member_ids) {
+      const name = nameById.get(memberId);
+      if (!name) continue;
+      items.push({ teamMemberId: memberId, teamMemberName: name, title: p.title, projectId: p.project_id, projectName: p.projects?.name ?? "project" });
+    }
+  }
+  for (const j of (jobs ?? []) as { id: string; title: string; assignee_team_member_ids: string[] }[]) {
+    for (const memberId of j.assignee_team_member_ids) {
+      const name = nameById.get(memberId);
+      if (!name) continue;
+      items.push({ teamMemberId: memberId, teamMemberName: name, title: j.title, projectId: null, projectName: "Losse klus" });
+    }
+  }
+  items.sort((a, b) => a.teamMemberName.localeCompare(b.teamMemberName, "nl"));
+  return items;
+}
+
 export interface DashboardExtras {
   todayTasks: TodayTask[];
   openMeerwerk: { count: number; amount: number };
