@@ -93,6 +93,7 @@ export interface CostItem {
   project_id: string;
   description: string;
   amount: number;
+  vat_type: ExtraWorkVatType;
   created_at: string;
 }
 
@@ -118,6 +119,7 @@ export interface Project {
   created_by: string | null;
   created_at: string;
   quote_amount: number;
+  quote_vat_type: ExtraWorkVatType;
   delivery_ready: boolean;
   delivery_date: string | null;
   warranty_text: string | null;

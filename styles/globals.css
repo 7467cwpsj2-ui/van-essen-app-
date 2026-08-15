@@ -2712,6 +2712,7 @@ a.dash-panel-row:hover {
   letter-spacing: 0.04em;
 }
 .calc-field input,
+.calc-field select,
 .calc-field textarea {
   background: var(--panel);
   border: 1px solid var(--border);

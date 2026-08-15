@@ -53,7 +53,7 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
   const confirm = () => {
     if (!projectId || !supplier.trim() || !amount) return;
     startTransition(() => {
-      createCostItem(projectId, { description: supplier.trim(), amount: Number(amount) || 0 })
+      createCostItem(projectId, { description: supplier.trim(), amount: Number(amount) || 0, vatType: "incl" })
         .then(() => setSaved(true))
         .catch((err) => setError(err instanceof Error ? err.message : "Opslaan mislukt."));
     });

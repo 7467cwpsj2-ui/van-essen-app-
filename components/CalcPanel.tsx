@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { Plus, Trash2 } from "lucide-react";
 import { createCostItem, deleteCostItem, updateCalc } from "@/lib/actions/calc";
 import { InvoiceUploadPanel } from "@/components/InvoiceUploadPanel";
-import type { CostItem, Project } from "@/types/database";
+import { VAT_TYPE_LABEL, type CostItem, type ExtraWorkVatType, type Project } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 
@@ -33,8 +33,10 @@ export function CalcPanel({
   isLocked: boolean;
 }) {
   const [quoteAmount, setQuoteAmount] = useState(String(project.quote_amount ?? 0));
+  const [quoteVatType, setQuoteVatType] = useState<ExtraWorkVatType>(project.quote_vat_type ?? "excl");
   const [itemDescription, setItemDescription] = useState("");
   const [itemAmount, setItemAmount] = useState("");
+  const [itemVatType, setItemVatType] = useState<ExtraWorkVatType>("excl");
   const [, startTransition] = useTransition();
 
   const begroot = Number(project.quote_amount) || 0;
@@ -47,7 +49,7 @@ export function CalcPanel({
 
   const saveQuote = () => {
     startTransition(() => {
-      updateCalc(projectId, { quoteAmount: Number(quoteAmount) || 0 }).catch((err) =>
+      updateCalc(projectId, { quoteAmount: Number(quoteAmount) || 0, quoteVatType }).catch((err) =>
         alert(err instanceof Error ? err.message : "Opslaan mislukt.")
       );
     });
@@ -56,7 +58,7 @@ export function CalcPanel({
   const addItem = () => {
     if (!itemDescription.trim() || !itemAmount) return;
     startTransition(() => {
-      createCostItem(projectId, { description: itemDescription, amount: Number(itemAmount) || 0 }).catch((err) =>
+      createCostItem(projectId, { description: itemDescription, amount: Number(itemAmount) || 0, vatType: itemVatType }).catch((err) =>
         alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
       );
     });
@@ -68,10 +70,19 @@ export function CalcPanel({
     <div className="panel">
       <div className="hint-bar">Nacalculatie is alleen voor jou zichtbaar — team en klant zien dit nooit.</div>
 
-      <label className="calc-field">
-        Begroot (offertebedrag)
-        <input type="number" value={quoteAmount} disabled={isLocked} onChange={(e) => setQuoteAmount(e.target.value)} />
-      </label>
+      <div className="calc-grid">
+        <label className="calc-field">
+          Begroot (offertebedrag)
+          <input type="number" value={quoteAmount} disabled={isLocked} onChange={(e) => setQuoteAmount(e.target.value)} />
+        </label>
+        <label className="calc-field">
+          Btw
+          <select value={quoteVatType} disabled={isLocked} onChange={(e) => setQuoteVatType(e.target.value as ExtraWorkVatType)}>
+            <option value="excl">{VAT_TYPE_LABEL.excl}</option>
+            <option value="incl">{VAT_TYPE_LABEL.incl}</option>
+          </select>
+        </label>
+      </div>
       {!isLocked && (
         <button className="btn-primary" onClick={saveQuote} style={{ alignSelf: "flex-start" }}>
           Opslaan
@@ -80,7 +91,9 @@ export function CalcPanel({
 
       <div className="calc-summary">
         <div className="calc-line">
-          <span>Begroot</span>
+          <span>
+            Begroot <span className="vat-pill">{VAT_TYPE_LABEL[quoteVatType]}</span>
+          </span>
           <span className="mono">{fmtEuro(begroot)}</span>
         </div>
         <div className="calc-line">
@@ -153,6 +166,7 @@ export function CalcPanel({
               <div className="task-title">{c.description}</div>
               <div className="task-meta">
                 <span className="mono">{fmtEuro(c.amount)}</span>
+                <span className="vat-pill">{VAT_TYPE_LABEL[c.vat_type]}</span>
               </div>
             </div>
             {!isLocked && (
@@ -186,6 +200,10 @@ export function CalcPanel({
                 value={itemAmount}
                 onChange={(e) => setItemAmount(e.target.value)}
               />
+              <select value={itemVatType} onChange={(e) => setItemVatType(e.target.value as ExtraWorkVatType)}>
+                <option value="excl">{VAT_TYPE_LABEL.excl}</option>
+                <option value="incl">{VAT_TYPE_LABEL.incl}</option>
+              </select>
               <button className="btn-primary" onClick={addItem}>
                 <Plus size={14} /> Toevoegen
               </button>

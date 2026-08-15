@@ -109,7 +109,7 @@ ${text.slice(0, 6000)}
   if (matchedProjectId && supplier && amount != null) {
     const { error } = await supabase
       .from("cost_items")
-      .insert({ project_id: matchedProjectId, description: supplier, amount });
+      .insert({ project_id: matchedProjectId, description: supplier, amount, vat_type: "incl" });
     if (!error) {
       autoFiled = true;
       revalidatePath(`/projects/${matchedProjectId}/nacalculatie`);

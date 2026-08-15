@@ -48,8 +48,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0027_nacalculatie_kosten.sql`, `0028_fix_notes_team_visibility.sql`,
 `0029_quick_jobs.sql`, `0030_extra_work_schedule_toggle.sql`,
 `0031_schedule_phase_fixed_date.sql`,
-`0032_quick_jobs_team_visibility.sql`, en klik telkens Run), of met de
-Supabase CLI:
+`0032_quick_jobs_team_visibility.sql`, `0033_calc_vat_type.sql`, en klik
+telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>
