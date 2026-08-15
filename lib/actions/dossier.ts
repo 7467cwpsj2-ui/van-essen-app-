@@ -1,9 +1,12 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import type { WarrantyUnit } from "@/types/database";
+
+const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function updateDossierSettings(
   projectId: string,
@@ -36,6 +39,28 @@ export async function deleteWarrantyItem(projectId: string, id: string) {
   await requireOwner();
   const supabase = createClient();
   const { error } = await supabase.from("warranty_items").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/dossier`);
+}
+
+export async function getOrCreateDossierShareLink(projectId: string): Promise<string> {
+  await requireOwner();
+  const supabase = createClient();
+  const { data: existing } = await supabase.from("projects").select("dossier_share_token").eq("id", projectId).single();
+  let token = existing?.dossier_share_token as string | null | undefined;
+  if (!token) {
+    token = randomUUID();
+    const { error } = await supabase.from("projects").update({ dossier_share_token: token }).eq("id", projectId);
+    if (error) throw new Error(error.message);
+    revalidatePath(`/projects/${projectId}/dossier`);
+  }
+  return `${siteUrl()}/d/${token}`;
+}
+
+export async function revokeDossierShareLink(projectId: string) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from("projects").update({ dossier_share_token: null }).eq("id", projectId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/dossier`);
 }

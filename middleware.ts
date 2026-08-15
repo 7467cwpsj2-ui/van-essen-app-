@@ -4,7 +4,9 @@ import { NextResponse, type NextRequest } from "next/server";
 // /api/cron/* heeft geen gebruikerssessie (Vercel Cron roept dit aan
 // zonder cookies) — die route bewaakt zichzelf met een eigen
 // CRON_SECRET-check, dus hier alleen de login-redirect overslaan.
-const PUBLIC_PATHS = ["/login", "/wachtwoord-vergeten", "/auth/callback", "/manifest.webmanifest", "/api/cron/", "/api/review"];
+// /d/* is het gedeelde, leesalleen opleverdossier — bewaakt door een
+// eigen niet-raadbare token in de URL, niet door een sessie.
+const PUBLIC_PATHS = ["/login", "/wachtwoord-vergeten", "/auth/callback", "/manifest.webmanifest", "/api/cron/", "/api/review", "/d/"];
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

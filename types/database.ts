@@ -133,6 +133,7 @@ export interface Project {
   cover_photo_path: string | null;
   planning_color: string | null;
   review_request_sent_at: string | null;
+  dossier_share_token: string | null;
 }
 
 export interface SchedulePhase {

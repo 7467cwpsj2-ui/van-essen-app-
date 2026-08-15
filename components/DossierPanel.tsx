@@ -1,14 +1,42 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Download, Lock, Plus, Printer, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, Download, FileText, Link2, Lock, Plus, Printer, Trash2 } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
 import { createClient } from "@/lib/supabase/client";
-import { createWarrantyItem, deleteWarrantyItem, signDelivery, updateDossierSettings } from "@/lib/actions/dossier";
-import type { CompletionPoint, Project, Role, WarrantyItem, WarrantyUnit } from "@/types/database";
+import {
+  createWarrantyItem,
+  deleteWarrantyItem,
+  getOrCreateDossierShareLink,
+  revokeDossierShareLink,
+  signDelivery,
+  updateDossierSettings,
+} from "@/lib/actions/dossier";
+import { warrantyEndDate } from "@/lib/warranty";
+import type { ClientChoice, CompletionPoint, PhotoCategory, Project, Role, WarrantyItem, WarrantyUnit } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
+const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
+
+const PHOTO_STORY_LABEL: Record<Exclude<PhotoCategory, "oplevering">, string> = {
+  voor: "Voor de start",
+  tijdens: "Tijdens de werkzaamheden",
+  na: "Na afronding",
+};
+
+interface DossierPhoto {
+  id: string;
+  title: string;
+  url: string | null;
+}
+
+interface DossierDrawing {
+  id: string;
+  title: string;
+  url: string | null;
+  fileType: string | null;
+}
 
 export function DossierPanel({
   projectId,
@@ -18,8 +46,12 @@ export function DossierPanel({
   meerwerkAkkoord,
   minderwerkAkkoord,
   warrantyItems,
-  deliveryPhotos,
+  photosByCategory,
+  clientChoices,
+  drawings,
   signatureUrl,
+  reviewQrDataUrl,
+  shareUrl: initialShareUrl,
 }: {
   projectId: string;
   role: Role;
@@ -28,8 +60,12 @@ export function DossierPanel({
   meerwerkAkkoord: number;
   minderwerkAkkoord: number;
   warrantyItems: WarrantyItem[];
-  deliveryPhotos: { id: string; title: string; signedUrl: string | null }[];
+  photosByCategory: Record<PhotoCategory, DossierPhoto[]>;
+  clientChoices: ClientChoice[];
+  drawings: DossierDrawing[];
   signatureUrl: string | null;
+  reviewQrDataUrl: string | null;
+  shareUrl: string | null;
 }) {
   const isLocked = !!project.delivery_signed_at;
   const [deliveryDate, setDeliveryDate] = useState(project.delivery_date || "");
@@ -39,10 +75,14 @@ export function DossierPanel({
   const [signing, setSigning] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [shareUrl, setShareUrl] = useState(initialShareUrl);
+  const [shareBusy, setShareBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [, startTransition] = useTransition();
 
   const eindtotaal = Number(project.quote_amount || 0) + meerwerkAkkoord - minderwerkAkkoord;
   const allApproved = completionPoints.length > 0 && completionPoints.every((p) => p.status === "goedgekeurd");
+  const warrantyBase = project.delivery_signed_at || project.delivery_date;
 
   const statusClass = isLocked ? "signed" : project.delivery_ready ? "ready" : "pending";
   const statusLabel = isLocked ? "Ondertekend" : project.delivery_ready ? "Klaar voor oplevering" : "Open";
@@ -82,6 +122,62 @@ export function DossierPanel({
       setBusy(false);
     }
   };
+
+  const generateShareLink = async () => {
+    setShareBusy(true);
+    try {
+      const url = await getOrCreateDossierShareLink(projectId);
+      setShareUrl(url);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Aanmaken mislukt.");
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const revokeShareLink = async () => {
+    setShareBusy(true);
+    try {
+      await revokeDossierShareLink(projectId);
+      setShareUrl(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Intrekken mislukt.");
+    } finally {
+      setShareBusy(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!shareUrl) return;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // negeren — clipboard-toegang kan geweigerd zijn, link staat gewoon zichtbaar
+    }
+  };
+
+  const photoSection = (title: string, photos: DossierPhoto[]) =>
+    photos.length > 0 && (
+      <div key={title}>
+        <div className="dash-section-title">{title}</div>
+        <div className="drawing-grid">
+          {photos.map((ph) => (
+            <div key={ph.id} className="drawing-card">
+              {ph.url && (
+                <button type="button" className="thumb-btn" onClick={() => setPreview(ph.url)}>
+                  <img src={ph.url} alt="" className="drawing-thumb" />
+                </button>
+              )}
+              <div className="drawing-body">
+                <div className="drawing-title">{ph.title}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
 
   return (
     <div className="panel">
@@ -174,19 +270,51 @@ export function DossierPanel({
         </div>
       )}
 
-      {deliveryPhotos.length > 0 && (
+      {clientChoices.length > 0 && (
         <div>
-          <div className="dash-section-title">Opleverfoto&apos;s</div>
+          <div className="dash-section-title">Klantkeuzes</div>
+          <div className="work-list">
+            {clientChoices.map((c) => (
+              <div key={c.id} className="list-row">
+                <div className="list-row-body">
+                  <div className="list-row-title">{c.category}</div>
+                  {c.description && <div className="list-row-sub">{c.description}</div>}
+                </div>
+                <span className="mono">{c.choice_text || "—"}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(["voor", "tijdens", "na"] as const).map((cat) => photoSection(PHOTO_STORY_LABEL[cat], photosByCategory[cat]))}
+      {photoSection("Opleverfoto's", photosByCategory.oplevering)}
+
+      {drawings.length > 0 && (
+        <div>
+          <div className="dash-section-title">Tekeningen</div>
           <div className="drawing-grid">
-            {deliveryPhotos.map((ph) => (
-              <div key={ph.id} className="drawing-card">
-                {ph.signedUrl && (
-                  <button type="button" className="thumb-btn" onClick={() => setPreview(ph.signedUrl)}>
-                    <img src={ph.signedUrl} alt="" className="drawing-thumb" />
+            {drawings.map((d) => (
+              <div key={d.id} className="drawing-card">
+                {d.fileType === "pdf" ? (
+                  d.url ? (
+                    <a href={d.url} target="_blank" rel="noreferrer" className="thumb-btn drawing-pdf-link" title="Tekening openen">
+                      <div className="drawing-icon">
+                        <FileText size={20} />
+                      </div>
+                    </a>
+                  ) : (
+                    <div className="drawing-icon">
+                      <FileText size={20} />
+                    </div>
+                  )
+                ) : d.url ? (
+                  <button type="button" className="thumb-btn" onClick={() => setPreview(d.url)} title="Tekening bekijken">
+                    <img src={d.url} alt="" className="drawing-thumb" />
                   </button>
-                )}
+                ) : null}
                 <div className="drawing-body">
-                  <div className="drawing-title">{ph.title}</div>
+                  <div className="drawing-title">{d.title}</div>
                 </div>
               </div>
             ))}
@@ -199,22 +327,30 @@ export function DossierPanel({
         {project.warranty_text && <div className="hint-bar small">{project.warranty_text}</div>}
         <div className="warranty-list">
           {warrantyItems.length === 0 && <div className="empty-hint">Nog geen garantie-items.</div>}
-          {warrantyItems.map((w) => (
-            <div key={w.id} className="warranty-row">
-              {w.item}
-              <b>
-                {w.amount} {w.unit}
-              </b>
-              {role === "eigenaar" && !isLocked && (
-                <button
-                  className="icon-btn danger ghost no-print"
-                  onClick={() => startTransition(() => deleteWarrantyItem(projectId, w.id).catch((err) => alert(err.message)))}
-                >
-                  <Trash2 size={12} />
-                </button>
-              )}
-            </div>
-          ))}
+          {warrantyItems.map((w) => {
+            const end = warrantyBase ? warrantyEndDate(warrantyBase, w.amount, w.unit) : null;
+            return (
+              <div key={w.id} className="warranty-row">
+                {w.item}
+                <span style={{ marginLeft: "auto", textAlign: "right" }}>
+                  <b style={{ marginLeft: 0 }}>
+                    {w.amount} {w.unit}
+                  </b>
+                  {end && (
+                    <span style={{ display: "block", fontSize: 11, color: "var(--text-faint)" }}>tot {fmtDate(end)}</span>
+                  )}
+                </span>
+                {role === "eigenaar" && !isLocked && (
+                  <button
+                    className="icon-btn danger ghost no-print"
+                    onClick={() => startTransition(() => deleteWarrantyItem(projectId, w.id).catch((err) => alert(err.message)))}
+                  >
+                    <Trash2 size={12} />
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
         {role === "eigenaar" && !isLocked && (
           <div className="add-form no-print" style={{ marginTop: 8 }}>
@@ -257,6 +393,42 @@ export function DossierPanel({
             </button>
           </div>
         )
+      )}
+
+      {reviewQrDataUrl && (
+        <div className="hint-bar">
+          <img src={reviewQrDataUrl} alt="QR-code review" style={{ width: 64, height: 64, verticalAlign: "middle", marginRight: 10 }} />
+          Bedankt voor het vertrouwen! Scan de QR-code om een review achter te laten.
+        </div>
+      )}
+
+      {role === "eigenaar" && (
+        <div className="add-form no-print">
+          <div className="add-form-title">Deelbare link</div>
+          <div className="hint-bar small">
+            Deel dit dossier met de klant via een linkje — geen account nodig. Let op: de link toont dezelfde gegevens als de PDF
+            (ook het financiële overzicht), deel hem dus alleen met de klant zelf.
+          </div>
+          {shareUrl ? (
+            <>
+              <div className="calc-field">
+                <input value={shareUrl} readOnly onFocus={(e) => e.target.select()} />
+              </div>
+              <div className="dossier-status-actions">
+                <button className="btn-ghost" onClick={copyShareLink}>
+                  <Copy size={13} /> {copied ? "Gekopieerd!" : "Kopieer link"}
+                </button>
+                <button className="btn-ghost" disabled={shareBusy} onClick={revokeShareLink}>
+                  <Trash2 size={13} /> Link intrekken
+                </button>
+              </div>
+            </>
+          ) : (
+            <button className="btn-primary" disabled={shareBusy} onClick={generateShareLink} style={{ alignSelf: "flex-start" }}>
+              <Link2 size={14} /> Genereer deelbare link
+            </button>
+          )}
+        </div>
       )}
     </div>
   );

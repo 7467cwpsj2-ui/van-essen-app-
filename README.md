@@ -49,7 +49,7 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0029_quick_jobs.sql`, `0030_extra_work_schedule_toggle.sql`,
 `0031_schedule_phase_fixed_date.sql`,
 `0032_quick_jobs_team_visibility.sql`, `0033_calc_vat_type.sql`, `0034_hourly_rate_vat.sql`,
-`0035_cost_item_supplier.sql`, en klik telkens
+`0035_cost_item_supplier.sql`, `0036_dossier_extras.sql`, en klik telkens
 Run), of met de Supabase CLI:
 
 ```bash
