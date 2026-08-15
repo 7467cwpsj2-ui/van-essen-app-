@@ -36,6 +36,28 @@ export async function createCostItem(
   revalidatePath(`/projects/${projectId}/nacalculatie`);
 }
 
+export async function updateCostItem(
+  projectId: string,
+  costItemId: string,
+  data: { description: string; amount: number; vatType: ExtraWorkVatType; supplier?: string | null; invoiceNumber?: string | null }
+) {
+  await requireOwner();
+  if (!data.description.trim()) throw new Error("Omschrijving is verplicht.");
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("cost_items")
+    .update({
+      description: data.description.trim(),
+      amount: data.amount,
+      vat_type: data.vatType,
+      supplier: data.supplier?.trim() || null,
+      invoice_number: data.invoiceNumber?.trim() || null,
+    })
+    .eq("id", costItemId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/nacalculatie`);
+}
+
 export async function deleteCostItem(projectId: string, costItemId: string) {
   await requireOwner();
   const supabase = createClient();

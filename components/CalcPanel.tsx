@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Trash2 } from "lucide-react";
-import { createCostItem, deleteCostItem, updateCalc } from "@/lib/actions/calc";
+import { Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { createCostItem, deleteCostItem, updateCalc, updateCostItem } from "@/lib/actions/calc";
 import { InvoiceUploadPanel } from "@/components/InvoiceUploadPanel";
 import { VAT_TYPE_LABEL, type CostItem, type ExtraWorkVatType, type Project } from "@/types/database";
 
@@ -40,6 +40,8 @@ export function CalcPanel({
   const [itemVatType, setItemVatType] = useState<ExtraWorkVatType>("excl");
   const [itemSupplier, setItemSupplier] = useState("");
   const [itemInvoiceNumber, setItemInvoiceNumber] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ description: "", amount: "", vatType: "excl" as ExtraWorkVatType, supplier: "", invoiceNumber: "" });
   const [, startTransition] = useTransition();
 
   const begroot = Number(project.quote_amount) || 0;
@@ -59,10 +61,14 @@ export function CalcPanel({
   };
 
   const addItem = () => {
-    if (!itemDescription.trim() || !itemAmount) return;
+    const description = itemDescription.trim() || itemSupplier.trim();
+    if (!description || !itemAmount) {
+      alert("Vul in elk geval een omschrijving (of leverancier) en een bedrag in.");
+      return;
+    }
     startTransition(() => {
       createCostItem(projectId, {
-        description: itemDescription,
+        description,
         amount: Number(itemAmount) || 0,
         vatType: itemVatType,
         supplier: itemSupplier,
@@ -73,6 +79,37 @@ export function CalcPanel({
     setItemAmount("");
     setItemSupplier("");
     setItemInvoiceNumber("");
+  };
+
+  const startEdit = (c: CostItem) => {
+    setEditingId(c.id);
+    setEditForm({
+      description: c.description,
+      amount: String(c.amount),
+      vatType: c.vat_type,
+      supplier: c.supplier ?? "",
+      invoiceNumber: c.invoice_number ?? "",
+    });
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = (id: string) => {
+    const description = editForm.description.trim() || editForm.supplier.trim();
+    if (!description || !editForm.amount) {
+      alert("Vul in elk geval een omschrijving (of leverancier) en een bedrag in.");
+      return;
+    }
+    startTransition(() => {
+      updateCostItem(projectId, id, {
+        description,
+        amount: Number(editForm.amount) || 0,
+        vatType: editForm.vatType,
+        supplier: editForm.supplier,
+        invoiceNumber: editForm.invoiceNumber,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+    });
+    setEditingId(null);
   };
 
   const costBySupplier = costItems.reduce<Map<string, number>>((map, c) => {
@@ -184,29 +221,79 @@ export function CalcPanel({
       </div>
       {costItems.length === 0 && <div className="empty-hint small">Nog geen overige kostenposten toegevoegd.</div>}
       <div className="task-list">
-        {costItems.map((c) => (
-          <div key={c.id} className="task-row">
-            <div className="task-body">
-              <div className="task-title">{c.description}</div>
-              <div className="task-meta">
-                <span>
-                  {c.supplier && <>{c.supplier}</>}
-                  {c.invoice_number && <> · factuur {c.invoice_number}</>}
-                </span>
-                <span className="mono">{fmtEuro(c.amount)}</span>
-                <span className="vat-pill">{VAT_TYPE_LABEL[c.vat_type]}</span>
+        {costItems.map((c) =>
+          editingId === c.id ? (
+            <div key={c.id} className="add-form">
+              <div className="add-form-grid">
+                <input
+                  placeholder="Omschrijving"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                />
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Bedrag"
+                  value={editForm.amount}
+                  onChange={(e) => setEditForm({ ...editForm, amount: e.target.value })}
+                />
+                <select
+                  value={editForm.vatType}
+                  onChange={(e) => setEditForm({ ...editForm, vatType: e.target.value as ExtraWorkVatType })}
+                >
+                  <option value="excl">{VAT_TYPE_LABEL.excl}</option>
+                  <option value="incl">{VAT_TYPE_LABEL.incl}</option>
+                </select>
+                <input
+                  placeholder="Leverancier (optioneel)"
+                  value={editForm.supplier}
+                  onChange={(e) => setEditForm({ ...editForm, supplier: e.target.value })}
+                />
+                <input
+                  placeholder="Factuurnummer (optioneel)"
+                  value={editForm.invoiceNumber}
+                  onChange={(e) => setEditForm({ ...editForm, invoiceNumber: e.target.value })}
+                />
+                <div className="dossier-status-actions">
+                  <button className="btn-primary" onClick={() => saveEdit(c.id)}>
+                    <Check size={14} /> Opslaan
+                  </button>
+                  <button className="btn-ghost" onClick={cancelEdit}>
+                    <X size={14} /> Annuleren
+                  </button>
+                </div>
               </div>
             </div>
-            {!isLocked && (
-              <button
-                className="icon-btn danger ghost"
-                onClick={() => startTransition(() => deleteCostItem(projectId, c.id).catch(() => {}))}
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
-          </div>
-        ))}
+          ) : (
+            <div key={c.id} className="task-row">
+              <div className="task-body">
+                <div className="task-title">{c.description}</div>
+                <div className="task-meta">
+                  <span>
+                    {c.supplier && <>{c.supplier}</>}
+                    {c.invoice_number && <> · factuur {c.invoice_number}</>}
+                  </span>
+                  <span className="mono">{fmtEuro(c.amount)}</span>
+                  <span className="vat-pill">{VAT_TYPE_LABEL[c.vat_type]}</span>
+                </div>
+              </div>
+              {!isLocked && (
+                <div style={{ display: "flex", gap: 4 }}>
+                  <button className="icon-btn ghost" onClick={() => startEdit(c)}>
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    className="icon-btn danger ghost"
+                    onClick={() => startTransition(() => deleteCostItem(projectId, c.id).catch(() => {}))}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )}
+            </div>
+          )
+        )}
       </div>
 
       {supplierTotals.length > 0 && (
