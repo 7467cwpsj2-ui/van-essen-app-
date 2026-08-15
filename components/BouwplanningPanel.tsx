@@ -228,7 +228,8 @@ export function BouwplanningPanel({
             </button>
           </div>
           <div className="hint-bar small">
-            Dit past alleen de bouwplanning aan — een eventueel gekoppeld akkoord meerwerk/minderwerk blijft ongewijzigd staan.
+            Latere fases schuiven automatisch mee op basis van deze wijziging. Een eventueel gekoppeld akkoord meerwerk/minderwerk
+            blijft ongewijzigd staan.
             {editComputedEnd && (
               <>
                 {" "}
