@@ -58,6 +58,63 @@ export interface ActivityItem {
   createdAt: string;
 }
 
+export interface MyScheduleItem {
+  id: string;
+  title: string;
+  projectId: string | null;
+  projectName: string;
+  start_date: string;
+  end_date: string;
+}
+
+// Bouwplanningfases + losse klussen waar dit teamlid zelf op ingepland
+// staat — voor "Mijn planning" op het dashboard. RLS zorgt dat een
+// teamlid alleen fases uit projecten met toegang, en alleen losse
+// klussen waar hij zelf bij staat, terugkrijgt.
+export async function getMySchedule(teamMemberId: string): Promise<MyScheduleItem[]> {
+  const supabase = createClient();
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const [{ data: phases }, { data: jobs }] = await Promise.all([
+    supabase
+      .from("schedule_phases")
+      .select("id,project_id,title,start_date,end_date,projects(name)")
+      .contains("assignee_team_member_ids", [teamMemberId])
+      .gte("end_date", todayIso)
+      .order("start_date"),
+    supabase
+      .from("quick_jobs")
+      .select("id,title,start_date,end_date")
+      .contains("assignee_team_member_ids", [teamMemberId])
+      .gte("end_date", todayIso)
+      .order("start_date"),
+  ]);
+
+  const items: MyScheduleItem[] = [];
+  for (const p of (phases ?? []) as unknown as {
+    id: string;
+    project_id: string;
+    title: string;
+    start_date: string;
+    end_date: string;
+    projects: { name: string } | null;
+  }[]) {
+    items.push({
+      id: p.id,
+      title: p.title,
+      projectId: p.project_id,
+      projectName: p.projects?.name ?? "project",
+      start_date: p.start_date,
+      end_date: p.end_date,
+    });
+  }
+  for (const j of (jobs ?? []) as { id: string; title: string; start_date: string; end_date: string }[]) {
+    items.push({ id: `qj:${j.id}`, title: j.title, projectId: null, projectName: "Losse klus", start_date: j.start_date, end_date: j.end_date });
+  }
+  items.sort((a, b) => a.start_date.localeCompare(b.start_date));
+  return items.slice(0, 8);
+}
+
 export interface DashboardExtras {
   todayTasks: TodayTask[];
   openMeerwerk: { count: number; amount: number };

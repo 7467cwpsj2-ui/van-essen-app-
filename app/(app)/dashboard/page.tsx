@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Building2, Camera, CheckCircle2, Clock, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
-import { getDashboardExtras, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
+import { getDashboardExtras, getMySchedule, getProjectsWithProgress, type ActivityItem } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
 import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
 
@@ -12,6 +12,7 @@ const STATUS_LABEL: Record<ProjectStatus, string> = {
 };
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+const fmtShort = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
 
 const ACTIVITY_ICON: Record<ActivityItem["kind"], React.ReactNode> = {
   meerwerk: <TrendingUp size={14} />,
@@ -23,6 +24,8 @@ export default async function DashboardPage() {
   const current = await requireUser();
   const projects = await getProjectsWithProgress();
   const extras = await getDashboardExtras(projects);
+  const mySchedule =
+    current.profile.role === "team" && current.profile.team_member_id ? await getMySchedule(current.profile.team_member_id) : [];
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -79,6 +82,44 @@ export default async function DashboardPage() {
       </div>
 
       <div className="dash-panels">
+        {current.profile.role === "team" && (
+          <div className="dash-panel">
+            <div className="dash-panel-head">
+              <span>Mijn planning</span>
+            </div>
+            {mySchedule.length === 0 ? (
+              <div className="empty-hint small">Je staat momenteel nergens ingepland.</div>
+            ) : (
+              <div className="dash-panel-list">
+                {mySchedule.map((s) => {
+                  const row = (
+                    <>
+                      <div className="dash-panel-row-icon">
+                        <Clock size={14} />
+                      </div>
+                      <div className="dash-panel-row-body">
+                        <div className="dash-panel-row-title">{s.title}</div>
+                        <div className="dash-panel-row-sub">
+                          {s.projectName} · {fmtShort(s.start_date)} – {fmtShort(s.end_date)}
+                        </div>
+                      </div>
+                    </>
+                  );
+                  return s.projectId ? (
+                    <Link key={s.id} href={`/projects/${s.projectId}/bouwplanning`} className="dash-panel-row">
+                      {row}
+                    </Link>
+                  ) : (
+                    <div key={s.id} className="dash-panel-row static">
+                      {row}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="dash-panel">
           <div className="dash-panel-head">
             <span>Projecten overzicht</span>
