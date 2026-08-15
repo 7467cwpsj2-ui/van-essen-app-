@@ -85,6 +85,7 @@ export interface TeamMember {
   sees_all_projects: boolean;
   member_type: TeamMemberType;
   hourly_rate: number | null;
+  hourly_rate_vat_type: ExtraWorkVatType;
   created_at: string;
 }
 
@@ -213,6 +214,14 @@ export type ExtraWorkStatus = "open" | "akkoord" | "afgewezen";
 export type ExtraWorkVatType = "excl" | "incl";
 
 export const VAT_TYPE_LABEL: Record<ExtraWorkVatType, string> = { excl: "excl. btw", incl: "incl. btw" };
+
+// Standaard hoge btw-tarief, gebruikt om een incl.-btw uurtarief
+// automatisch om te rekenen naar excl. btw voor de nacalculatie.
+export const STANDARD_VAT_RATE = 0.21;
+
+export function amountExclVat(amount: number, vatType: ExtraWorkVatType): number {
+  return vatType === "incl" ? amount / (1 + STANDARD_VAT_RATE) : amount;
+}
 
 export interface ExtraWork {
   id: string;

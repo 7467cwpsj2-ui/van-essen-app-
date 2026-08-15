@@ -12,7 +12,7 @@ import {
   updateTeamMemberDetails,
   updateTeamMemberType,
 } from "@/lib/actions/team";
-import type { ModuleKey, TeamMember, TeamMemberType } from "@/types/database";
+import { VAT_TYPE_LABEL, type ExtraWorkVatType, type ModuleKey, type TeamMember, type TeamMemberType } from "@/types/database";
 
 const TRADES = [
   "Timmerman",
@@ -118,20 +118,35 @@ export function TeamMemberRow({
               <Trash2 size={13} />
             </button>
           </div>
-          <label className="field-with-label">
-            <span className="field-label">Uurtarief (voor nacalculatie, optioneel)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="bv. 45.00"
-              value={hourlyRate}
-              onChange={(e) => setHourlyRate(e.target.value)}
-              onBlur={() =>
-                run(() => updateTeamMemberDetails(member.id, { hourly_rate: hourlyRate.trim() ? Number(hourlyRate) : null }))
-              }
-            />
-          </label>
+          <div className="add-form-grid">
+            <label className="field-with-label">
+              <span className="field-label">Uurtarief (voor nacalculatie, optioneel)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="bv. 45.00"
+                value={hourlyRate}
+                onChange={(e) => setHourlyRate(e.target.value)}
+                onBlur={() =>
+                  run(() => updateTeamMemberDetails(member.id, { hourly_rate: hourlyRate.trim() ? Number(hourlyRate) : null }))
+                }
+              />
+            </label>
+            <label className="field-with-label">
+              <span className="field-label">Btw over uurtarief</span>
+              <select
+                value={member.hourly_rate_vat_type}
+                onChange={(e) => run(() => updateTeamMemberDetails(member.id, { hourly_rate_vat_type: e.target.value as ExtraWorkVatType }))}
+              >
+                <option value="excl">{VAT_TYPE_LABEL.excl}</option>
+                <option value="incl">{VAT_TYPE_LABEL.incl}</option>
+              </select>
+            </label>
+          </div>
+          <div className="hint-bar small">
+            Bij incl. btw rekent de nacalculatie het uurtarief automatisch om naar excl. btw (21%) voor de arbeidskosten.
+          </div>
           <div className="radio-row">
             <label className="checkbox-label">
               <input

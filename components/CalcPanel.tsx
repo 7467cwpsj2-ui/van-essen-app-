@@ -12,6 +12,7 @@ interface LaborRow {
   name: string;
   hours: number;
   rate: number | null;
+  vatType: ExtraWorkVatType | null;
   amount: number;
 }
 
@@ -109,7 +110,9 @@ export function CalcPanel({
           <span className="mono">{fmtEuro(aangepasteBegroting)}</span>
         </div>
         <div className="calc-line">
-          <span>Arbeidskosten (uren × tarief)</span>
+          <span>
+            Arbeidskosten (uren × tarief) <span className="vat-pill">{VAT_TYPE_LABEL.excl}</span>
+          </span>
           <span className="mono">{fmtEuro(arbeidskosten)}</span>
         </div>
         <div className="calc-line">
@@ -140,8 +143,9 @@ export function CalcPanel({
                 <div className="task-meta">
                   <span>
                     {l.hours} uur{l.rate != null ? ` × ${fmtEuro(l.rate)}` : ""}
+                    {l.rate != null && l.vatType && <span className="vat-pill">{VAT_TYPE_LABEL[l.vatType]}</span>}
                   </span>
-                  <span className="mono">{l.rate != null ? fmtEuro(l.amount) : "geen tarief ingesteld"}</span>
+                  <span className="mono">{l.rate != null ? `${fmtEuro(l.amount)} excl. btw` : "geen tarief ingesteld"}</span>
                 </div>
               </div>
             </div>
@@ -152,6 +156,11 @@ export function CalcPanel({
         <div className="hint-bar small">
           Sommige uren tellen nog niet mee, omdat er geen uurtarief is ingesteld — dat kun je toevoegen bij het teamlid op de
           Personeel-pagina.
+        </div>
+      )}
+      {labor.some((l) => l.vatType === "incl") && (
+        <div className="hint-bar small">
+          Uurtarieven die incl. btw zijn ingevuld, worden hier automatisch omgerekend naar excl. btw (21%) voor de arbeidskosten.
         </div>
       )}
 

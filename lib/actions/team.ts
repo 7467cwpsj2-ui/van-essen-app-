@@ -49,7 +49,10 @@ export async function inviteTeamMember(formData: FormData) {
   revalidatePath("/personeel");
 }
 
-export async function updateTeamMemberDetails(id: string, patch: { name?: string; trade?: string | null; hourly_rate?: number | null }) {
+export async function updateTeamMemberDetails(
+  id: string,
+  patch: { name?: string; trade?: string | null; hourly_rate?: number | null; hourly_rate_vat_type?: "excl" | "incl" }
+) {
   await requireOwner();
   const supabase = createClient();
   const { error } = await supabase.from("team_members").update(patch).eq("id", id);
