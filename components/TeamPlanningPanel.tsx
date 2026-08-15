@@ -8,7 +8,7 @@ import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInp
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
 import { createQuickJob, deleteQuickJob } from "@/lib/actions/quickJobs";
 import { endDateForWorkingDays } from "@/lib/workingDays";
-import type { QuickJob } from "@/types/database";
+import type { QuickJob, TeamMemberType } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
@@ -29,6 +29,7 @@ export interface PlanningRow {
   isQuickJob: boolean;
   fixedDate: boolean;
   assignee: string | null;
+  memberType: TeamMemberType | null;
   start_date: string;
   end_date: string;
 }
@@ -59,6 +60,7 @@ export function TeamPlanningPanel({
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
   const [, startTransition] = useTransition();
   const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [filter, setFilter] = useState<"alle" | "personeel" | "onderaannemer">("alle");
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
   const quickJobAssigneeLabel = (j: QuickJob) =>
@@ -97,8 +99,21 @@ export function TeamPlanningPanel({
     });
   };
 
-  const assigned = rows.filter((r) => r.assignee);
+  const assigned = rows.filter((r) => r.assignee && (filter === "alle" || r.memberType === filter));
   const people = Array.from(new Set(assigned.map((r) => r.assignee as string))).sort((a, b) => a.localeCompare(b, "nl"));
+
+  const jobMemberType = (j: QuickJob): TeamMemberType | null => {
+    if (j.assignee_team_member_ids.length > 0) {
+      const m = teamMembers.find((tm) => tm.id === j.assignee_team_member_ids[0]);
+      return m?.member_type ?? "personeel";
+    }
+    if (j.assignee?.trim()) {
+      const match = teamMembers.find((tm) => tm.name.trim().toLowerCase() === j.assignee!.trim().toLowerCase());
+      return match?.member_type ?? "onderaannemer";
+    }
+    return null;
+  };
+  const filteredQuickJobs = quickJobs.filter((j) => filter === "alle" || jobMemberType(j) === filter);
 
   const days: Date[] = [];
   if (assigned.length) {
@@ -117,6 +132,17 @@ export function TeamPlanningPanel({
       <div className="hint-bar">
         Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project of losse klus. Klik op een
         kleurbolletje hieronder om de kleur van een project zelf aan te passen.
+      </div>
+      <div className="mode-toggle">
+        <button type="button" className={filter === "alle" ? "active" : ""} onClick={() => setFilter("alle")}>
+          Alles
+        </button>
+        <button type="button" className={filter === "personeel" ? "active" : ""} onClick={() => setFilter("personeel")}>
+          Eigen personeel
+        </button>
+        <button type="button" className={filter === "onderaannemer" ? "active" : ""} onClick={() => setFilter("onderaannemer")}>
+          Onderaannemers
+        </button>
       </div>
       {legend.length > 0 && (
         <div className="planning-legend">
@@ -145,7 +171,13 @@ export function TeamPlanningPanel({
         </div>
       )}
       {people.length === 0 ? (
-        <div className="empty-hint">Nog geen bouwplanning met een toegewezen persoon gevonden.</div>
+        <div className="empty-hint">
+          {filter === "alle"
+            ? "Nog geen bouwplanning met een toegewezen persoon gevonden."
+            : filter === "personeel"
+              ? "Geen ingepland eigen personeel gevonden."
+              : "Geen ingeplande onderaannemers gevonden."}
+        </div>
       ) : (
         <ScrollToToday todayIdx={todayIdx}>
           <div className="gantt-grid" style={{ gridTemplateColumns: `160px repeat(${days.length}, 30px)` }}>
@@ -270,13 +302,13 @@ export function TeamPlanningPanel({
         )}
       </div>
 
-      {quickJobs.length > 0 && (
+      {filteredQuickJobs.length > 0 && (
         <>
           <div className="add-form-title" style={{ marginTop: 4 }}>
             Losse klussen
           </div>
           <div className="task-list">
-            {quickJobs.map((j) => (
+            {filteredQuickJobs.map((j) => (
               <div key={j.id} className="task-row">
                 <div className="task-body">
                   <div className="task-title">{j.title}</div>

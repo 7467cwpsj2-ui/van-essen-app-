@@ -19,6 +19,10 @@ export default async function PlanningOverzichtPage() {
   ]);
 
   const nameById = new Map((teamMembers ?? []).map((m) => [m.id as string, m.name as string]));
+  const memberTypeById = new Map((teamMembers ?? []).map((m) => [m.id as string, m.member_type as TeamMember["member_type"]]));
+  const memberTypeByName = new Map(
+    (teamMembers ?? []).map((m) => [(m.name as string).trim().toLowerCase(), m.member_type as TeamMember["member_type"]])
+  );
 
   const raw = (data ?? []) as unknown as {
     id: string;
@@ -46,10 +50,16 @@ export default async function PlanningOverzichtPage() {
     };
     if (r.assignee_team_member_ids.length > 0) {
       for (const memberId of r.assignee_team_member_ids) {
-        rows.push({ id: `${r.id}:${memberId}`, ...base, assignee: nameById.get(memberId) ?? "Onbekend personeelslid" });
+        rows.push({
+          id: `${r.id}:${memberId}`,
+          ...base,
+          assignee: nameById.get(memberId) ?? "Onbekend personeelslid",
+          memberType: memberTypeById.get(memberId) ?? "personeel",
+        });
       }
     } else {
-      rows.push({ id: r.id, ...base, assignee: r.assignee?.trim() || null });
+      const name = r.assignee?.trim() || null;
+      rows.push({ id: r.id, ...base, assignee: name, memberType: name ? memberTypeByName.get(name.toLowerCase()) ?? "onderaannemer" : null });
     }
   }
 
@@ -67,10 +77,16 @@ export default async function PlanningOverzichtPage() {
     };
     if (j.assignee_team_member_ids.length > 0) {
       for (const memberId of j.assignee_team_member_ids) {
-        rows.push({ id: `qj:${j.id}:${memberId}`, ...base, assignee: nameById.get(memberId) ?? "Onbekend personeelslid" });
+        rows.push({
+          id: `qj:${j.id}:${memberId}`,
+          ...base,
+          assignee: nameById.get(memberId) ?? "Onbekend personeelslid",
+          memberType: memberTypeById.get(memberId) ?? "personeel",
+        });
       }
     } else {
-      rows.push({ id: `qj:${j.id}`, ...base, assignee: j.assignee?.trim() || null });
+      const name = j.assignee?.trim() || null;
+      rows.push({ id: `qj:${j.id}`, ...base, assignee: name, memberType: name ? memberTypeByName.get(name.toLowerCase()) ?? "onderaannemer" : null });
     }
   }
 
