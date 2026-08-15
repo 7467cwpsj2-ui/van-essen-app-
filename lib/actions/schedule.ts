@@ -30,6 +30,7 @@ export async function createPhase(
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/planning-overzicht");
 }
 
 // Bepaalt of latere fases wel/niet automatisch mee mogen schuiven zodra
@@ -41,6 +42,7 @@ export async function setPhaseFixedDate(projectId: string, phaseId: string, fixe
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/planning-overzicht");
 }
 
 // Puur de datums van een bestaande fase aanpassen — losstaand van
@@ -50,7 +52,11 @@ export async function setPhaseFixedDate(projectId: string, phaseId: string, fixe
 // automatisch mee, met dezelfde verschuiving in kalenderdagen — zelfde
 // principe als bij een meerwerk-verschuiving. Fases met fixed_date
 // slaan deze automatische verschuiving over.
-export async function updatePhaseDates(projectId: string, phaseId: string, data: { start: string; end: string }) {
+export async function updatePhaseDates(
+  projectId: string,
+  phaseId: string,
+  data: { start: string; end: string; assignee?: string | null; assigneeTeamMemberIds?: string[] }
+) {
   await requireUser();
   if (!data.start || !data.end) throw new Error("Startdatum en einddatum zijn verplicht.");
   const supabase = createClient();
@@ -58,7 +64,13 @@ export async function updatePhaseDates(projectId: string, phaseId: string, data:
   const { data: current } = await supabase.from("schedule_phases").select("end_date").eq("id", phaseId).single();
   const oldEnd = current?.end_date as string | undefined;
 
-  const { error } = await supabase.from("schedule_phases").update({ start_date: data.start, end_date: data.end }).eq("id", phaseId);
+  const update: Record<string, unknown> = { start_date: data.start, end_date: data.end };
+  if (data.assigneeTeamMemberIds !== undefined) {
+    update.assignee = data.assigneeTeamMemberIds.length > 0 ? null : data.assignee || null;
+    update.assignee_team_member_ids = data.assigneeTeamMemberIds;
+  }
+
+  const { error } = await supabase.from("schedule_phases").update(update).eq("id", phaseId);
   if (error) throw new Error(error.message);
 
   if (oldEnd && oldEnd !== data.end) {
@@ -83,6 +95,7 @@ export async function updatePhaseDates(projectId: string, phaseId: string, data:
 
   revalidatePath(`/projects/${projectId}/bouwplanning`);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/planning-overzicht");
 }
 
 export async function deletePhase(projectId: string, phaseId: string) {
@@ -92,4 +105,5 @@ export async function deletePhase(projectId: string, phaseId: string) {
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
   revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/planning-overzicht");
 }

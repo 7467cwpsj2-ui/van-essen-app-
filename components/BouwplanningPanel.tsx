@@ -37,7 +37,7 @@ export function BouwplanningPanel({
 }) {
   const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "", fixedDate: false });
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ start: "", days: "" });
+  const [editForm, setEditForm] = useState({ assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
@@ -74,7 +74,7 @@ export function BouwplanningPanel({
       const wd = new Date(t).getUTCDay();
       if (wd !== 0 && wd !== 6) count++;
     }
-    setEditForm({ start: p.start_date, days: String(count || 1) });
+    setEditForm({ assignee: p.assignee ?? "", assigneeTeamMemberIds: p.assignee_team_member_ids, start: p.start_date, days: String(count || 1) });
   };
 
   const editComputedEnd =
@@ -84,9 +84,12 @@ export function BouwplanningPanel({
     if (!editingId || !editForm.start || !editComputedEnd) return;
     const id = editingId;
     startTransition(() => {
-      updatePhaseDates(projectId, id, { start: editForm.start, end: editComputedEnd }).catch((err) =>
-        alert(err instanceof Error ? err.message : "Opslaan mislukt.")
-      );
+      updatePhaseDates(projectId, id, {
+        start: editForm.start,
+        end: editComputedEnd,
+        assignee: editForm.assignee,
+        assigneeTeamMemberIds: editForm.assigneeTeamMemberIds,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
     });
     setEditingId(null);
   };
@@ -228,7 +231,7 @@ export function BouwplanningPanel({
       {canEdit && editingId && (
         <div className="add-form">
           <div className="add-form-title">
-            Datums aanpassen — {phases.find((p) => p.id === editingId)?.title}
+            Fase aanpassen — {phases.find((p) => p.id === editingId)?.title}
           </div>
           <div className="add-form-grid">
             <input type="date" value={editForm.start} onChange={(e) => setEditForm({ ...editForm, start: e.target.value })} title="Startdatum" />
@@ -246,6 +249,13 @@ export function BouwplanningPanel({
               <X size={13} /> Annuleren
             </button>
           </div>
+          <AssigneeInput
+            assignee={editForm.assignee}
+            assigneeTeamMemberIds={editForm.assigneeTeamMemberIds}
+            onChangeAssignee={(v) => setEditForm({ ...editForm, assignee: v })}
+            onChangeTeamMemberIds={(ids) => setEditForm({ ...editForm, assigneeTeamMemberIds: ids })}
+            teamMembers={teamMembers}
+          />
           <div className="hint-bar small">
             Latere fases schuiven automatisch mee op basis van deze wijziging. Een eventueel gekoppeld akkoord meerwerk/minderwerk
             blijft ongewijzigd staan.
