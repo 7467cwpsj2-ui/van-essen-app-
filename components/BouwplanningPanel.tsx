@@ -1,10 +1,10 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Pencil, Plus, Trash2, X } from "lucide-react";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { ScrollToToday } from "@/components/ScrollToToday";
-import { createPhase, deletePhase } from "@/lib/actions/schedule";
+import { createPhase, deletePhase, updatePhaseDates } from "@/lib/actions/schedule";
 import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { SchedulePhase, Task } from "@/types/database";
 
@@ -36,6 +36,8 @@ export function BouwplanningPanel({
   conflicts?: Record<string, PhaseConflict[]>;
 }) {
   const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState({ start: "", days: "" });
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
@@ -56,6 +58,30 @@ export function BouwplanningPanel({
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
     setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
+  };
+
+  const startEditPhase = (p: SchedulePhase) => {
+    setEditingId(p.id);
+    let count = 0;
+    for (let t = new Date(p.start_date).getTime(); t <= new Date(p.end_date).getTime(); t += DAY_MS) {
+      const wd = new Date(t).getUTCDay();
+      if (wd !== 0 && wd !== 6) count++;
+    }
+    setEditForm({ start: p.start_date, days: String(count || 1) });
+  };
+
+  const editComputedEnd =
+    editForm.start && Number(editForm.days) >= 1 ? endDateForWorkingDays(editForm.start, Number(editForm.days)) : "";
+
+  const saveEditPhase = () => {
+    if (!editingId || !editForm.start || !editComputedEnd) return;
+    const id = editingId;
+    startTransition(() => {
+      updatePhaseDates(projectId, id, { start: editForm.start, end: editComputedEnd }).catch((err) =>
+        alert(err instanceof Error ? err.message : "Opslaan mislukt.")
+      );
+    });
+    setEditingId(null);
   };
 
   let days: Date[] = [];
@@ -138,12 +164,17 @@ export function BouwplanningPanel({
                       )}
                     </div>
                     {canEdit && (
-                      <button
-                        className="icon-btn danger ghost gantt-row-del"
-                        onClick={() => startTransition(() => deletePhase(projectId, i.id).catch(() => {}))}
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      <div className="gantt-row-actions">
+                        <button className="icon-btn ghost" onClick={() => startEditPhase(i)} title="Datums aanpassen">
+                          <Pencil size={12} />
+                        </button>
+                        <button
+                          className="icon-btn danger ghost"
+                          onClick={() => startTransition(() => deletePhase(projectId, i.id).catch(() => {}))}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     )}
                   </div>
                   {days.map((d, idx) => {
@@ -174,6 +205,39 @@ export function BouwplanningPanel({
         </ScrollToToday>
       )}
       {!canEdit && phases.length > 0 && <div className="hint-bar small">Je kunt deze bouwplanning bekijken, maar niet wijzigen.</div>}
+
+      {canEdit && editingId && (
+        <div className="add-form">
+          <div className="add-form-title">
+            Datums aanpassen — {phases.find((p) => p.id === editingId)?.title}
+          </div>
+          <div className="add-form-grid">
+            <input type="date" value={editForm.start} onChange={(e) => setEditForm({ ...editForm, start: e.target.value })} title="Startdatum" />
+            <input
+              type="number"
+              min="1"
+              placeholder="Aantal werkdagen"
+              value={editForm.days}
+              onChange={(e) => setEditForm({ ...editForm, days: e.target.value })}
+            />
+            <button className="btn-primary" onClick={saveEditPhase}>
+              Opslaan
+            </button>
+            <button className="btn-ghost" onClick={() => setEditingId(null)}>
+              <X size={13} /> Annuleren
+            </button>
+          </div>
+          <div className="hint-bar small">
+            Dit past alleen de bouwplanning aan — een eventueel gekoppeld akkoord meerwerk/minderwerk blijft ongewijzigd staan.
+            {editComputedEnd && (
+              <>
+                {" "}
+                Deze fase loopt dan tot en met <b>{fmtDate(editComputedEnd)}</b>.
+              </>
+            )}
+          </div>
+        </div>
+      )}
 
       {canEdit && (
         <div className="add-form">

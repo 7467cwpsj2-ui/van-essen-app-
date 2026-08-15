@@ -1825,10 +1825,12 @@ textarea {
   color: var(--brand);
   font-family: var(--font-mono);
 }
-.gantt-row-del {
+.gantt-row-actions {
   position: absolute;
   right: 4px;
   top: 4px;
+  display: flex;
+  gap: 2px;
 }
 .gantt-daycell.weekend {
   background: var(--panel-2);

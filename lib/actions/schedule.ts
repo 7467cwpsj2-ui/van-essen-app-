@@ -24,6 +24,19 @@ export async function createPhase(
   revalidatePath(`/projects/${projectId}/planning`);
 }
 
+// Puur de datums van een bestaande fase aanpassen — losstaand van
+// meerwerk/minderwerk, dus de goedkeuring van een gekoppeld meerwerk-
+// item blijft hierdoor altijd ongewijzigd staan.
+export async function updatePhaseDates(projectId: string, phaseId: string, data: { start: string; end: string }) {
+  await requireUser();
+  if (!data.start || !data.end) throw new Error("Startdatum en einddatum zijn verplicht.");
+  const supabase = createClient();
+  const { error } = await supabase.from("schedule_phases").update({ start_date: data.start, end_date: data.end }).eq("id", phaseId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/bouwplanning`);
+  revalidatePath(`/projects/${projectId}/planning`);
+}
+
 export async function deletePhase(projectId: string, phaseId: string) {
   await requireUser();
   const supabase = createClient();
