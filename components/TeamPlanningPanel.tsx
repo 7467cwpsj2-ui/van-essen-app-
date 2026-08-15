@@ -2,9 +2,13 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Plus, Trash2 } from "lucide-react";
 import { ScrollToToday } from "@/components/ScrollToToday";
+import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
+import { createQuickJob, deleteQuickJob } from "@/lib/actions/quickJobs";
+import { endDateForWorkingDays } from "@/lib/workingDays";
+import type { QuickJob } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
@@ -22,6 +26,7 @@ export interface PlanningRow {
   projectId: string;
   projectName: string;
   projectColor: string | null;
+  isQuickJob: boolean;
   assignee: string | null;
   start_date: string;
   end_date: string;
@@ -37,9 +42,42 @@ function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string) {
   return aStart <= bEnd && bStart <= aEnd;
 }
 
-export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
+function fmtShort(iso: string) {
+  return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
+}
+
+export function TeamPlanningPanel({
+  rows,
+  quickJobs,
+  teamMembers,
+}: {
+  rows: PlanningRow[];
+  quickJobs: QuickJob[];
+  teamMembers: AssigneeTeamMember[];
+}) {
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
   const [, startTransition] = useTransition();
+  const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+
+  const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
+  const quickJobAssigneeLabel = (j: QuickJob) =>
+    j.assignee_team_member_ids.length > 0 ? j.assignee_team_member_ids.map(teamMemberName).join(", ") : j.assignee || "Niet toegewezen";
+
+  const computedEnd = form.start && Number(form.days) >= 1 ? endDateForWorkingDays(form.start, Number(form.days)) : "";
+
+  const addQuickJob = () => {
+    if (!form.title.trim() || !form.start || !computedEnd) return;
+    startTransition(() => {
+      createQuickJob({
+        title: form.title,
+        assignee: form.assignee,
+        assigneeTeamMemberIds: form.assigneeTeamMemberIds,
+        start: form.start,
+        end: computedEnd,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+    });
+    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
+  };
 
   const initialColors = useMemo(() => {
     const map: Record<string, string> = {};
@@ -69,30 +107,38 @@ export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
   }
   const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
 
-  const legend = Array.from(new Map(assigned.map((r) => [r.projectId, r.projectName])).entries()).sort((a, b) =>
-    a[1].localeCompare(b[1], "nl")
+  const legend = Array.from(new Map(assigned.map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob }])).entries()).sort(
+    (a, b) => a[1].name.localeCompare(b[1].name, "nl")
   );
 
   return (
     <div className="panel">
       <div className="hint-bar">
-        Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project. Klik op een kleurbolletje
-        hieronder om de kleur van een project zelf aan te passen.
+        Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project of losse klus. Klik op een
+        kleurbolletje hieronder om de kleur van een project zelf aan te passen.
       </div>
       {legend.length > 0 && (
         <div className="planning-legend">
-          {legend.map(([id, name]) => (
+          {legend.map(([id, info]) => (
             <div key={id} className="planning-legend-item">
-              <input
-                type="color"
-                value={colorOf(id)}
-                onChange={(e) => handleColorChange(id, e.target.value)}
-                className="planning-legend-swatch"
-                title={`Kleur voor ${name} aanpassen`}
-              />
-              <Link href={`/projects/${id}/bouwplanning`} className="planning-legend-label">
-                {name}
-              </Link>
+              {info.isQuickJob ? (
+                <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: colorOf(id) }} />
+              ) : (
+                <input
+                  type="color"
+                  value={colorOf(id)}
+                  onChange={(e) => handleColorChange(id, e.target.value)}
+                  className="planning-legend-swatch"
+                  title={`Kleur voor ${info.name} aanpassen`}
+                />
+              )}
+              {info.isQuickJob ? (
+                <span className="planning-legend-label">{info.name}</span>
+              ) : (
+                <Link href={`/projects/${id}/bouwplanning`} className="planning-legend-label">
+                  {info.name}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -185,6 +231,70 @@ export function TeamPlanningPanel({ rows }: { rows: PlanningRow[] }) {
             {todayIdx >= 0 && <div className="gantt-today-line" style={{ left: `${160 + todayIdx * 30 + 15}px` }} title="Vandaag" />}
           </div>
         </ScrollToToday>
+      )}
+
+      <div className="add-form">
+        <div className="add-form-title">Kleine klus toevoegen (1-3 dagen, geen project of klant nodig)</div>
+        <div className="add-form-grid">
+          <input
+            placeholder="Wat moet er gebeuren?"
+            value={form.title}
+            onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} title="Startdatum" />
+          <input
+            type="number"
+            min="1"
+            max="3"
+            placeholder="Aantal dagen"
+            value={form.days}
+            onChange={(e) => setForm({ ...form, days: e.target.value })}
+          />
+          <button className="btn-primary" onClick={addQuickJob}>
+            <Plus size={14} /> Toevoegen
+          </button>
+        </div>
+        <AssigneeInput
+          assignee={form.assignee}
+          assigneeTeamMemberIds={form.assigneeTeamMemberIds}
+          onChangeAssignee={(v) => setForm({ ...form, assignee: v })}
+          onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
+          teamMembers={teamMembers}
+        />
+        {computedEnd && (
+          <div className="hint-bar small">
+            Deze klus loopt van {fmtShort(form.start)} t/m {fmtShort(computedEnd)} (weekenden tellen niet mee).
+          </div>
+        )}
+      </div>
+
+      {quickJobs.length > 0 && (
+        <>
+          <div className="add-form-title" style={{ marginTop: 4 }}>
+            Losse klussen
+          </div>
+          <div className="task-list">
+            {quickJobs.map((j) => (
+              <div key={j.id} className="task-row">
+                <div className="task-body">
+                  <div className="task-title">{j.title}</div>
+                  <div className="task-meta">
+                    <span>{quickJobAssigneeLabel(j)}</span>
+                    <span className="mono">
+                      {fmtShort(j.start_date)} – {fmtShort(j.end_date)}
+                    </span>
+                  </div>
+                </div>
+                <button
+                  className="icon-btn danger ghost"
+                  onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   );

@@ -46,7 +46,7 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0023_project_planning_color.sql`, `0024_team_member_type.sql`,
 `0025_schedule_phase_multi_assignee.sql`, `0026_review_requests.sql`,
 `0027_nacalculatie_kosten.sql`, `0028_fix_notes_team_visibility.sql`,
-en klik telkens Run), of met de Supabase CLI:
+`0029_quick_jobs.sql`, en klik telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

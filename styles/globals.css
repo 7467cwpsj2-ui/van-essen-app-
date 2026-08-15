@@ -1875,6 +1875,10 @@ textarea {
   border: none;
   border-radius: 3px;
 }
+.planning-legend-swatch-static {
+  display: inline-block;
+  cursor: default;
+}
 .planning-legend-label {
   color: var(--text-faint);
   text-decoration: none;

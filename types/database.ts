@@ -141,6 +141,16 @@ export interface SchedulePhase {
   created_at: string;
 }
 
+export interface QuickJob {
+  id: string;
+  title: string;
+  assignee: string | null;
+  assignee_team_member_ids: string[];
+  start_date: string;
+  end_date: string;
+  created_at: string;
+}
+
 export type TaskAssigneeType = "eigenaar" | "team" | "klant";
 
 export interface Task {

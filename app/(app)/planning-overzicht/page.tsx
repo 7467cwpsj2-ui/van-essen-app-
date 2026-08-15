@@ -2,18 +2,20 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPlanningPanel, type PlanningRow } from "@/components/TeamPlanningPanel";
+import type { QuickJob, TeamMember } from "@/types/database";
 
 export default async function PlanningOverzichtPage() {
   const current = await requireUser();
   if (current.profile.role !== "eigenaar") notFound();
 
   const supabase = createClient();
-  const [{ data }, { data: teamMembers }] = await Promise.all([
+  const [{ data }, { data: teamMembers }, { data: quickJobs }] = await Promise.all([
     supabase
       .from("schedule_phases")
       .select("id,project_id,title,assignee,assignee_team_member_ids,start_date,end_date,projects(name,planning_color)")
       .order("start_date"),
-    supabase.from("team_members").select("id,name"),
+    supabase.from("team_members").select("id,name,trade,member_type"),
+    supabase.from("quick_jobs").select("*").order("start_date"),
   ]);
 
   const nameById = new Map((teamMembers ?? []).map((m) => [m.id as string, m.name as string]));
@@ -36,6 +38,7 @@ export default async function PlanningOverzichtPage() {
       projectId: r.project_id,
       projectName: r.projects?.name ?? "onbekend project",
       projectColor: r.projects?.planning_color ?? null,
+      isQuickJob: false,
       start_date: r.start_date,
       end_date: r.end_date,
     };
@@ -45,6 +48,26 @@ export default async function PlanningOverzichtPage() {
       }
     } else {
       rows.push({ id: r.id, ...base, assignee: r.assignee?.trim() || null });
+    }
+  }
+
+  const jobs = (quickJobs ?? []) as QuickJob[];
+  for (const j of jobs) {
+    const base = {
+      title: "Losse klus",
+      projectId: `qj:${j.id}`,
+      projectName: j.title,
+      projectColor: null,
+      isQuickJob: true,
+      start_date: j.start_date,
+      end_date: j.end_date,
+    };
+    if (j.assignee_team_member_ids.length > 0) {
+      for (const memberId of j.assignee_team_member_ids) {
+        rows.push({ id: `qj:${j.id}:${memberId}`, ...base, assignee: nameById.get(memberId) ?? "Onbekend personeelslid" });
+      }
+    } else {
+      rows.push({ id: `qj:${j.id}`, ...base, assignee: j.assignee?.trim() || null });
     }
   }
 
@@ -58,5 +81,16 @@ export default async function PlanningOverzichtPage() {
     return a.start_date.localeCompare(b.start_date);
   });
 
-  return <TeamPlanningPanel rows={rows} />;
+  return (
+    <TeamPlanningPanel
+      rows={rows}
+      quickJobs={jobs}
+      teamMembers={((teamMembers ?? []) as Pick<TeamMember, "id" | "name" | "trade" | "member_type">[]).map((m) => ({
+        id: m.id,
+        name: m.name,
+        trade: m.trade,
+        member_type: m.member_type,
+      }))}
+    />
+  );
 }
