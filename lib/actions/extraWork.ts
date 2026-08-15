@@ -99,6 +99,17 @@ export async function resetExtraWork(projectId: string, workId: string) {
   revalidatePath(`/projects/${projectId}/bouwplanning`);
 }
 
+// Draait alleen de bouwplanning-verschuiving terug (of past 'm opnieuw
+// toe) — laat de status/goedkeuring van het meerwerk-item zelf met rust.
+export async function toggleExtraWorkSchedule(projectId: string, workId: string, apply: boolean) {
+  await requireUser();
+  const supabase = createClient();
+  const { error } = await supabase.rpc("toggle_extra_work_schedule", { p_work_id: workId, p_apply: apply });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/meerwerk`);
+  revalidatePath(`/projects/${projectId}/bouwplanning`);
+}
+
 export async function deleteExtraWork(projectId: string, workId: string) {
   await requireUser();
   const supabase = createClient();

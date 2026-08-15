@@ -8,7 +8,7 @@ import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { FilePreview } from "@/components/FilePreview";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
-import { approveExtraWork, createExtraWork, deleteExtraWork, rejectExtraWork, resetExtraWork } from "@/lib/actions/extraWork";
+import { approveExtraWork, createExtraWork, deleteExtraWork, rejectExtraWork, resetExtraWork, toggleExtraWorkSchedule } from "@/lib/actions/extraWork";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import { VAT_TYPE_LABEL, type ExtraWork, type ExtraWorkStatus, type ExtraWorkType, type ExtraWorkVatType, type Role, type SchedulePhase } from "@/types/database";
 
@@ -110,6 +110,17 @@ export function ExtraWorkPanel({
       if (status === "akkoord") await approveExtraWork(projectId, id, null);
       else if (status === "afgewezen") await rejectExtraWork(projectId, id);
       else await resetExtraWork(projectId, id);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Bijwerken mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleToggleSchedule = async (id: string, apply: boolean) => {
+    setBusy(true);
+    try {
+      await toggleExtraWorkSchedule(projectId, id, apply);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Bijwerken mislukt.");
     } finally {
@@ -231,6 +242,17 @@ export function ExtraWorkPanel({
                       : `${Math.abs(w.extra_days)} werk${Math.abs(w.extra_days) === 1 ? "dag" : "dagen"} korter`}
                     {phase ? ` bij ${phase.title}` : ""} —{" "}
                     {w.schedule_applied ? "bouwplanning aangepast" : "bouwplanning past pas aan na akkoord van de klant"}
+                    {role === "eigenaar" && (
+                      <button
+                        type="button"
+                        className="link-btn"
+                        disabled={busy}
+                        style={{ marginLeft: 8 }}
+                        onClick={() => handleToggleSchedule(w.id, !w.schedule_applied)}
+                      >
+                        {w.schedule_applied ? "ongedaan maken in bouwplanning" : "opnieuw toepassen in bouwplanning"}
+                      </button>
+                    )}
                   </div>
                 )}
                 {w.status === "akkoord" && w.approved_by && (
