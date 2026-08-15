@@ -2,11 +2,11 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, Pencil, Plus, Trash2, X } from "lucide-react";
 import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
-import { createQuickJob, deleteQuickJob } from "@/lib/actions/quickJobs";
+import { createQuickJob, deleteQuickJob, updateQuickJob } from "@/lib/actions/quickJobs";
 import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { QuickJob, TeamMemberType } from "@/types/database";
 
@@ -61,6 +61,8 @@ export function TeamPlanningPanel({
   const [, startTransition] = useTransition();
   const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
   const [filter, setFilter] = useState<"alle" | "personeel" | "onderaannemer">("alle");
+  const [editingJobId, setEditingJobId] = useState<string | null>(null);
+  const [editJobForm, setEditJobForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
   const quickJobAssigneeLabel = (j: QuickJob) =>
@@ -80,6 +82,41 @@ export function TeamPlanningPanel({
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
     setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
+  };
+
+  const startEditJob = (j: QuickJob) => {
+    setEditingJobId(j.id);
+    let count = 0;
+    for (let t = new Date(j.start_date).getTime(); t <= new Date(j.end_date).getTime(); t += DAY_MS) {
+      const wd = new Date(t).getUTCDay();
+      if (wd !== 0 && wd !== 6) count++;
+    }
+    setEditJobForm({
+      title: j.title,
+      assignee: j.assignee ?? "",
+      assigneeTeamMemberIds: j.assignee_team_member_ids,
+      start: j.start_date,
+      days: String(count || 1),
+    });
+  };
+
+  const cancelEditJob = () => setEditingJobId(null);
+
+  const editJobComputedEnd =
+    editJobForm.start && Number(editJobForm.days) >= 1 ? endDateForWorkingDays(editJobForm.start, Number(editJobForm.days)) : "";
+
+  const saveEditJob = (id: string) => {
+    if (!editJobForm.title.trim() || !editJobForm.start || !editJobComputedEnd) return;
+    startTransition(() => {
+      updateQuickJob(id, {
+        title: editJobForm.title,
+        assignee: editJobForm.assignee,
+        assigneeTeamMemberIds: editJobForm.assigneeTeamMemberIds,
+        start: editJobForm.start,
+        end: editJobComputedEnd,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+    });
+    setEditingJobId(null);
   };
 
   const initialColors = useMemo(() => {
@@ -308,25 +345,76 @@ export function TeamPlanningPanel({
             Losse klussen
           </div>
           <div className="task-list">
-            {filteredQuickJobs.map((j) => (
-              <div key={j.id} className="task-row">
-                <div className="task-body">
-                  <div className="task-title">{j.title}</div>
-                  <div className="task-meta">
-                    <span>{quickJobAssigneeLabel(j)}</span>
-                    <span className="mono">
-                      {fmtShort(j.start_date)} – {fmtShort(j.end_date)}
-                    </span>
+            {filteredQuickJobs.map((j) =>
+              editingJobId === j.id ? (
+                <div key={j.id} className="add-form">
+                  <div className="add-form-grid">
+                    <input
+                      placeholder="Wat moet er gebeuren?"
+                      value={editJobForm.title}
+                      onChange={(e) => setEditJobForm({ ...editJobForm, title: e.target.value })}
+                    />
+                    <input
+                      type="date"
+                      value={editJobForm.start}
+                      onChange={(e) => setEditJobForm({ ...editJobForm, start: e.target.value })}
+                      title="Startdatum"
+                    />
+                    <input
+                      type="number"
+                      min="1"
+                      max="3"
+                      placeholder="Aantal dagen"
+                      value={editJobForm.days}
+                      onChange={(e) => setEditJobForm({ ...editJobForm, days: e.target.value })}
+                    />
+                  </div>
+                  <AssigneeInput
+                    assignee={editJobForm.assignee}
+                    assigneeTeamMemberIds={editJobForm.assigneeTeamMemberIds}
+                    onChangeAssignee={(v) => setEditJobForm({ ...editJobForm, assignee: v })}
+                    onChangeTeamMemberIds={(ids) => setEditJobForm({ ...editJobForm, assigneeTeamMemberIds: ids })}
+                    teamMembers={teamMembers}
+                  />
+                  {editJobComputedEnd && (
+                    <div className="hint-bar small">
+                      Deze klus loopt dan van {fmtShort(editJobForm.start)} t/m {fmtShort(editJobComputedEnd)}.
+                    </div>
+                  )}
+                  <div className="dossier-status-actions">
+                    <button className="btn-primary" onClick={() => saveEditJob(j.id)}>
+                      <Check size={14} /> Opslaan
+                    </button>
+                    <button className="btn-ghost" onClick={cancelEditJob}>
+                      <X size={14} /> Annuleren
+                    </button>
                   </div>
                 </div>
-                <button
-                  className="icon-btn danger ghost"
-                  onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            ))}
+              ) : (
+                <div key={j.id} className="task-row">
+                  <div className="task-body">
+                    <div className="task-title">{j.title}</div>
+                    <div className="task-meta">
+                      <span>{quickJobAssigneeLabel(j)}</span>
+                      <span className="mono">
+                        {fmtShort(j.start_date)} – {fmtShort(j.end_date)}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button className="icon-btn ghost" onClick={() => startEditJob(j)}>
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="icon-btn danger ghost"
+                      onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </>
       )}
