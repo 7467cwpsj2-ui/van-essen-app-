@@ -6,7 +6,14 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function createPhase(
   projectId: string,
-  data: { title: string; assignee: string | null; assigneeTeamMemberIds: string[]; start: string; end: string }
+  data: {
+    title: string;
+    assignee: string | null;
+    assigneeTeamMemberIds: string[];
+    start: string;
+    end: string;
+    fixedDate?: boolean;
+  }
 ) {
   await requireUser();
   if (!data.title.trim() || !data.start || !data.end) throw new Error("Titel, startdatum en einddatum zijn verplicht.");
@@ -18,7 +25,19 @@ export async function createPhase(
     assignee_team_member_ids: data.assigneeTeamMemberIds,
     start_date: data.start,
     end_date: data.end,
+    fixed_date: !!data.fixedDate,
   });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/bouwplanning`);
+  revalidatePath(`/projects/${projectId}/planning`);
+}
+
+// Bepaalt of latere fases wel/niet automatisch mee mogen schuiven zodra
+// deze fase zelf verschuift (door meerwerk of een handmatige wijziging).
+export async function setPhaseFixedDate(projectId: string, phaseId: string, fixedDate: boolean) {
+  await requireUser();
+  const supabase = createClient();
+  const { error } = await supabase.from("schedule_phases").update({ fixed_date: fixedDate }).eq("id", phaseId);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
   revalidatePath(`/projects/${projectId}/planning`);
@@ -29,7 +48,8 @@ export async function createPhase(
 // item blijft hierdoor altijd ongewijzigd staan. Latere fases (die op
 // of na de oorspronkelijke einddatum van deze fase beginnen) schuiven
 // automatisch mee, met dezelfde verschuiving in kalenderdagen — zelfde
-// principe als bij een meerwerk-verschuiving.
+// principe als bij een meerwerk-verschuiving. Fases met fixed_date
+// slaan deze automatische verschuiving over.
 export async function updatePhaseDates(projectId: string, phaseId: string, data: { start: string; end: string }) {
   await requireUser();
   if (!data.start || !data.end) throw new Error("Startdatum en einddatum zijn verplicht.");
@@ -48,6 +68,7 @@ export async function updatePhaseDates(projectId: string, phaseId: string, data:
         .from("schedule_phases")
         .select("id,start_date,end_date")
         .eq("project_id", projectId)
+        .eq("fixed_date", false)
         .neq("id", phaseId)
         .gte("start_date", oldEnd);
       await Promise.all(

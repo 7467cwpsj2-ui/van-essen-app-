@@ -12,7 +12,7 @@ export default async function PlanningOverzichtPage() {
   const [{ data }, { data: teamMembers }, { data: quickJobs }] = await Promise.all([
     supabase
       .from("schedule_phases")
-      .select("id,project_id,title,assignee,assignee_team_member_ids,start_date,end_date,projects(name,planning_color)")
+      .select("id,project_id,title,assignee,assignee_team_member_ids,start_date,end_date,fixed_date,projects(name,planning_color)")
       .order("start_date"),
     supabase.from("team_members").select("id,name,trade,member_type"),
     supabase.from("quick_jobs").select("*").order("start_date"),
@@ -28,6 +28,7 @@ export default async function PlanningOverzichtPage() {
     assignee_team_member_ids: string[];
     start_date: string;
     end_date: string;
+    fixed_date: boolean;
     projects: { name: string; planning_color: string | null } | null;
   }[];
 
@@ -39,6 +40,7 @@ export default async function PlanningOverzichtPage() {
       projectName: r.projects?.name ?? "onbekend project",
       projectColor: r.projects?.planning_color ?? null,
       isQuickJob: false,
+      fixedDate: r.fixed_date,
       start_date: r.start_date,
       end_date: r.end_date,
     };
@@ -59,6 +61,7 @@ export default async function PlanningOverzichtPage() {
       projectName: j.title,
       projectColor: null,
       isQuickJob: true,
+      fixedDate: false,
       start_date: j.start_date,
       end_date: j.end_date,
     };

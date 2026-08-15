@@ -138,6 +138,7 @@ export interface SchedulePhase {
   assignee_team_member_ids: string[];
   start_date: string;
   end_date: string;
+  fixed_date: boolean;
   created_at: string;
 }
 

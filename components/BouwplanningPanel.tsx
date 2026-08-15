@@ -1,10 +1,10 @@
 "use client";
 
 import { Fragment, useState, useTransition } from "react";
-import { AlertTriangle, Pencil, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Lock, Pencil, Plus, Trash2, Unlock, X } from "lucide-react";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { ScrollToToday } from "@/components/ScrollToToday";
-import { createPhase, deletePhase, updatePhaseDates } from "@/lib/actions/schedule";
+import { createPhase, deletePhase, setPhaseFixedDate, updatePhaseDates } from "@/lib/actions/schedule";
 import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { SchedulePhase, Task } from "@/types/database";
 
@@ -35,7 +35,7 @@ export function BouwplanningPanel({
   canEdit: boolean;
   conflicts?: Record<string, PhaseConflict[]>;
 }) {
-  const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "", fixedDate: false });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ start: "", days: "" });
   const [, startTransition] = useTransition();
@@ -55,9 +55,16 @@ export function BouwplanningPanel({
         assigneeTeamMemberIds: form.assigneeTeamMemberIds,
         start: form.start,
         end: computedEnd,
+        fixedDate: form.fixedDate,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
+    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "", fixedDate: false });
+  };
+
+  const toggleFixed = (p: SchedulePhase) => {
+    startTransition(() => {
+      setPhaseFixedDate(projectId, p.id, !p.fixed_date).catch((err) => alert(err instanceof Error ? err.message : "Bijwerken mislukt."));
+    });
   };
 
   const startEditPhase = (p: SchedulePhase) => {
@@ -141,6 +148,11 @@ export function BouwplanningPanel({
                   <div className="gantt-cell gantt-row-label">
                     <div className="gantt-row-title">
                       {i.title}
+                      {i.fixed_date && (
+                        <span className="gantt-fixed-icon" title="Deze fase schuift niet automatisch mee met andere wijzigingen.">
+                          <Lock size={11} />
+                        </span>
+                      )}
                       {conflicts[i.id] && (
                         <span
                           className="gantt-conflict-icon"
@@ -165,6 +177,13 @@ export function BouwplanningPanel({
                     </div>
                     {canEdit && (
                       <div className="gantt-row-actions">
+                        <button
+                          className="icon-btn ghost"
+                          onClick={() => toggleFixed(i)}
+                          title={i.fixed_date ? "Weer laten meeschuiven" : "Deze fase niet meer laten verplaatsen"}
+                        >
+                          {i.fixed_date ? <Unlock size={12} /> : <Lock size={12} />}
+                        </button>
                         <button className="icon-btn ghost" onClick={() => startEditPhase(i)} title="Datums aanpassen">
                           <Pencil size={12} />
                         </button>
@@ -273,6 +292,10 @@ export function BouwplanningPanel({
               <Plus size={14} /> Toevoegen
             </button>
           </div>
+          <label className="checkbox-label">
+            <input type="checkbox" checked={form.fixedDate} onChange={(e) => setForm({ ...form, fixedDate: e.target.checked })} />
+            Deze fase kan niet meer verplaatst worden (schuift nooit automatisch mee met meerwerk of andere wijzigingen)
+          </label>
           <div className="hint-bar small">
             Weekenden tellen niet mee bij het doortellen van de werkdagen.
             {computedEnd && (

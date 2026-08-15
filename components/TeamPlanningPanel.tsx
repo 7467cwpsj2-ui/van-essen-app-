@@ -27,6 +27,7 @@ export interface PlanningRow {
   projectName: string;
   projectColor: string | null;
   isQuickJob: boolean;
+  fixedDate: boolean;
   assignee: string | null;
   start_date: string;
   end_date: string;
@@ -178,7 +179,8 @@ export function TeamPlanningPanel({
                 if (matches.length === 0) return { blockKey: null, background: null, label: "" };
                 if (matches.length === 1) {
                   const color = colorOf(matches[0].projectId);
-                  return { blockKey: matches[0].projectId, background: color, label: `${matches[0].projectName} — ${matches[0].title}` };
+                  const label = `${matches[0].projectName} — ${matches[0].title}${matches[0].fixedDate ? " (vaste datum)" : ""}`;
+                  return { blockKey: matches[0].projectId, background: color, label };
                 }
                 const usedColors = Array.from(new Set(matches.map((m) => colorOf(m.projectId))));
                 const stripe =
