@@ -7,7 +7,7 @@ import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
 import { createQuickJob, deleteQuickJob, updateQuickJob } from "@/lib/actions/quickJobs";
-import { endDateForWorkingDays } from "@/lib/workingDays";
+import { endDateForWorkingDays, isoWeekNumber } from "@/lib/workingDays";
 import type { QuickJob, TeamMemberType } from "@/types/database";
 
 const DAY_MS = 86400000;
@@ -217,7 +217,20 @@ export function TeamPlanningPanel({
         </div>
       ) : (
         <ScrollToToday todayIdx={todayIdx}>
-          <div className="gantt-grid" style={{ gridTemplateColumns: `160px repeat(${days.length}, 30px)` }}>
+          <div
+            className="gantt-grid"
+            style={{ gridTemplateColumns: `160px repeat(${days.length}, 30px)`, gridTemplateRows: "20px 48px" }}
+          >
+            <div className="gantt-cell gantt-corner" />
+            {days.map((d, idx) => {
+              const wd = d.getUTCDay();
+              const isWeekStart = wd === 1 || idx === 0;
+              return (
+                <div key={idx} className={"gantt-cell gantt-week-cell" + (isWeekStart && idx > 0 ? " week-start" : "")}>
+                  {isWeekStart && <span className="gantt-week-label">Wk {isoWeekNumber(d)}</span>}
+                </div>
+              );
+            })}
             <div className="gantt-cell gantt-corner" />
             {days.map((d, idx) => {
               const wd = d.getUTCDay();

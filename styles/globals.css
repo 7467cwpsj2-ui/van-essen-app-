@@ -1746,6 +1746,22 @@ textarea {
   z-index: 2;
   background: var(--panel);
 }
+.gantt-week-cell {
+  justify-content: flex-start;
+  background: var(--panel-2);
+  border-bottom: none;
+}
+.gantt-week-cell.week-start {
+  border-left: 1px solid var(--border);
+}
+.gantt-week-label {
+  font-size: 8.5px;
+  font-family: var(--font-mono);
+  color: var(--text-faint);
+  letter-spacing: 0.03em;
+  padding-left: 3px;
+  white-space: nowrap;
+}
 .gantt-head {
   flex-direction: column;
   justify-content: center;

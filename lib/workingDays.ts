@@ -3,6 +3,17 @@ export function isWeekendDate(d: Date): boolean {
   return wd === 0 || wd === 6;
 }
 
+// ISO-8601 weeknummer (week 1 is de week met de eerste donderdag van het jaar).
+export function isoWeekNumber(d: Date): number {
+  const date = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+  const dayNum = (date.getUTCDay() + 6) % 7; // ma = 0 .. zo = 6
+  date.setUTCDate(date.getUTCDate() - dayNum + 3); // dichtstbijzijnde donderdag
+  const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+  const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
+  firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
+  return 1 + Math.round((date.getTime() - firstThursday.getTime()) / (7 * 86400000));
+}
+
 // Geeft de maandag van de week waarin `dateIso` valt.
 export function mondayOfWeek(dateIso: string): string {
   const d = new Date(dateIso + "T00:00:00Z");
