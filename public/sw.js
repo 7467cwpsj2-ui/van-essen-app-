@@ -40,6 +40,40 @@ self.addEventListener("push", (event) => {
   );
 });
 
+// Browsers verversen een pushabonnement af en toe automatisch (bv. na
+// een systeemupdate of na een paar maanden) — zonder dit stopt een
+// toestel dan stil met meldingen ontvangen, zonder dat iemand het
+// merkt totdat ze toevallig iets missen. We melden het nieuwe
+// abonnement meteen opnieuw aan bij de server, zonder dat de gebruiker
+// er iets van hoeft te merken of opnieuw toestemming hoeft te geven.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  event.waitUntil(
+    (async () => {
+      try {
+        let subscription = event.newSubscription;
+        if (!subscription) {
+          const applicationServerKey = event.oldSubscription && event.oldSubscription.options.applicationServerKey;
+          subscription = await self.registration.pushManager.subscribe(
+            applicationServerKey ? { userVisibleOnly: true, applicationServerKey } : { userVisibleOnly: true }
+          );
+        }
+        const json = subscription.toJSON();
+        if (json.endpoint && json.keys && json.keys.p256dh && json.keys.auth) {
+          await fetch("/api/push/subscribe", {
+            method: "POST",
+            credentials: "same-origin",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
+          });
+        }
+      } catch {
+        // Kan hier niets meer aan doen zonder gebruikersinteractie — bij
+        // het volgende bezoek pikt de gewone aanmeldflow het weer op.
+      }
+    })()
+  );
+});
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/dashboard";
