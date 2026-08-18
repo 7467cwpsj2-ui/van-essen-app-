@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   Building2,
   CalendarRange,
+  ClipboardList,
   FileText,
   LayoutDashboard,
   Plus,
@@ -86,6 +87,13 @@ export function AppShell({
           <>
             <Link href="/projects/new" className="new-project-toggle" onClick={() => setSidebarOpen(false)}>
               <Plus size={14} /> Nieuw project
+            </Link>
+            <Link
+              href="/offertes"
+              className={"toegang-toggle" + (pathname === "/offertes" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <ClipboardList size={14} /> Offertes
             </Link>
             <Link
               href="/personeel"

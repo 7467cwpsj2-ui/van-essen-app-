@@ -325,6 +325,30 @@ export interface OwnerClientMessage {
   created_at: string;
 }
 
+export type LeadStatus = "open" | "offerte_verzonden" | "gewonnen" | "verloren";
+
+export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {
+  open: "Open",
+  offerte_verzonden: "Offerte verzonden",
+  gewonnen: "Gewonnen",
+  verloren: "Verloren",
+};
+
+export interface Lead {
+  id: string;
+  client_name: string;
+  address: string | null;
+  phone: string | null;
+  email: string | null;
+  description: string | null;
+  visit_date: string | null;
+  status: LeadStatus;
+  converted_project_id: string | null;
+  last_reminder_sent_at: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
 export interface HourEntry {
   id: string;
   project_id: string;

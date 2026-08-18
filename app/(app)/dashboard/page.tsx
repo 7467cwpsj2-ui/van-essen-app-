@@ -1,7 +1,14 @@
 import Link from "next/link";
-import { Building2, Camera, CheckCircle2, Clock, MapPin, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
-import { getDashboardExtras, getMySchedule, getProjectsWithProgress, getTodayStaffSchedule, type ActivityItem } from "@/lib/data";
+import {
+  getDashboardExtras,
+  getLeadsSummary,
+  getMySchedule,
+  getProjectsWithProgress,
+  getTodayStaffSchedule,
+  type ActivityItem,
+} from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
 import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
 
@@ -27,6 +34,7 @@ export default async function DashboardPage() {
   const mySchedule =
     current.profile.role === "team" && current.profile.team_member_id ? await getMySchedule(current.profile.team_member_id) : [];
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
+  const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -60,6 +68,17 @@ export default async function DashboardPage() {
           <div className="dash-card-value">{extras.todayTasks.length}</div>
           <div className="dash-card-title">Te doen vandaag</div>
         </Link>
+        {current.profile.role === "eigenaar" && (
+          <Link href="/offertes" className="dash-card">
+            <div className="dash-card-icon">
+              <ClipboardList size={16} />
+            </div>
+            <div className="dash-card-value">{leadsSummary.overdueCount}</div>
+            <div className="dash-card-title">
+              Offertes te laat{leadsSummary.openCount > leadsSummary.overdueCount ? ` · ${leadsSummary.openCount} open` : ""}
+            </div>
+          </Link>
+        )}
         {current.profile.role !== "klant" && canSeeModule(current, "meerwerk") && (
           <Link href="/meerwerk" className="dash-card">
             <div className="dash-card-icon">

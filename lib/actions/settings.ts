@@ -13,3 +13,12 @@ export async function updateGoogleReviewUrl(url: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/instellingen");
 }
+
+export async function updateLeadReminderDays(days: number) {
+  await requireOwner();
+  if (!(days >= 1)) throw new Error("Moet minstens 1 dag zijn.");
+  const supabase = createClient();
+  const { error } = await supabase.from("app_settings").update({ lead_reminder_days: Math.round(days) }).eq("id", true);
+  if (error) throw new Error(error.message);
+  revalidatePath("/instellingen");
+}

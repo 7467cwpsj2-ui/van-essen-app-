@@ -172,6 +172,27 @@ export async function getTodayStaffSchedule(): Promise<StaffTodayItem[]> {
   return items;
 }
 
+export interface LeadsSummary {
+  openCount: number;
+  overdueCount: number;
+}
+
+// Voor het dashboard-kaartje "Offertes" — hoeveel aanvragen nog open
+// staan, en hoeveel daarvan al langer dan de ingestelde termijn wachten
+// op een offerte (dezelfde termijn als de cron-herinnering gebruikt).
+export async function getLeadsSummary(): Promise<LeadsSummary> {
+  const supabase = createClient();
+  const [{ data: settings }, { data: leads }] = await Promise.all([
+    supabase.from("app_settings").select("lead_reminder_days").eq("id", true).single(),
+    supabase.from("leads").select("id,visit_date").eq("status", "open"),
+  ]);
+  const reminderDays = (settings?.lead_reminder_days as number | undefined) ?? 3;
+  const cutoff = new Date(Date.now() - reminderDays * 86400000).toISOString().slice(0, 10);
+  const rows = (leads ?? []) as { id: string; visit_date: string | null }[];
+  const overdueCount = rows.filter((l) => l.visit_date && l.visit_date <= cutoff).length;
+  return { openCount: rows.length, overdueCount };
+}
+
 export interface DashboardExtras {
   todayTasks: TodayTask[];
   openMeerwerk: { count: number; amount: number };
