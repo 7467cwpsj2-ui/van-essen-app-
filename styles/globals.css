@@ -658,10 +658,9 @@ textarea {
   position: relative;
 }
 .project-overflow-menu {
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  z-index: 30;
+  /* position/top/right komen inline mee (via getBoundingClientRect), zodat
+     het menu buiten de overflow:hidden van .project-header uitsteekt. */
+  z-index: 100;
   min-width: 190px;
   background: var(--panel);
   border: 1px solid var(--border);
