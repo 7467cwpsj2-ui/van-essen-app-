@@ -11,6 +11,7 @@ import {
   type ActivityItem,
 } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
+import { timeAwareGreeting } from "@/lib/greeting";
 import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -49,7 +50,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="dashboard">
-      <div className="header-eyebrow">Welkom, {current.profile.name}</div>
+      <div className="header-eyebrow">
+        {timeAwareGreeting()}, {current.profile.name}
+      </div>
       <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
         Dashboard
       </h1>
@@ -70,8 +73,8 @@ export default async function DashboardPage() {
           <div className="dash-card-title">Te doen vandaag</div>
         </Link>
         {current.profile.role === "eigenaar" && (
-          <Link href="/offertes" className="dash-card">
-            <div className="dash-card-icon">
+          <Link href="/offertes" className={"dash-card" + (leadsSummary.overdueCount > 0 ? " accent" : "")}>
+            <div className={"dash-card-icon" + (leadsSummary.overdueCount > 0 ? " warning" : "")}>
               <ClipboardList size={16} />
             </div>
             <div className="dash-card-value">{leadsSummary.overdueCount}</div>
@@ -81,8 +84,8 @@ export default async function DashboardPage() {
           </Link>
         )}
         {current.profile.role !== "klant" && canSeeModule(current, "meerwerk") && (
-          <Link href="/meerwerk" className="dash-card">
-            <div className="dash-card-icon">
+          <Link href="/meerwerk" className={"dash-card" + (extras.openMeerwerk.count > 0 ? " accent" : "")}>
+            <div className={"dash-card-icon" + (extras.openMeerwerk.count > 0 ? " warning" : "")}>
               <TrendingUp size={16} />
             </div>
             <div className="dash-card-value">{extras.openMeerwerk.count}</div>

@@ -12,6 +12,8 @@
   --brand-soft: #eaf6fd;
   --success: #1fa971;
   --danger: #d64b3f;
+  --warning: #c47a1f;
+  --warning-soft: #fbf1e2;
   --text: #111111;
   --text-dim: #5b5f66;
   --text-faint: #8a8e96;
@@ -38,6 +40,8 @@
     --brand-soft: rgba(51, 168, 232, 0.16);
     --success: #34c98d;
     --danger: #ef6b5e;
+    --warning: #e8a94a;
+    --warning-soft: rgba(232, 169, 74, 0.16);
     --text: #f2f4f7;
     --text-dim: #aab0ba;
     --text-faint: #767c87;
@@ -56,6 +60,8 @@
   --brand-soft: rgba(51, 168, 232, 0.16);
   --success: #34c98d;
   --danger: #ef6b5e;
+  --warning: #e8a94a;
+  --warning-soft: rgba(232, 169, 74, 0.16);
   --text: #f2f4f7;
   --text-dim: #aab0ba;
   --text-faint: #767c87;
@@ -413,6 +419,19 @@ textarea {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+.project-item-progress {
+  height: 4px;
+  background: var(--panel-2);
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 1px;
+}
+.project-item-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--brand-dim), var(--brand));
+  border-radius: 999px;
+  transition: width 0.7s var(--ease-premium);
 }
 
 .project-group {
@@ -2484,15 +2503,16 @@ textarea {
   margin-top: -4px;
 }
 .proj-card-progress {
-  height: 6px;
+  height: 7px;
   background: var(--panel-2);
-  border-radius: 4px;
+  border-radius: 999px;
   overflow: hidden;
 }
 .proj-card-progress-fill {
   height: 100%;
-  background: var(--brand);
-  border-radius: 4px;
+  background: linear-gradient(90deg, var(--brand-dim), var(--brand));
+  border-radius: 999px;
+  box-shadow: 0 0 8px color-mix(in srgb, var(--brand) 55%, transparent);
 }
 .proj-card-foot {
   display: flex;
@@ -2530,11 +2550,18 @@ textarea {
   justify-content: center;
   margin-bottom: 2px;
 }
+.dash-card-icon.warning {
+  background: var(--warning-soft);
+  color: var(--warning);
+}
 .dash-card-value {
   font-family: var(--font-display);
   font-weight: 800;
   font-size: 26px;
   color: var(--text);
+}
+.dash-card.accent .dash-card-value {
+  color: var(--warning);
 }
 .dash-card-title {
   font-size: 12px;
