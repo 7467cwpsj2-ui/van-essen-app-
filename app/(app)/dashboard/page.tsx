@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
+import { ProjectThumb } from "@/components/ProjectThumb";
 import {
   getDashboardExtras,
   getLeadsSummary,
@@ -197,7 +198,7 @@ export default async function DashboardPage() {
               {topProjects.map((p) => (
                 <Link key={p.id} href={`/projects/${p.id}/planning`} className="dash-panel-row">
                   <div className="dash-panel-row-icon">
-                    {p.coverPhotoUrl ? <img src={p.coverPhotoUrl} alt="" /> : <Building2 size={14} />}
+                    <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planning_color} />
                   </div>
                   <div className="dash-panel-row-body">
                     <div className="dash-panel-row-title">{p.name}</div>
@@ -283,7 +284,7 @@ export default async function DashboardPage() {
           {projects.map((p) => (
             <Link key={p.id} href={`/projects/${p.id}/planning`} className="proj-card">
               <div className="proj-card-thumb">
-                {p.coverPhotoUrl ? <img src={p.coverPhotoUrl} alt="" /> : <Building2 size={22} />}
+                <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planning_color} />
               </div>
               <div className="proj-card-body">
                 <div className="proj-card-name">{p.name}</div>

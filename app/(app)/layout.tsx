@@ -13,6 +13,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     clientName: p.clientName,
     progress: p.progress,
     coverPhotoUrl: p.coverPhotoUrl,
+    planningColor: p.planning_color,
   }));
 
   return (

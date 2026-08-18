@@ -7,18 +7,12 @@ import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
 import { createQuickJob, deleteQuickJob, updateQuickJob } from "@/lib/actions/quickJobs";
+import { colorForProject } from "@/lib/projectColor";
 import { endDateForWorkingDays, isoWeekNumber } from "@/lib/workingDays";
 import type { QuickJob, TeamMemberType } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
-const PROJECT_COLORS = ["#2f6fed", "#dd6b20", "#38a169", "#d53f8c", "#805ad5", "#319795", "#c05621", "#3182ce", "#b7791f", "#4c51bf"];
-
-function colorForProject(projectId: string): string {
-  let hash = 0;
-  for (let i = 0; i < projectId.length; i++) hash = (hash * 31 + projectId.charCodeAt(i)) >>> 0;
-  return PROJECT_COLORS[hash % PROJECT_COLORS.length];
-}
 
 export interface PlanningRow {
   id: string;

@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Building2,
   CalendarRange,
   ClipboardList,
   FileText,
@@ -21,6 +20,7 @@ import {
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ProjectThumb } from "@/components/ProjectThumb";
 import { PushPrompt } from "@/components/PushPrompt";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpdateChecker } from "@/components/UpdateChecker";
@@ -34,6 +34,7 @@ export interface SidebarProject {
   clientName: string | null;
   progress: number;
   coverPhotoUrl: string | null;
+  planningColor: string | null;
 }
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -166,7 +167,7 @@ export function AppShell({
                         onClick={() => setSidebarOpen(false)}
                       >
                         <div className="project-item-thumb">
-                          {p.coverPhotoUrl ? <img src={p.coverPhotoUrl} alt="" /> : <Building2 size={14} />}
+                          <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />
                         </div>
                         <div className="project-item-info">
                           <span className="project-item-name">{p.name}</span>
