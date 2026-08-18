@@ -20,11 +20,12 @@ import {
   X,
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
+import { NotificationBell } from "@/components/NotificationBell";
 import { PushPrompt } from "@/components/PushPrompt";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { signOut } from "@/lib/actions/auth";
-import type { ProjectStatus, Role } from "@/types/database";
+import type { AppNotification, ProjectStatus, Role } from "@/types/database";
 
 export interface SidebarProject {
   id: string;
@@ -46,11 +47,13 @@ export function AppShell({
   role,
   name,
   projects,
+  notifications,
   children,
 }: {
   role: Role;
   name: string;
   projects: SidebarProject[];
+  notifications: { items: AppNotification[]; unreadCount: number };
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -68,13 +71,19 @@ export function AppShell({
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />} Menu
         </button>
         <Brandmark />
-        <ThemeToggle />
+        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
+          <ThemeToggle />
+        </div>
       </div>
 
       <aside className={"sidebar" + (sidebarOpen ? " open" : "")}>
         <div className="sidebar-top">
           <Brandmark />
-          <ThemeToggle />
+          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
+            <ThemeToggle />
+          </div>
         </div>
         <Link
           href="/dashboard"

@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
-import type { Project, SchedulePhase } from "@/types/database";
+import type { AppNotification, Project, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
@@ -191,6 +191,22 @@ export async function getLeadsSummary(): Promise<LeadsSummary> {
   const rows = (leads ?? []) as { id: string; visit_date: string | null }[];
   const overdueCount = rows.filter((l) => l.visit_date && l.visit_date <= cutoff).length;
   return { openCount: rows.length, overdueCount };
+}
+
+export interface NotificationsSummary {
+  items: AppNotification[];
+  unreadCount: number;
+}
+
+// Voor het belletje-icoon in de zijbalk — de laatste meldingen van de
+// ingelogde gebruiker plus het aantal ongelezen, voor het rode bolletje.
+export async function getNotifications(): Promise<NotificationsSummary> {
+  const supabase = createClient();
+  const [{ data: items }, { count }] = await Promise.all([
+    supabase.from("notifications").select("*").order("created_at", { ascending: false }).limit(20),
+    supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false),
+  ]);
+  return { items: (items ?? []) as AppNotification[], unreadCount: count ?? 0 };
 }
 
 export interface DashboardExtras {

@@ -349,6 +349,16 @@ export interface Lead {
   created_at: string;
 }
 
+export interface AppNotification {
+  id: string;
+  user_id: string;
+  title: string;
+  body: string | null;
+  url: string | null;
+  read: boolean;
+  created_at: string;
+}
+
 export interface HourEntry {
   id: string;
   project_id: string;

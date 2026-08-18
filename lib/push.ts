@@ -25,13 +25,25 @@ export interface PushPayload {
 }
 
 // Verstuurt een pushmelding naar alle geregistreerde toestellen van de
-// gegeven gebruiker(s). Stil als er geen VAPID-sleutels ingesteld zijn
-// (dan is push simpelweg nog niet geconfigureerd) of niemand een
-// abonnement heeft — dit mag nooit de aanroepende actie laten falen.
+// gegeven gebruiker(s), én bewaart 'm altijd ook in het meldingencentrum
+// (notifications-tabel) — dat werkt onafhankelijk van push, dus een
+// gemiste of nooit-geconfigureerde pushmelding blijft gewoon in de app
+// zelf zichtbaar. Dit alles is best-effort en mag nooit de aanroepende
+// actie laten falen.
 export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
-  if (!VAPID_PUBLIC || !VAPID_PRIVATE || userIds.length === 0) return;
+  if (userIds.length === 0) return;
+  const admin = createAdminClient();
+
   try {
-    const admin = createAdminClient();
+    await admin
+      .from("notifications")
+      .insert(userIds.map((user_id) => ({ user_id, title: payload.title, body: payload.body, url: payload.url ?? null })));
+  } catch {
+    // meldingencentrum is best-effort, mag verzenden van push nooit blokkeren
+  }
+
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
+  try {
     const { data: subs } = await admin.from("push_subscriptions").select("*").in("user_id", userIds);
     if (!subs?.length) return;
 
