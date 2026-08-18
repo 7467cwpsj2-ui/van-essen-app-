@@ -229,9 +229,6 @@ textarea {
 .mobile-bar {
   display: none;
 }
-.mobile-tabbar {
-  display: none;
-}
 .sidebar {
   background: var(--panel);
   border-right: 1px solid var(--border);
@@ -3050,7 +3047,6 @@ a.dash-panel-row:hover {
 @media print {
   .sidebar,
   .mobile-bar,
-  .mobile-tabbar,
   .tabs,
   .no-print {
     display: none !important;
@@ -3119,42 +3115,8 @@ a.dash-panel-row:hover {
   .mobile-bar .bm-sub {
     font-size: 7px;
   }
-  .mobile-tabbar {
-    display: flex;
-    align-items: stretch;
-    justify-content: space-around;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 15;
-    background: color-mix(in srgb, var(--panel) 85%, transparent);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-top: 1px solid var(--border);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .mobile-tab {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 3px;
-    padding: 8px 4px 6px;
-    background: transparent;
-    border: none;
-    color: var(--text-faint);
-    font-size: 10px;
-    font-weight: 500;
-    text-decoration: none;
-  }
-  .mobile-tab.active {
-    color: var(--brand);
-  }
   .main {
     padding: 16px;
-    padding-bottom: calc(16px + 58px + env(safe-area-inset-bottom));
   }
   .project-header h1 {
     font-size: 20px;
