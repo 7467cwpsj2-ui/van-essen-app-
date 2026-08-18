@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FileText,
   LayoutDashboard,
+  ListChecks,
   Plus,
   Users,
   Settings,
@@ -214,6 +215,43 @@ export function AppShell({
         <PushPrompt />
         {children}
       </main>
+
+      <nav className="mobile-tabbar">
+        <Link
+          href="/dashboard"
+          className={"mobile-tab" + (pathname === "/dashboard" ? " active" : "")}
+          onClick={() => setSidebarOpen(false)}
+        >
+          <LayoutDashboard size={20} />
+          <span>Dashboard</span>
+        </Link>
+        <Link
+          href="/te-doen"
+          className={"mobile-tab" + (pathname === "/te-doen" ? " active" : "")}
+          onClick={() => setSidebarOpen(false)}
+        >
+          <ListChecks size={20} />
+          <span>Te doen</span>
+        </Link>
+        {role === "eigenaar" && (
+          <Link
+            href="/offertes"
+            className={"mobile-tab" + (pathname === "/offertes" ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <ClipboardList size={20} />
+            <span>Offertes</span>
+          </Link>
+        )}
+        <button
+          type="button"
+          className={"mobile-tab" + (sidebarOpen ? " active" : "")}
+          onClick={() => setSidebarOpen((v) => !v)}
+        >
+          <Menu size={20} />
+          <span>Menu</span>
+        </button>
+      </nav>
     </div>
   );
 }
