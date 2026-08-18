@@ -12,8 +12,8 @@
   --brand-soft: #eaf6fd;
   --success: #1fa971;
   --danger: #d64b3f;
-  --warning: #dc7f0e;
-  --warning-soft: #fdedd2;
+  --warning: #7c3aed;
+  --warning-soft: #f2e9fe;
   --text: #111111;
   --text-dim: #5b5f66;
   --text-faint: #8a8e96;
@@ -40,8 +40,8 @@
     --brand-soft: rgba(51, 168, 232, 0.16);
     --success: #34c98d;
     --danger: #ef6b5e;
-    --warning: #e8a94a;
-    --warning-soft: rgba(232, 169, 74, 0.16);
+    --warning: #a78bfa;
+    --warning-soft: rgba(167, 139, 250, 0.16);
     --text: #f2f4f7;
     --text-dim: #aab0ba;
     --text-faint: #767c87;
@@ -60,8 +60,8 @@
   --brand-soft: rgba(51, 168, 232, 0.16);
   --success: #34c98d;
   --danger: #ef6b5e;
-  --warning: #e8a94a;
-  --warning-soft: rgba(232, 169, 74, 0.16);
+  --warning: #a78bfa;
+  --warning-soft: rgba(167, 139, 250, 0.16);
   --text: #f2f4f7;
   --text-dim: #aab0ba;
   --text-faint: #767c87;
