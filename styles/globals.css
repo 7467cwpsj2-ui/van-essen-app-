@@ -12,8 +12,8 @@
   --brand-soft: #eaf6fd;
   --success: #1fa971;
   --danger: #d64b3f;
-  --warning: #7c3aed;
-  --warning-soft: #f2e9fe;
+  --warning: var(--danger);
+  --warning-soft: color-mix(in srgb, var(--danger) 13%, transparent);
   --text: #111111;
   --text-dim: #5b5f66;
   --text-faint: #8a8e96;
@@ -40,8 +40,6 @@
     --brand-soft: rgba(51, 168, 232, 0.16);
     --success: #34c98d;
     --danger: #ef6b5e;
-    --warning: #a78bfa;
-    --warning-soft: rgba(167, 139, 250, 0.16);
     --text: #f2f4f7;
     --text-dim: #aab0ba;
     --text-faint: #767c87;
@@ -60,8 +58,6 @@
   --brand-soft: rgba(51, 168, 232, 0.16);
   --success: #34c98d;
   --danger: #ef6b5e;
-  --warning: #a78bfa;
-  --warning-soft: rgba(167, 139, 250, 0.16);
   --text: #f2f4f7;
   --text-dim: #aab0ba;
   --text-faint: #767c87;
