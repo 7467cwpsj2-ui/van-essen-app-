@@ -74,9 +74,11 @@ export default async function ProjectLayout({
           <div className="header-right">
             {current.profile.role === "eigenaar" && !isLocked && (
               <>
-                <CoverPhotoControls projectId={p.id} hasPhoto={!!coverPhotoUrl} />
-                <EditProjectButton projectId={p.id} name={p.name} address={p.address} />
-                <StatusSelect projectId={p.id} status={p.status} />
+                <div className="header-toolbar">
+                  <CoverPhotoControls projectId={p.id} hasPhoto={!!coverPhotoUrl} />
+                  <EditProjectButton projectId={p.id} name={p.name} address={p.address} />
+                  <StatusSelect projectId={p.id} status={p.status} />
+                </div>
                 <DeleteProjectButton projectId={p.id} projectName={p.name} />
               </>
             )}
