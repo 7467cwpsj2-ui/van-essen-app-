@@ -167,6 +167,17 @@ textarea {
   transform: scale(0.97);
 }
 
+.icon-btn,
+.tab-btn,
+.mode-toggle button {
+  transition: transform 0.15s var(--ease-premium), background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+.icon-btn:active:not(:disabled),
+.tab-btn:active,
+.mode-toggle button:active {
+  transform: scale(0.92);
+}
+
 .proj-card-progress-fill {
   transition: width 0.7s var(--ease-premium);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -25,6 +25,7 @@ import { PushPrompt } from "@/components/PushPrompt";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { signOut } from "@/lib/actions/auth";
+import { haptic } from "@/lib/haptics";
 import type { AppNotification, ProjectStatus, Role } from "@/types/database";
 
 export interface SidebarProject {
@@ -64,6 +65,17 @@ export function AppShell({
   const toggleGroup = (status: string) => setCollapsed((prev) => ({ ...prev, [status]: !prev[status] }));
 
   const roleLabel = { eigenaar: "Eigenaar", team: "Team", klant: "Klant" }[role];
+
+  // Lichte trilling bij elke tik op een knop/link, app-breed — alleen
+  // voelbaar op toestellen die de Vibration API ondersteunen.
+  useEffect(() => {
+    const onPointerDown = (e: PointerEvent) => {
+      const target = (e.target as HTMLElement)?.closest("button:not(:disabled), a[href]");
+      if (target) haptic("light");
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
 
   return (
     <div className="app-shell">
