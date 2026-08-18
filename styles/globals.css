@@ -544,29 +544,26 @@ textarea {
   background: rgba(255, 255, 255, 0.92);
   color: var(--text);
 }
-.project-header.has-cover .status-select {
-  background: rgba(255, 255, 255, 0.92);
-  border-color: rgba(255, 255, 255, 0.5);
+.project-header.has-cover .header-right {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
-.project-header.has-cover .header-right .btn-ghost {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.45);
+.project-header.has-cover .header-right .btn-ghost,
+.project-header.has-cover .header-right .icon-btn,
+.project-header.has-cover .header-right .status-select {
   color: #fff;
 }
-.project-header.has-cover .header-right .btn-ghost:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.32);
-  border-color: rgba(255, 255, 255, 0.6);
-  color: #fff;
+.project-header.has-cover .header-right .btn-ghost:hover:not(:disabled),
+.project-header.has-cover .header-right .icon-btn:hover,
+.project-header.has-cover .header-right .status-select:hover {
+  background: rgba(255, 255, 255, 0.2);
 }
-.project-header.has-cover .header-right .icon-btn {
-  color: rgba(255, 255, 255, 0.9);
-}
-.project-header.has-cover .header-right .icon-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
-  color: #fff;
+.project-header.has-cover .header-right .status-select option {
+  color: var(--text);
 }
 .project-header.has-cover .header-right .icon-btn.danger:hover {
-  border-color: #ff8a80;
   color: #ff8a80;
 }
 .header-top {
@@ -609,9 +606,40 @@ textarea {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 2px;
   flex-wrap: wrap;
   position: relative;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 4px;
+}
+.header-right .btn-ghost,
+.header-right .icon-btn.ghost,
+.header-right .status-select {
+  height: 32px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  box-shadow: none;
+}
+.header-right .btn-ghost {
+  padding: 0 12px;
+}
+.header-right .icon-btn.ghost {
+  padding: 0 9px;
+}
+.header-right .btn-ghost:hover:not(:disabled),
+.header-right .icon-btn.ghost:hover,
+.header-right .status-select:hover {
+  background: var(--panel);
+}
+.header-right .status-select {
+  padding: 0 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: var(--font-body);
+  cursor: pointer;
 }
 .status-select {
   background: var(--bg);
