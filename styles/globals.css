@@ -255,6 +255,9 @@ textarea {
   align-items: flex-start;
   gap: 2px;
 }
+a:has(> .brandmark) {
+  text-decoration: none;
+}
 .brandmark.large {
   align-items: center;
 }

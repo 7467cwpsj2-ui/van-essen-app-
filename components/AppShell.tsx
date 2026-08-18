@@ -71,7 +71,9 @@ export function AppShell({
         <button type="button" onClick={() => setSidebarOpen((v) => !v)}>
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />} Menu
         </button>
-        <Brandmark />
+        <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
+          <Brandmark />
+        </Link>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
           <ThemeToggle />
@@ -80,7 +82,9 @@ export function AppShell({
 
       <aside className={"sidebar" + (sidebarOpen ? " open" : "")}>
         <div className="sidebar-top">
-          <Brandmark />
+          <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
+            <Brandmark />
+          </Link>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
             <ThemeToggle />
