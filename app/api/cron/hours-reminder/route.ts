@@ -6,10 +6,13 @@ export const dynamic = "force-dynamic";
 
 // Vercel Cron kent geen tijdzones (alleen UTC), en NL wisselt tussen
 // zomer- en wintertijd. Om dit toch echt om 16:30 NL-tijd te laten
-// afgaan, roept vercel.json deze route op twee UTC-tijden per dag aan
-// (één die in de zomer klopt, één die in de winter klopt) — hier wordt
-// vervolgens gecontroleerd of het daadwerkelijk 16 uur NL-tijd is; het
-// verkeerde moment van de twee doet dan gewoon niets.
+// afgaan, roept vercel.json deze route op twee UTC-uren per dag aan
+// binnen dezelfde cron-regel ("30 14,15 * * 1-5" — één die in de zomer
+// klopt, één die in de winter), hier wordt vervolgens gecontroleerd of
+// het daadwerkelijk 16 uur NL-tijd is; het verkeerde moment van de twee
+// doet dan gewoon niets. Dat de minuut (:30) altijd gelijk blijft komt
+// doordat zomer-/wintertijd nooit een halfuur verschuift, alleen hele
+// uren — dus precies één van de twee momenten valt exact op 16:30 NL.
 function isTargetHourInAmsterdam(): boolean {
   const hour = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", hour12: false }).format(new Date());
   return Number(hour) === 16;
