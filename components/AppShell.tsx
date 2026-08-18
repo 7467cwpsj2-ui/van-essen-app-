@@ -71,7 +71,7 @@ export function AppShell({
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />} Menu
         </button>
         <Brandmark />
-        <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
           <ThemeToggle />
         </div>
@@ -80,7 +80,7 @@ export function AppShell({
       <aside className={"sidebar" + (sidebarOpen ? " open" : "")}>
         <div className="sidebar-top">
           <Brandmark />
-          <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <NotificationBell items={notifications.items} unreadCount={notifications.unreadCount} />
             <ThemeToggle />
           </div>
