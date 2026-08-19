@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
+import { getProjectClientNamesMap } from "@/lib/clientNames";
 import type { AppNotification, Project, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
@@ -15,14 +16,7 @@ export async function getProjectsWithProgress(): Promise<ProjectWithProgress[]> 
   const { data: projects } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
   const projectRows = (projects ?? []) as Project[];
 
-  const clientIds = Array.from(new Set(projectRows.map((p) => p.client_id).filter(Boolean))) as string[];
-  const clientMap: Record<string, string> = {};
-  if (clientIds.length) {
-    const { data: clients } = await supabase.from("clients").select("id,name").in("id", clientIds);
-    (clients ?? []).forEach((c) => {
-      clientMap[c.id as string] = c.name as string;
-    });
-  }
+  const clientNameMap = await getProjectClientNamesMap(supabase, projectRows.map((p) => ({ id: p.id, client_id: p.client_id })));
 
   return Promise.all(
     projectRows.map(async (p) => {
@@ -34,7 +28,7 @@ export async function getProjectsWithProgress(): Promise<ProjectWithProgress[]> 
       }
       return {
         ...p,
-        clientName: p.client_id ? clientMap[p.client_id] ?? null : null,
+        clientName: clientNameMap[p.id] ?? null,
         progress: projectProgress((phases ?? []) as SchedulePhase[]),
         coverPhotoUrl,
       };

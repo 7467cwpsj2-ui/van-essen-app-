@@ -1,6 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { getProjectClientName } from "@/lib/clientNames";
 import type { ClientChoice, CompletionPoint, Drawing, ExtraWork, Photo, PhotoCategory, Project, WarrantyItem } from "@/types/database";
 
 export interface DossierPhoto {

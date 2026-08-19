@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Lock, MapPin, Search } from "lucide-react";
 import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getProjectClientName } from "@/lib/clientNames";
 import { ProjectTabs } from "@/components/ProjectTabs";
 import { StatusSelect } from "@/components/StatusSelect";
 import { RouteMenu } from "@/components/RouteMenu";
@@ -26,11 +27,7 @@ export default async function ProjectLayout({
   if (!project) notFound();
   const p = project as Project;
 
-  let clientName: string | null = null;
-  if (p.client_id) {
-    const { data: client } = await supabase.from("clients").select("name").eq("id", p.client_id).single();
-    clientName = client?.name ?? null;
-  }
+  const clientName = await getProjectClientName(supabase, p.id, p.client_id);
 
   let coverPhotoUrl: string | null = null;
   if (p.cover_photo_path) {
