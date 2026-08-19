@@ -8,13 +8,14 @@ export function SignaturePad({
   onCancel,
 }: {
   title?: string;
-  onSave: (blob: Blob) => void;
+  onSave: (blob: Blob) => void | Promise<void>;
   onCancel: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
   const [hasDrawn, setHasDrawn] = useState(false);
+  const [saving, setSaving] = useState(false);
 
   const fillWhite = () => {
     const canvas = canvasRef.current;
@@ -65,9 +66,18 @@ export function SignaturePad({
     setHasDrawn(false);
   };
   const save = () => {
-    if (!hasDrawn || !canvasRef.current) return;
-    canvasRef.current.toBlob((blob) => {
-      if (blob) onSave(blob);
+    if (!hasDrawn || !canvasRef.current || saving) return;
+    setSaving(true);
+    canvasRef.current.toBlob(async (blob) => {
+      if (!blob) {
+        setSaving(false);
+        return;
+      }
+      try {
+        await onSave(blob);
+      } finally {
+        setSaving(false);
+      }
     }, "image/png");
   };
 
@@ -90,14 +100,14 @@ export function SignaturePad({
         />
         <div className="sig-hint">Teken met muis of vinger</div>
         <div className="sig-actions">
-          <button type="button" className="btn-ghost" onClick={clear}>
+          <button type="button" className="btn-ghost" onClick={clear} disabled={saving}>
             Wissen
           </button>
-          <button type="button" className="btn-ghost" onClick={onCancel}>
+          <button type="button" className="btn-ghost" onClick={onCancel} disabled={saving}>
             Annuleren
           </button>
-          <button type="button" className="btn-primary" onClick={save} disabled={!hasDrawn}>
-            Bevestigen
+          <button type="button" className="btn-primary" onClick={save} disabled={!hasDrawn || saving}>
+            {saving ? "Bezig…" : "Bevestigen"}
           </button>
         </div>
       </div>

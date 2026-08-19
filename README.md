@@ -50,7 +50,7 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0031_schedule_phase_fixed_date.sql`,
 `0032_quick_jobs_team_visibility.sql`, `0033_calc_vat_type.sql`, `0034_hourly_rate_vat.sql`,
 `0035_cost_item_supplier.sql`, `0036_dossier_extras.sql`, `0037_leads.sql`,
-`0038_notifications.sql`, en klik telkens
+`0038_notifications.sql`, `0039_approve_extra_work_idempotent.sql`, en klik telkens
 Run), of met de Supabase CLI:
 
 ```bash
