@@ -1395,6 +1395,9 @@ a:has(> .brandmark) {
 .checkbox-label input {
   width: auto;
 }
+.checkbox-label.disabled {
+  opacity: 0.5;
+}
 .radio-row {
   display: flex;
   flex-wrap: wrap;

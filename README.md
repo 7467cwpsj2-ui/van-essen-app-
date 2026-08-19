@@ -52,7 +52,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0035_cost_item_supplier.sql`, `0036_dossier_extras.sql`, `0037_leads.sql`,
 `0038_notifications.sql`, `0039_approve_extra_work_idempotent.sql`,
 `0040_project_client_access.sql`,
-`0041_project_client_access_select.sql`, en klik telkens
+`0041_project_client_access_select.sql`,
+`0042_project_client_access_limit.sql`, en klik telkens
 Run), of met de Supabase CLI:
 
 ```bash

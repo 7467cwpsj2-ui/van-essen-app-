@@ -74,12 +74,13 @@ export async function toggleClientCanEditSchedule(id: string, value: boolean) {
   revalidatePath("/clients");
 }
 
-// Een project kan aan meerdere klanten gekoppeld zijn: de primaire klant
-// staat op projects.client_id (bepaalt o.a. de klantnaam op het dossier
-// en projectkaarten), extra klanten krijgen evenveel toegang via
-// project_client_access. Aanvinken koppelt deze klant zonder een
-// eventuele andere klant te ontkoppelen; uitvinken ontkoppelt alleen
-// deze klant.
+// Een project kan aan maximaal 2 klanten gekoppeld zijn: de primaire
+// klant staat op projects.client_id (bepaalt o.a. de klantnaam op het
+// dossier en projectkaarten), een eventuele tweede klant krijgt evenveel
+// toegang via project_client_access. Aanvinken koppelt deze klant zonder
+// een eventuele andere klant te ontkoppelen; uitvinken ontkoppelt alleen
+// deze klant. De harde limiet van 2 zit ook als veiligheidsnet in de
+// database (zie migratie 0042).
 export async function setClientProject(clientId: string, projectId: string, granted: boolean) {
   await requireOwner();
   const supabase = createClient();
@@ -89,6 +90,13 @@ export async function setClientProject(clientId: string, projectId: string, gran
       const { error } = await supabase.from("projects").update({ client_id: clientId }).eq("id", projectId);
       if (error) throw new Error(error.message);
     } else if (project.client_id !== clientId) {
+      const { count } = await supabase
+        .from("project_client_access")
+        .select("client_id", { count: "exact", head: true })
+        .eq("project_id", projectId);
+      if ((count ?? 0) >= 1) {
+        throw new Error("Een project kan aan maximaal 2 klanten gekoppeld worden.");
+      }
       const { error } = await supabase.from("project_client_access").insert({ project_id: projectId, client_id: clientId });
       if (error) throw new Error(error.message);
     }

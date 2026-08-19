@@ -83,16 +83,21 @@ export function ClientRow({
               {projects.map((p) => {
                 const checked = p.clientIds.includes(client.id);
                 const otherCount = p.clientIds.filter((id) => id !== client.id).length;
+                const full = !checked && otherCount >= 2;
                 return (
-                  <label key={p.id} className="checkbox-label">
+                  <label key={p.id} className={"checkbox-label" + (full ? " disabled" : "")}>
                     <input
                       type="checkbox"
                       checked={checked}
+                      disabled={full}
                       onChange={() => run(() => setClientProject(client.id, p.id, !checked))}
                     />
                     {p.name}
                     {otherCount > 0 && (
-                      <span className="access-summary-sub"> — ook gekoppeld aan {otherCount} andere klant{otherCount === 1 ? "" : "en"}</span>
+                      <span className="access-summary-sub">
+                        {" "}
+                        — {full ? "vol, al gekoppeld aan 2 klanten" : `ook gekoppeld aan 1 andere klant`}
+                      </span>
                     )}
                   </label>
                 );
