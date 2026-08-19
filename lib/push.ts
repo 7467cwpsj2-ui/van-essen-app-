@@ -93,9 +93,16 @@ export async function getTeamMemberUserIds(teamMemberId: string, excludeUserId?:
 
 export async function getProjectClientUserIds(projectId: string, excludeUserId?: string | null): Promise<string[]> {
   const admin = createAdminClient();
-  const { data: project } = await admin.from("projects").select("client_id").eq("id", projectId).single();
-  if (!project?.client_id) return [];
-  return getClientUserIds(project.client_id as string, excludeUserId);
+  const [{ data: project }, { data: extra }] = await Promise.all([
+    admin.from("projects").select("client_id").eq("id", projectId).single(),
+    admin.from("project_client_access").select("client_id").eq("project_id", projectId),
+  ]);
+  const clientIds = new Set<string>();
+  if (project?.client_id) clientIds.add(project.client_id as string);
+  (extra ?? []).forEach((r) => clientIds.add(r.client_id as string));
+  if (clientIds.size === 0) return [];
+  const lists = await Promise.all(Array.from(clientIds).map((id) => getClientUserIds(id, excludeUserId)));
+  return Array.from(new Set(lists.flat()));
 }
 
 async function getAccessibleTeamMemberIds(projectId: string): Promise<string[]> {

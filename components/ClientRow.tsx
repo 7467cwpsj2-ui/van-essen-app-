@@ -18,13 +18,13 @@ export function ClientRow({
   projects,
 }: {
   client: Client;
-  projects: { id: string; name: string; client_id: string | null }[];
+  projects: { id: string; name: string; clientIds: string[] }[];
 }) {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(client.name);
   const [, startTransition] = useTransition();
   const permCount = MODULE_KEYS.filter((k) => client.permissions[k]).length;
-  const linkedProjects = projects.filter((p) => p.client_id === client.id);
+  const linkedProjects = projects.filter((p) => p.clientIds.includes(client.id));
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
@@ -81,16 +81,19 @@ export function ClientRow({
             <div className="project-access-list">
               {projects.length === 0 && <span className="empty-hint">Nog geen projecten aangemaakt.</span>}
               {projects.map((p) => {
-                const linkedElsewhere = p.client_id !== null && p.client_id !== client.id;
+                const checked = p.clientIds.includes(client.id);
+                const otherCount = p.clientIds.filter((id) => id !== client.id).length;
                 return (
                   <label key={p.id} className="checkbox-label">
                     <input
                       type="checkbox"
-                      checked={p.client_id === client.id}
-                      onChange={() => run(() => setClientProject(client.id, p.id, p.client_id !== client.id))}
+                      checked={checked}
+                      onChange={() => run(() => setClientProject(client.id, p.id, !checked))}
                     />
                     {p.name}
-                    {linkedElsewhere && <span className="access-summary-sub"> — nu bij een andere klant, aanvinken verplaatst het</span>}
+                    {otherCount > 0 && (
+                      <span className="access-summary-sub"> — ook gekoppeld aan {otherCount} andere klant{otherCount === 1 ? "" : "en"}</span>
+                    )}
                   </label>
                 );
               })}

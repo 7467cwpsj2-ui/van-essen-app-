@@ -8,12 +8,21 @@ import type { Client, Project } from "@/types/database";
 export default async function ClientsPage() {
   await requireOwner();
   const supabase = createClient();
-  const [{ data: clients }, { data: projects }] = await Promise.all([
+  const [{ data: clients }, { data: projects }, { data: extraAccess }] = await Promise.all([
     supabase.from("clients").select("*").order("name"),
     supabase.from("projects").select("id,name,client_id").order("name"),
+    supabase.from("project_client_access").select("project_id,client_id"),
   ]);
   const clientList = (clients ?? []) as Client[];
-  const projectList = (projects ?? []) as Pick<Project, "id" | "name" | "client_id">[];
+  const rawProjects = (projects ?? []) as Pick<Project, "id" | "name" | "client_id">[];
+  const projectList = rawProjects.map((p) => ({
+    id: p.id,
+    name: p.name,
+    clientIds: [
+      ...(p.client_id ? [p.client_id] : []),
+      ...(extraAccess ?? []).filter((a) => a.project_id === p.id).map((a) => a.client_id as string),
+    ],
+  }));
 
   return (
     <div className="panel access-panel">

@@ -74,17 +74,31 @@ export async function toggleClientCanEditSchedule(id: string, value: boolean) {
   revalidatePath("/clients");
 }
 
-// Een project heeft precies één klant (project.client_id). Aanvinken
-// koppelt dit project aan deze klant (en ontkoppelt 'm dus bij een
-// eventuele vorige klant); uitvinken ontkoppelt het project weer —
-// alleen als het nu nog echt aan deze klant hangt, voor de zekerheid.
+// Een project kan aan meerdere klanten gekoppeld zijn: de primaire klant
+// staat op projects.client_id (bepaalt o.a. de klantnaam op het dossier
+// en projectkaarten), extra klanten krijgen evenveel toegang via
+// project_client_access. Aanvinken koppelt deze klant zonder een
+// eventuele andere klant te ontkoppelen; uitvinken ontkoppelt alleen
+// deze klant.
 export async function setClientProject(clientId: string, projectId: string, granted: boolean) {
   await requireOwner();
   const supabase = createClient();
   if (granted) {
-    const { error } = await supabase.from("projects").update({ client_id: clientId }).eq("id", projectId);
-    if (error) throw new Error(error.message);
+    const { data: project } = await supabase.from("projects").select("client_id").eq("id", projectId).single();
+    if (!project?.client_id) {
+      const { error } = await supabase.from("projects").update({ client_id: clientId }).eq("id", projectId);
+      if (error) throw new Error(error.message);
+    } else if (project.client_id !== clientId) {
+      const { error } = await supabase.from("project_client_access").insert({ project_id: projectId, client_id: clientId });
+      if (error) throw new Error(error.message);
+    }
   } else {
+    const { error: accessError } = await supabase
+      .from("project_client_access")
+      .delete()
+      .eq("project_id", projectId)
+      .eq("client_id", clientId);
+    if (accessError) throw new Error(accessError.message);
     const { error } = await supabase.from("projects").update({ client_id: null }).eq("id", projectId).eq("client_id", clientId);
     if (error) throw new Error(error.message);
   }
