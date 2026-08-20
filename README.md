@@ -57,8 +57,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0044_subsidy_check_item_photos.sql`,
 `0045_subsidy_check_item_photos_file_type.sql`,
 `0046_subsidy_authorizations.sql`, `0047_subsidies_owner_only.sql`,
-`0048_subsidy_applications.sql`, en klik telkens Run), of met de
-Supabase CLI:
+`0048_subsidy_applications.sql`, `0049_project_hidden_tabs.sql`, en
+klik telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

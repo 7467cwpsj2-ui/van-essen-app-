@@ -117,6 +117,8 @@ export default async function ProjectLayout({
           showCalc={showCalc}
           showSubsidies={showSubsidies}
           showAuthorization={showAuthorization}
+          hiddenTabs={p.hidden_tabs}
+          canCustomize={current.profile.role === "eigenaar"}
         />
         <form action={`/projects/${p.id}/zoeken`} className="project-search">
           <Search size={14} />

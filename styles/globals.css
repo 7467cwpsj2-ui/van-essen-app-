@@ -1027,6 +1027,11 @@ a:has(> .brandmark) {
   font-weight: 600;
   box-shadow: var(--shadow-card);
 }
+.tab-btn-customize {
+  flex-shrink: 0;
+  padding: 8px 9px;
+  margin-left: 2px;
+}
 
 .panel {
   display: flex;

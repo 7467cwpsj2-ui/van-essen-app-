@@ -134,6 +134,7 @@ export interface Project {
   planning_color: string | null;
   review_request_sent_at: string | null;
   dossier_share_token: string | null;
+  hidden_tabs: string[];
 }
 
 export interface SchedulePhase {

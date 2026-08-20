@@ -57,6 +57,17 @@ export async function updateProjectDetails(id: string, data: { name: string; add
   revalidatePath("/dashboard");
 }
 
+// Welke tabs de eigenaar voor dit project uit de navigatiebalk heeft
+// verborgen — puur een weergavefilter (zie migratie 0049), geen
+// rechtensysteem: de pagina's zelf blijven gewoon bereikbaar.
+export async function updateHiddenTabs(id: string, hiddenTabs: string[]) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from("projects").update({ hidden_tabs: hiddenTabs }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${id}`);
+}
+
 export async function setCoverPhoto(id: string, filePath: string) {
   await requireOwner();
   const supabase = createClient();

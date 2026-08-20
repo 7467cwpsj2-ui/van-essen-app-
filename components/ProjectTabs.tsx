@@ -1,7 +1,8 @@
 "use client";
 
+import { useState, useTransition } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   ClipboardList,
   CalendarRange,
@@ -18,7 +19,9 @@ import {
   TrendingUp,
   Leaf,
   FileSignature,
+  SlidersHorizontal,
 } from "lucide-react";
+import { updateHiddenTabs } from "@/lib/actions/projects";
 import type { ModuleKey } from "@/types/database";
 
 const TAB_META: Record<ModuleKey, { icon: React.ReactNode; label: string }> = {
@@ -47,9 +50,7 @@ const TAB_ORDER: ModuleKey[] = [
   "dossier",
 ];
 
-// Tabs die geen module-toggle hebben (harde regels of eigenaar-only),
-// dus buiten het permissiesysteem om apart worden bepaald.
-interface ExtraTab {
+interface TabCandidate {
   key: string;
   label: string;
   icon: React.ReactNode;
@@ -64,6 +65,8 @@ export function ProjectTabs({
   showCalc,
   showSubsidies,
   showAuthorization,
+  hiddenTabs,
+  canCustomize,
 }: {
   projectId: string;
   visibleTabs: ModuleKey[];
@@ -72,31 +75,50 @@ export function ProjectTabs({
   showCalc: boolean;
   showSubsidies: boolean;
   showAuthorization: boolean;
+  hiddenTabs: string[];
+  canCustomize: boolean;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const [customizing, setCustomizing] = useState(false);
+  const [selection, setSelection] = useState<string[]>(hiddenTabs);
+  const [pending, startTransition] = useTransition();
 
-  const extraTabs: ExtraTab[] = [
+  const candidates: TabCandidate[] = [
+    ...TAB_ORDER.filter((t) => visibleTabs.includes(t)).map((key) => ({ key, label: TAB_META[key].label, icon: TAB_META[key].icon, visible: true })),
     { key: "uren", label: "Uren", icon: <Clock size={14} />, visible: showHours },
     { key: "nacalculatie", label: "Nacalculatie", icon: <TrendingUp size={14} />, visible: showCalc },
     { key: "subsidie", label: "Subsidie", icon: <Leaf size={14} />, visible: showSubsidies },
     { key: "machtiging", label: "Machtiging", icon: <FileSignature size={14} />, visible: showAuthorization },
     { key: "privechat", label: "Privéchat", icon: <Lock size={14} />, visible: showPrivateChat },
-  ];
+  ].filter((t) => t.visible);
+
+  const shown = candidates.filter((t) => !hiddenTabs.includes(t.key));
+
+  const openCustomize = () => {
+    setSelection(hiddenTabs);
+    setCustomizing(true);
+  };
+
+  const toggle = (key: string) => {
+    setSelection((prev) => (prev.includes(key) ? prev.filter((k) => k !== key) : [...prev, key]));
+  };
+
+  const save = () => {
+    startTransition(() => {
+      updateHiddenTabs(projectId, selection)
+        .then(() => {
+          setCustomizing(false);
+          router.refresh();
+        })
+        .catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+    });
+  };
 
   return (
-    <div className="tabs">
-      {TAB_ORDER.filter((t) => visibleTabs.includes(t)).map((key) => {
-        const href = `/projects/${projectId}/${key}`;
-        const active = pathname.startsWith(href);
-        return (
-          <Link key={key} href={href} className={"tab-btn" + (active ? " active" : "")}>
-            {TAB_META[key].icon} {TAB_META[key].label}
-          </Link>
-        );
-      })}
-      {extraTabs
-        .filter((t) => t.visible)
-        .map((t) => {
+    <>
+      <div className="tabs">
+        {shown.map((t) => {
           const href = `/projects/${projectId}/${t.key}`;
           const active = pathname.startsWith(href);
           return (
@@ -105,6 +127,40 @@ export function ProjectTabs({
             </Link>
           );
         })}
-    </div>
+        {canCustomize && (
+          <button type="button" className="tab-btn tab-btn-customize" onClick={openCustomize} title="Tabs aanpassen">
+            <SlidersHorizontal size={14} />
+          </button>
+        )}
+      </div>
+
+      {customizing && (
+        <div className="sig-overlay" onClick={() => !pending && setCustomizing(false)}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">Tabs voor dit project</div>
+            <div className="hint-bar small">
+              Vink uit wat hier niet nodig is — de pagina&apos;s zelf blijven gewoon bereikbaar, dit verbergt ze alleen uit de balk
+              hierboven.
+            </div>
+            <div className="access-list" style={{ maxHeight: 320, overflowY: "auto" }}>
+              {candidates.map((t) => (
+                <label key={t.key} className="checkbox-label" style={{ padding: "6px 0" }}>
+                  <input type="checkbox" checked={!selection.includes(t.key)} onChange={() => toggle(t.key)} />
+                  {t.icon} {t.label}
+                </label>
+              ))}
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={() => setCustomizing(false)} disabled={pending}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={save} disabled={pending}>
+                {pending ? "Bezig…" : "Opslaan"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
