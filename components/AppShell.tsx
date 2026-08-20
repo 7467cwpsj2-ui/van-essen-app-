@@ -8,6 +8,7 @@ import {
   ClipboardList,
   FileText,
   LayoutDashboard,
+  Leaf,
   Plus,
   Users,
   Settings,
@@ -148,6 +149,13 @@ export function AppShell({
               onClick={() => setSidebarOpen(false)}
             >
               <FileText size={14} /> Facturen
+            </Link>
+            <Link
+              href="/subsidies"
+              className={"toegang-toggle" + (pathname === "/subsidies" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Leaf size={14} /> Subsidies
             </Link>
             <Link
               href="/instellingen"

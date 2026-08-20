@@ -16,6 +16,7 @@ import {
   Lock,
   Clock,
   TrendingUp,
+  Leaf,
 } from "lucide-react";
 import type { ModuleKey } from "@/types/database";
 
@@ -60,18 +61,21 @@ export function ProjectTabs({
   showPrivateChat,
   showHours,
   showCalc,
+  showSubsidies,
 }: {
   projectId: string;
   visibleTabs: ModuleKey[];
   showPrivateChat: boolean;
   showHours: boolean;
   showCalc: boolean;
+  showSubsidies: boolean;
 }) {
   const pathname = usePathname();
 
   const extraTabs: ExtraTab[] = [
     { key: "uren", label: "Uren", icon: <Clock size={14} />, visible: showHours },
     { key: "nacalculatie", label: "Nacalculatie", icon: <TrendingUp size={14} />, visible: showCalc },
+    { key: "subsidie", label: "Subsidie", icon: <Leaf size={14} />, visible: showSubsidies },
     { key: "privechat", label: "Privéchat", icon: <Lock size={14} />, visible: showPrivateChat },
   ];
 

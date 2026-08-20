@@ -368,3 +368,40 @@ export interface HourEntry {
   note: string | null;
   created_at: string;
 }
+
+export interface SubsidyProduct {
+  id: string;
+  category: string;
+  measure: string;
+  manufacturer: string | null;
+  product_name: string;
+  type: string | null;
+  meldcode: string | null;
+  unit: string;
+  subsidy_amount: number;
+  valid_from: string | null;
+  valid_to: string | null;
+  active: boolean;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface SubsidyCheckItem {
+  id: string;
+  project_id: string;
+  product_id: string | null;
+  category: string;
+  measure: string;
+  manufacturer: string | null;
+  product_name: string;
+  type: string | null;
+  meldcode: string | null;
+  quantity: number;
+  unit: string;
+  amount_per_unit: number;
+  indicative_subsidy: number;
+  execution_date: string | null;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}

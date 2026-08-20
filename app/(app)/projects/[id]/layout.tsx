@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation";
 import { Lock, MapPin, Search } from "lucide-react";
-import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, requireUser } from "@/lib/auth";
+import { canSeeCalc, canSeeHours, canSeeModule, canSeePrivateChat, canSeeSubsidies, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProjectClientName } from "@/lib/clientNames";
 import { ProjectTabs } from "@/components/ProjectTabs";
@@ -39,6 +39,7 @@ export default async function ProjectLayout({
   const showPrivateChat = canSeePrivateChat(current);
   const showHours = canSeeHours(current);
   const showCalc = canSeeCalc(current);
+  const showSubsidies = canSeeSubsidies(current);
   const isLocked = !!p.delivery_signed_at;
 
   return (
@@ -109,6 +110,7 @@ export default async function ProjectLayout({
           showPrivateChat={showPrivateChat}
           showHours={showHours}
           showCalc={showCalc}
+          showSubsidies={showSubsidies}
         />
         <form action={`/projects/${p.id}/zoeken`} className="project-search">
           <Search size={14} />

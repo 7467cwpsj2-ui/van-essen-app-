@@ -82,3 +82,9 @@ export function canSeeHours(current: CurrentUser): boolean {
 export function canSeeCalc(current: CurrentUser): boolean {
   return current.profile.role === "eigenaar";
 }
+
+// Subsidiecheck: harde regel, altijd intern (eigenaar + team), nooit
+// klant. Geen module-toggle.
+export function canSeeSubsidies(current: CurrentUser): boolean {
+  return current.profile.role === "eigenaar" || current.profile.role === "team";
+}
