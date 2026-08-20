@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Download, Pencil, Plus, Trash2, X, Check } from "lucide-react";
+import { Download, FileText, Pencil, Plus, Trash2, X, Check } from "lucide-react";
 import {
   addSubsidyCheckItem,
   addSubsidyCheckItemPhoto,
@@ -13,9 +13,9 @@ import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { Lightbox } from "@/components/Lightbox";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
-import type { SubsidyCheckItem, SubsidyProduct } from "@/types/database";
+import type { FileType, SubsidyCheckItem, SubsidyProduct } from "@/types/database";
 
-type ItemPhoto = { id: string; url: string | null; caption: string | null };
+type ItemPhoto = { id: string; url: string | null; fileType: FileType; caption: string | null };
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
@@ -48,7 +48,7 @@ export function SubsidyCheckPanel({
   const [editQuantity, setEditQuantity] = useState("1");
   const [editDate, setEditDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
-  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [uploadCounts, setUploadCounts] = useState<Record<string, number>>({});
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
@@ -58,22 +58,26 @@ export function SubsidyCheckPanel({
     });
   };
 
+  // Meerdere foto's/bestanden tegelijk selecteren roept dit per bestand
+  // aan (zie FileCaptureButtons) — de teller houdt per maatregel bij
+  // hoeveel uploads nog lopen, zodat de knop pas "klaar" toont als echt
+  // alles klaar is, ook als de bestanden ongelijk snel verwerken.
   const uploadPhoto = async (itemId: string, file: File) => {
-    setUploadingId(itemId);
+    setUploadCounts((prev) => ({ ...prev, [itemId]: (prev[itemId] ?? 0) + 1 }));
     try {
       const processed = await processUploadedFile(file);
       const supabase = createClient();
-      const ext = processed.fileName.split(".").pop() || "jpg";
+      const ext = processed.fileName.split(".").pop() || (processed.fileType === "pdf" ? "pdf" : "jpg");
       const path = `${projectId}/subsidie/${itemId}/${crypto.randomUUID()}.${ext}`;
       const { error: uploadError } = await supabase.storage.from("project-files").upload(path, processed.blob, {
-        contentType: "image/jpeg",
+        contentType: processed.fileType === "pdf" ? "application/pdf" : "image/jpeg",
       });
       if (uploadError) throw new Error(uploadError.message);
-      await addSubsidyCheckItemPhoto(itemId, projectId, path, null);
+      await addSubsidyCheckItemPhoto(itemId, projectId, path, processed.fileType, null);
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Foto toevoegen mislukt.");
+      alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
     } finally {
-      setUploadingId(null);
+      setUploadCounts((prev) => ({ ...prev, [itemId]: Math.max(0, (prev[itemId] ?? 0) - 1) }));
     }
   };
 
@@ -167,28 +171,53 @@ export function SubsidyCheckPanel({
                   </div>
                   {it.notes && <div className="task-meta">{it.notes}</div>}
                   <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
-                    {(photosByItem[it.id] ?? []).map((ph) => (
-                      <div key={ph.id} style={{ position: "relative" }}>
-                        <button type="button" className="thumb-btn" onClick={() => ph.url && setLightboxSrc(ph.url)}>
-                          {ph.url && <img src={ph.url} alt="" className="work-attachment-thumb" />}
-                        </button>
-                        {!isLocked && (
-                          <button
-                            type="button"
-                            className="icon-btn danger ghost"
-                            style={{ position: "absolute", top: -6, right: -6, background: "var(--panel)" }}
-                            onClick={() => removePhoto(ph.id)}
-                          >
-                            <X size={11} />
+                    {(photosByItem[it.id] ?? []).map((ph) =>
+                      ph.fileType === "pdf" ? (
+                        <div key={ph.id} style={{ position: "relative" }}>
+                          {ph.url ? (
+                            <a href={ph.url} target="_blank" rel="noreferrer" className="work-attachment-link">
+                              <FileText size={13} /> Bijlage
+                            </a>
+                          ) : (
+                            <span className="work-attachment-link">
+                              <FileText size={13} /> Bijlage
+                            </span>
+                          )}
+                          {!isLocked && (
+                            <button
+                              type="button"
+                              className="icon-btn danger ghost"
+                              style={{ position: "absolute", top: -8, right: -8, background: "var(--panel)" }}
+                              onClick={() => removePhoto(ph.id)}
+                            >
+                              <X size={11} />
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        <div key={ph.id} style={{ position: "relative" }}>
+                          <button type="button" className="thumb-btn" onClick={() => ph.url && setLightboxSrc(ph.url)}>
+                            {ph.url && <img src={ph.url} alt="" className="work-attachment-thumb" />}
                           </button>
-                        )}
-                      </div>
-                    ))}
+                          {!isLocked && (
+                            <button
+                              type="button"
+                              className="icon-btn danger ghost"
+                              style={{ position: "absolute", top: -6, right: -6, background: "var(--panel)" }}
+                              onClick={() => removePhoto(ph.id)}
+                            >
+                              <X size={11} />
+                            </button>
+                          )}
+                        </div>
+                      )
+                    )}
                     {!isLocked && (
                       <FileCaptureButtons
-                        accept="image/*"
+                        accept="image/*,application/pdf"
+                        multiple
                         variant="icon"
-                        busy={uploadingId === it.id}
+                        busy={(uploadCounts[it.id] ?? 0) > 0}
                         onPicked={(file) => uploadPhoto(it.id, file)}
                       />
                     )}

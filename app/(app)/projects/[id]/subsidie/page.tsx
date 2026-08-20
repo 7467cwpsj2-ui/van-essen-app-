@@ -17,10 +17,10 @@ export default async function SubsidiePage({ params }: { params: { id: string } 
   ]);
 
   const photoRows = (photos ?? []) as SubsidyCheckItemPhoto[];
-  const photosByItem: Record<string, { id: string; url: string | null; caption: string | null }[]> = {};
+  const photosByItem: Record<string, { id: string; url: string | null; fileType: SubsidyCheckItemPhoto["file_type"]; caption: string | null }[]> = {};
   for (const ph of photoRows) {
     const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(ph.file_path, 3600);
-    (photosByItem[ph.check_item_id] ??= []).push({ id: ph.id, url: signed?.signedUrl ?? null, caption: ph.caption });
+    (photosByItem[ph.check_item_id] ??= []).push({ id: ph.id, url: signed?.signedUrl ?? null, fileType: ph.file_type, caption: ph.caption });
   }
 
   return (

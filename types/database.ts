@@ -411,6 +411,7 @@ export interface SubsidyCheckItemPhoto {
   check_item_id: string;
   project_id: string;
   file_path: string;
+  file_type: FileType;
   caption: string | null;
   uploaded_by: string | null;
   created_at: string;

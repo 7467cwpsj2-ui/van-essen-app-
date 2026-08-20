@@ -57,6 +57,7 @@ const styles = StyleSheet.create({
   photoGroupTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", marginBottom: 6 },
   photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   photo: { width: 130, height: 95, objectFit: "cover", borderRadius: 4 },
+  attachmentLine: { fontSize: 8, color: "#5b5f66", marginTop: 2 },
   footer: { position: "absolute", bottom: 24, left: 40, right: 40, fontSize: 7, color: "#8a8e96", textAlign: "center" },
 });
 
@@ -94,7 +95,7 @@ export function SubsidyDocument({
   totalIndicativeSubsidy: number;
   checkedAt: string;
 }) {
-  const itemsWithPhotos = items.filter((it) => (photosByItem[it.id] ?? []).some((ph) => ph.url));
+  const itemsWithAttachments = items.filter((it) => (photosByItem[it.id] ?? []).some((ph) => ph.url));
   return (
     <Document title={`Subsidie-indicatie ISDE — ${project.name}`}>
       <Page size="A4" style={styles.page}>
@@ -177,23 +178,33 @@ export function SubsidyDocument({
         <Footer />
       </Page>
 
-      {itemsWithPhotos.length > 0 && (
+      {itemsWithAttachments.length > 0 && (
         <Page size="A4" style={styles.page}>
-          <Text style={styles.sectionTitle}>Bewijsfoto&apos;s</Text>
-          {itemsWithPhotos.map((it) => (
-            <View key={it.id} style={styles.photoGroup}>
-              <Text style={styles.photoGroupTitle}>
-                {it.measure} — {it.product_name}
-              </Text>
-              <View style={styles.photoGrid}>
-                {(photosByItem[it.id] ?? [])
-                  .filter((ph) => ph.url)
-                  .map((ph) => (
-                    <Image key={ph.id} style={styles.photo} src={ph.url as string} />
-                  ))}
+          <Text style={styles.sectionTitle}>Bewijsfoto&apos;s en bijlagen</Text>
+          {itemsWithAttachments.map((it) => {
+            const attachments = (photosByItem[it.id] ?? []).filter((ph) => ph.url);
+            const photoAttachments = attachments.filter((ph) => ph.fileType !== "pdf");
+            const fileAttachments = attachments.filter((ph) => ph.fileType === "pdf");
+            return (
+              <View key={it.id} style={styles.photoGroup}>
+                <Text style={styles.photoGroupTitle}>
+                  {it.measure} — {it.product_name}
+                </Text>
+                {photoAttachments.length > 0 && (
+                  <View style={styles.photoGrid}>
+                    {photoAttachments.map((ph) => (
+                      <Image key={ph.id} style={styles.photo} src={ph.url as string} />
+                    ))}
+                  </View>
+                )}
+                {fileAttachments.map((ph) => (
+                  <Text key={ph.id} style={styles.attachmentLine}>
+                    Bijgevoegd document (zie digitaal dossier in de app)
+                  </Text>
+                ))}
               </View>
-            </View>
-          ))}
+            );
+          })}
           <Footer />
         </Page>
       )}

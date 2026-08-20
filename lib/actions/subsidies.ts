@@ -167,16 +167,24 @@ export async function deleteSubsidyCheckItem(id: string, projectId: string) {
   revalidatePath(`/projects/${projectId}/subsidie`);
 }
 
-// Bewijsfoto's bij een subsidieregel (bv. tijdens de uitvoering, of het
-// typeplaatje) — de foto zelf is al geüpload naar Storage door de
+// Bewijsbijlagen bij een subsidieregel (foto's zoals tijdens de
+// uitvoering of het typeplaatje, maar ook documenten zoals een factuur
+// als PDF) — het bestand zelf is al geüpload naar Storage door de
 // aanroeper, deze slaat alleen het pad vast.
-export async function addSubsidyCheckItemPhoto(checkItemId: string, projectId: string, filePath: string, caption: string | null) {
+export async function addSubsidyCheckItemPhoto(
+  checkItemId: string,
+  projectId: string,
+  filePath: string,
+  fileType: "image" | "pdf",
+  caption: string | null
+) {
   const current = await requireUser();
   const supabase = createClient();
   const { error } = await supabase.from("subsidy_check_item_photos").insert({
     check_item_id: checkItemId,
     project_id: projectId,
     file_path: filePath,
+    file_type: fileType,
     caption: caption?.trim() || null,
     uploaded_by: current.profile.name,
   });

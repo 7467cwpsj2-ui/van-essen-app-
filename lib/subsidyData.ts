@@ -6,6 +6,7 @@ import type { Project, SubsidyCheckItem, SubsidyCheckItemPhoto } from "@/types/d
 export interface SubsidyDocumentPhoto {
   id: string;
   url: string | null;
+  fileType: SubsidyCheckItemPhoto["file_type"];
 }
 
 export interface SubsidyDocumentData {
@@ -34,7 +35,7 @@ export async function loadSubsidyData(supabase: SupabaseClient, projectId: strin
   const photosByItem: Record<string, SubsidyDocumentPhoto[]> = {};
   for (const ph of (photos ?? []) as SubsidyCheckItemPhoto[]) {
     const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(ph.file_path, urlTtlSeconds);
-    (photosByItem[ph.check_item_id] ??= []).push({ id: ph.id, url: signed?.signedUrl ?? null });
+    (photosByItem[ph.check_item_id] ??= []).push({ id: ph.id, url: signed?.signedUrl ?? null, fileType: ph.file_type });
   }
 
   return {
