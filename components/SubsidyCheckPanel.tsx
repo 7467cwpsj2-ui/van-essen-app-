@@ -256,7 +256,13 @@ export function SubsidyCheckPanel({
       </div>
 
       {items.length > 0 && (
-        <a href={`/api/projects/${projectId}/subsidie-pdf`} className="btn-primary" style={{ marginTop: 12, width: "fit-content" }}>
+        <a
+          href={`/api/projects/${projectId}/subsidie-pdf`}
+          target="_blank"
+          rel="noreferrer"
+          className="btn-primary"
+          style={{ marginTop: 12, width: "fit-content" }}
+        >
           <Download size={14} /> Subsidiedocument downloaden
         </a>
       )}
