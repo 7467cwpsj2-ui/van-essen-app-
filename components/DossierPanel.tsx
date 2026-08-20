@@ -20,7 +20,7 @@ import {
 import { warrantyEndDate } from "@/lib/warranty";
 import type { DossierWarrantyItem } from "@/lib/dossierData";
 import { WARRANTY_TYPE_LABEL } from "@/types/database";
-import type { ClientChoice, CompletionPoint, PhotoCategory, Project, Role, WarrantyType, WarrantyUnit } from "@/types/database";
+import type { ClientChoice, CompletionPoint, ExtraWork, PhotoCategory, Project, Role, WarrantyType, WarrantyUnit } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
@@ -65,6 +65,7 @@ export function DossierPanel({
   completionPoints,
   meerwerkAkkoord,
   minderwerkAkkoord,
+  extraWork,
   warrantyItems,
   photosByCategory,
   clientChoices,
@@ -80,6 +81,7 @@ export function DossierPanel({
   completionPoints: CompletionPoint[];
   meerwerkAkkoord: number;
   minderwerkAkkoord: number;
+  extraWork: ExtraWork[];
   warrantyItems: DossierWarrantyItem[];
   photosByCategory: Record<PhotoCategory, DossierPhoto[]>;
   clientChoices: ClientChoice[];
@@ -316,6 +318,26 @@ export function DossierPanel({
 
       {project.delivery_date && (
         <div className="hint-bar small">Opleverdatum: {project.delivery_date}</div>
+      )}
+
+      {extraWork.length > 0 && (
+        <div>
+          <div className="dash-section-title">Meer- en minderwerk</div>
+          <div className="work-list">
+            {extraWork.map((w) => (
+              <div key={w.id} className="list-row">
+                <div className="list-row-body">
+                  <div className="list-row-title">{w.description}</div>
+                  {w.approved_date && <div className="list-row-sub">Akkoord op {fmtDate(w.approved_date)}</div>}
+                </div>
+                <span className="mono">
+                  {w.type === "minderwerk" ? "− " : ""}
+                  {fmtEuro(w.amount)}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
       )}
 
       {completionPoints.length > 0 && (

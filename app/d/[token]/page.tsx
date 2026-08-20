@@ -88,6 +88,26 @@ export default async function PublicDossierPage({ params }: { params: { token: s
           </div>
         </div>
 
+        {data.extraWork.length > 0 && (
+          <div>
+            <div className="dash-section-title">Meer- en minderwerk</div>
+            <div className="work-list">
+              {data.extraWork.map((w) => (
+                <div key={w.id} className="list-row">
+                  <div className="list-row-body">
+                    <div className="list-row-title">{w.description}</div>
+                    {w.approved_date && <div className="list-row-sub">Akkoord op {fmtDate(w.approved_date)}</div>}
+                  </div>
+                  <span className="mono">
+                    {w.type === "minderwerk" ? "− " : ""}
+                    {fmtEuro(w.amount)}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {data.completionPoints.length > 0 && (
           <div>
             <div className="dash-section-title">Opleverpunten</div>

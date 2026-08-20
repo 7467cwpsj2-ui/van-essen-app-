@@ -268,6 +268,33 @@ export function DossierDocument({
           </View>
         </View>
 
+        {extraWork.length > 0 && (
+          <View>
+            {extraWork
+              .filter((w) => w.type === "meerwerk")
+              .map((w) => (
+                <View key={w.id} style={styles.row}>
+                  <View>
+                    <Text>{w.description}</Text>
+                    {w.approved_date && <Text style={styles.rowSub}>Akkoord op {fmtDate(w.approved_date)}</Text>}
+                  </View>
+                  <Text>{fmtEuro(w.amount)}</Text>
+                </View>
+              ))}
+            {extraWork
+              .filter((w) => w.type === "minderwerk")
+              .map((w) => (
+                <View key={w.id} style={styles.row}>
+                  <View>
+                    <Text>{w.description}</Text>
+                    {w.approved_date && <Text style={styles.rowSub}>Akkoord op {fmtDate(w.approved_date)}</Text>}
+                  </View>
+                  <Text>− {fmtEuro(w.amount)}</Text>
+                </View>
+              ))}
+          </View>
+        )}
+
         {completionPoints.length > 0 && (
           <View>
             <Text style={styles.sectionTitle}>Opleverpunten</Text>
