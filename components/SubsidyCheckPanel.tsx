@@ -1,12 +1,16 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Download, Pencil, Plus, Trash2, X, Check } from "lucide-react";
 import { addSubsidyCheckItem, deleteSubsidyCheckItem, updateSubsidyCheckItem } from "@/lib/actions/subsidies";
 import type { SubsidyCheckItem, SubsidyProduct } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
+const todayIso = () => new Date().toISOString().slice(0, 10);
+
+const productLabel = (p: SubsidyProduct) =>
+  `${p.measure} — ${p.product_name}${p.manufacturer ? ` (${p.manufacturer})` : ""}${p.meldcode ? ` · ${p.meldcode}` : ""}`;
 
 export function SubsidyCheckPanel({
   projectId,
@@ -21,12 +25,11 @@ export function SubsidyCheckPanel({
   products: SubsidyProduct[];
   items: SubsidyCheckItem[];
 }) {
-  const [category, setCategory] = useState("");
-  const [measure, setMeasure] = useState("");
-  const [productId, setProductId] = useState("");
+  const [search, setSearch] = useState("");
   const [quantity, setQuantity] = useState("1");
-  const [executionDate, setExecutionDate] = useState("");
+  const [executionDate, setExecutionDate] = useState(todayIso);
   const [notes, setNotes] = useState("");
+  const quantityRef = useRef<HTMLInputElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editQuantity, setEditQuantity] = useState("1");
   const [editDate, setEditDate] = useState("");
@@ -39,20 +42,24 @@ export function SubsidyCheckPanel({
     });
   };
 
-  const categories = useMemo(() => Array.from(new Set(products.map((p) => p.category))), [products]);
-  const measures = useMemo(() => Array.from(new Set(products.filter((p) => p.category === category).map((p) => p.measure))), [products, category]);
-  const productOptions = useMemo(() => products.filter((p) => p.category === category && p.measure === measure), [products, category, measure]);
-  const selectedProduct = products.find((p) => p.id === productId) ?? null;
+  const selectedProduct = products.find((p) => productLabel(p) === search) ?? null;
 
   const total = items.reduce((s, it) => s + Number(it.indicative_subsidy), 0);
 
+  const pickProduct = (label: string) => {
+    setSearch(label);
+    if (products.some((p) => productLabel(p) === label)) {
+      requestAnimationFrame(() => quantityRef.current?.select());
+    }
+  };
+
   const addItem = () => {
     const q = Number(quantity);
-    if (!productId || !(q > 0)) return;
-    run(() => addSubsidyCheckItem(projectId, productId, q, executionDate || null, notes || null));
-    setProductId("");
+    if (!selectedProduct || !(q > 0)) return;
+    run(() => addSubsidyCheckItem(projectId, selectedProduct.id, q, executionDate || null, notes || null));
+    setSearch("");
     setQuantity("1");
-    setExecutionDate("");
+    setExecutionDate(todayIso());
     setNotes("");
   };
 
@@ -155,55 +162,30 @@ export function SubsidyCheckPanel({
         <div className="add-form">
           <div className="add-form-title">Maatregel toevoegen aan {projectName}</div>
           <div className="add-form-grid">
-            <select
-              value={category}
-              onChange={(e) => {
-                setCategory(e.target.value);
-                setMeasure("");
-                setProductId("");
-              }}
-            >
-              <option value="">Categorie…</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
-              value={measure}
-              disabled={!category}
-              onChange={(e) => {
-                setMeasure(e.target.value);
-                setProductId("");
-              }}
-            >
-              <option value="">Maatregel…</option>
-              {measures.map((m) => (
-                <option key={m} value={m}>
-                  {m}
-                </option>
-              ))}
-            </select>
-            <select value={productId} disabled={!measure} onChange={(e) => setProductId(e.target.value)}>
-              <option value="">Product…</option>
-              {productOptions.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {p.manufacturer ? `${p.manufacturer} — ` : ""}
-                  {p.product_name}
-                </option>
-              ))}
-            </select>
             <input
+              list="subsidy-product-options"
+              placeholder="Typ maatregel, product, fabrikant of meldcode…"
+              value={search}
+              onChange={(e) => pickProduct(e.target.value)}
+              style={{ minWidth: 220 }}
+            />
+            <datalist id="subsidy-product-options">
+              {products.map((p) => (
+                <option key={p.id} value={productLabel(p)} />
+              ))}
+            </datalist>
+            <input
+              ref={quantityRef}
               type="number"
               min="0"
               step="0.01"
               placeholder={selectedProduct ? `Aantal (${selectedProduct.unit})` : "Aantal"}
               value={quantity}
               onChange={(e) => setQuantity(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addItem()}
             />
             <input type="date" title="Datum uitvoering" value={executionDate} onChange={(e) => setExecutionDate(e.target.value)} />
-            <button className="btn-primary" onClick={addItem} disabled={!productId}>
+            <button className="btn-primary" onClick={addItem} disabled={!selectedProduct}>
               <Plus size={14} /> Toevoegen
             </button>
           </div>
