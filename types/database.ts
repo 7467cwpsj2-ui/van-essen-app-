@@ -299,7 +299,7 @@ export type WarrantyUnit = "weken" | "maanden" | "jaren";
 export type WarrantyType = "eigen" | "fabrikant";
 
 export const WARRANTY_TYPE_LABEL: Record<WarrantyType, string> = {
-  eigen: "Eigen garantie (Van Essen)",
+  eigen: "Eigen garantie Van Essen Bouw & Onderhoud",
   fabrikant: "Fabrieksgarantie",
 };
 
