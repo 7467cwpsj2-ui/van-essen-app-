@@ -83,8 +83,8 @@ export function canSeeCalc(current: CurrentUser): boolean {
   return current.profile.role === "eigenaar";
 }
 
-// Subsidiecheck: harde regel, altijd intern (eigenaar + team), nooit
-// klant. Geen module-toggle.
+// Subsidiemodule: harde regel, alleen de eigenaar — team en klant komen
+// hier niet bij. Geen module-toggle.
 export function canSeeSubsidies(current: CurrentUser): boolean {
-  return current.profile.role === "eigenaar" || current.profile.role === "team";
+  return current.profile.role === "eigenaar";
 }

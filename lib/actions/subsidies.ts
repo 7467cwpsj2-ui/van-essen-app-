@@ -99,6 +99,7 @@ export async function addSubsidyCheckItem(
   notes: string | null
 ) {
   const current = await requireUser();
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar heeft toegang tot de subsidiemodule.");
   if (!(quantity > 0)) throw new Error("Aantal moet groter dan 0 zijn.");
   const supabase = createClient();
   const { data: product, error: productError } = await supabase
@@ -136,7 +137,8 @@ export async function updateSubsidyCheckItem(
   executionDate: string | null,
   notes: string | null
 ) {
-  await requireUser();
+  const current = await requireUser();
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar heeft toegang tot de subsidiemodule.");
   if (!(quantity > 0)) throw new Error("Aantal moet groter dan 0 zijn.");
   const supabase = createClient();
   const { data: item, error: itemError } = await supabase
@@ -160,7 +162,8 @@ export async function updateSubsidyCheckItem(
 }
 
 export async function deleteSubsidyCheckItem(id: string, projectId: string) {
-  await requireUser();
+  const current = await requireUser();
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar heeft toegang tot de subsidiemodule.");
   const supabase = createClient();
   const { error } = await supabase.from("subsidy_check_items").delete().eq("id", id);
   if (error) throw new Error(error.message);
@@ -179,6 +182,7 @@ export async function addSubsidyCheckItemPhoto(
   caption: string | null
 ) {
   const current = await requireUser();
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar heeft toegang tot de subsidiemodule.");
   const supabase = createClient();
   const { error } = await supabase.from("subsidy_check_item_photos").insert({
     check_item_id: checkItemId,
@@ -193,7 +197,8 @@ export async function addSubsidyCheckItemPhoto(
 }
 
 export async function deleteSubsidyCheckItemPhoto(id: string, projectId: string) {
-  await requireUser();
+  const current = await requireUser();
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar heeft toegang tot de subsidiemodule.");
   const supabase = createClient();
   const { data: photo } = await supabase.from("subsidy_check_item_photos").select("file_path").eq("id", id).single();
   const { error } = await supabase.from("subsidy_check_item_photos").delete().eq("id", id);
@@ -203,11 +208,11 @@ export async function deleteSubsidyCheckItemPhoto(id: string, projectId: string)
 }
 
 // Machtiging (ISDE-machtigingsformulier voor woningeigenaren) — de
-// eigenaar/team vraagt 'm aan, de klant tekent zelf digitaal, net als bij
+// eigenaar vraagt 'm aan, de klant tekent zelf digitaal, net als bij
 // meerwerk en het opleverdossier.
 export async function requestSubsidyAuthorization(projectId: string) {
   const current = await requireUser();
-  if (current.profile.role === "klant") throw new Error("Alleen Van Essen kan een machtiging aanvragen.");
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar kan een machtiging aanvragen.");
   const supabase = createClient();
   const { error } = await supabase.from("subsidy_authorizations").insert({
     project_id: projectId,
@@ -223,7 +228,7 @@ export async function requestSubsidyAuthorization(projectId: string) {
 // aangevraagd kan worden (bv. bij een tikfout).
 export async function cancelSubsidyAuthorization(id: string, projectId: string) {
   const current = await requireUser();
-  if (current.profile.role === "klant") throw new Error("Alleen Van Essen kan dit intrekken.");
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar kan dit intrekken.");
   const supabase = createClient();
   const { error } = await supabase.from("subsidy_authorizations").delete().eq("id", id).eq("status", "wacht_op_klant");
   if (error) throw new Error(error.message);
