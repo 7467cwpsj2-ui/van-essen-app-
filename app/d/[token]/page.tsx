@@ -3,8 +3,9 @@ import { FileText, Lock } from "lucide-react";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { loadDossierData } from "@/lib/dossierData";
 import { warrantyEndDate } from "@/lib/warranty";
+import { computeDossierFinancials } from "@/lib/dossierFinancials";
 import { Brandmark } from "@/components/Brandmark";
-import { WARRANTY_TYPE_LABEL } from "@/types/database";
+import { VAT_TYPE_LABEL, WARRANTY_TYPE_LABEL } from "@/types/database";
 import type { PhotoCategory } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -27,9 +28,7 @@ export default async function PublicDossierPage({ params }: { params: { token: s
   if (!data) notFound();
 
   const { project: p } = data;
-  const meerwerk = data.extraWork.filter((w) => w.type === "meerwerk").reduce((s, w) => s + Number(w.amount), 0);
-  const minderwerk = data.extraWork.filter((w) => w.type === "minderwerk").reduce((s, w) => s + Number(w.amount), 0);
-  const eindtotaal = Number(p.quote_amount || 0) + meerwerk - minderwerk;
+  const financials = computeDossierFinancials(p, data.extraWork);
   const warrantyBase = p.delivery_signed_at || p.delivery_date;
 
   const photoSection = (title: string, photos: { id: string; title: string; url: string | null }[]) =>
@@ -69,23 +68,33 @@ export default async function PublicDossierPage({ params }: { params: { token: s
           {data.clientName ? ` — ${data.clientName}` : ""}
         </div>
 
-        <div className="calc-summary">
-          <div className="calc-line">
-            <span>Offertebedrag</span>
-            <span className="mono">{fmtEuro(p.quote_amount)}</span>
-          </div>
-          <div className="calc-line">
-            <span>Meerwerk (akkoord)</span>
-            <span className="mono">{fmtEuro(meerwerk)}</span>
-          </div>
-          <div className="calc-line">
-            <span>Minderwerk (akkoord)</span>
-            <span className="mono">− {fmtEuro(minderwerk)}</span>
-          </div>
-          <div className="calc-line calc-line-strong">
-            <span>Eindtotaal</span>
-            <span className="mono">{fmtEuro(eindtotaal)}</span>
-          </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          {financials.map((f) => (
+            <div className="calc-summary" key={f.vatType}>
+              {f.isQuoteVatType && (
+                <div className="calc-line">
+                  <span>Offertebedrag ({VAT_TYPE_LABEL[f.vatType]})</span>
+                  <span className="mono">{fmtEuro(f.quoteAmount)}</span>
+                </div>
+              )}
+              {f.meerwerk > 0 && (
+                <div className="calc-line">
+                  <span>Meerwerk (akkoord, {VAT_TYPE_LABEL[f.vatType]})</span>
+                  <span className="mono">{fmtEuro(f.meerwerk)}</span>
+                </div>
+              )}
+              {f.minderwerk > 0 && (
+                <div className="calc-line">
+                  <span>Minderwerk (akkoord, {VAT_TYPE_LABEL[f.vatType]})</span>
+                  <span className="mono">− {fmtEuro(f.minderwerk)}</span>
+                </div>
+              )}
+              <div className="calc-line calc-line-strong">
+                <span>Eindtotaal ({VAT_TYPE_LABEL[f.vatType]})</span>
+                <span className="mono">{fmtEuro(f.total)}</span>
+              </div>
+            </div>
+          ))}
         </div>
 
         {data.extraWork.length > 0 && (

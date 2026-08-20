@@ -29,8 +29,6 @@ export default async function DossierPage({ params }: { params: { id: string } }
       role={current.profile.role}
       project={data.project}
       completionPoints={data.completionPoints}
-      meerwerkAkkoord={data.extraWork.filter((w) => w.type === "meerwerk").reduce((s, w) => s + Number(w.amount), 0)}
-      minderwerkAkkoord={data.extraWork.filter((w) => w.type === "minderwerk").reduce((s, w) => s + Number(w.amount), 0)}
       extraWork={data.extraWork}
       warrantyItems={data.warrantyItems}
       photosByCategory={data.photosByCategory}

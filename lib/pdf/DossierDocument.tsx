@@ -1,7 +1,8 @@
 import "server-only";
 import { Document, Page, View, Text, Image, Link, StyleSheet } from "@react-pdf/renderer";
 import { warrantyEndDate } from "@/lib/warranty";
-import { WARRANTY_TYPE_LABEL } from "@/types/database";
+import { computeDossierFinancials } from "@/lib/dossierFinancials";
+import { VAT_TYPE_LABEL, WARRANTY_TYPE_LABEL } from "@/types/database";
 import type { ClientChoice, CompanyDetails, CompletionPoint, ExtraWork, PhotoCategory, Project } from "@/types/database";
 import type { DossierDrawing, DossierPhoto, DossierWarrantyItem } from "@/lib/dossierData";
 
@@ -172,9 +173,7 @@ export function DossierDocument({
   coverPhotoUrl: string | null;
   company: CompanyDetails;
 }) {
-  const meerwerk = extraWork.filter((w) => w.type === "meerwerk").reduce((s, w) => s + Number(w.amount), 0);
-  const minderwerk = extraWork.filter((w) => w.type === "minderwerk").reduce((s, w) => s + Number(w.amount), 0);
-  const eindtotaal = Number(project.quote_amount || 0) + meerwerk - minderwerk;
+  const financials = computeDossierFinancials(project, extraWork);
   const warrantyBase = project.delivery_signed_at || project.delivery_date;
   const drawingsWithImage = drawings.filter((d) => d.fileType === "image" && d.url);
   const drawingsWithoutImage = drawings.filter((d) => !(d.fileType === "image" && d.url));
@@ -249,24 +248,32 @@ export function DossierDocument({
         </View>
 
         <Text style={styles.sectionTitle}>Financieel overzicht</Text>
-        <View style={styles.summaryBox}>
-          <View style={styles.summaryLine}>
-            <Text>Offertebedrag</Text>
-            <Text>{fmtEuro(project.quote_amount)}</Text>
+        {financials.map((f) => (
+          <View key={f.vatType} style={[styles.summaryBox, { marginBottom: 8 }]}>
+            {f.isQuoteVatType && (
+              <View style={styles.summaryLine}>
+                <Text>Offertebedrag ({VAT_TYPE_LABEL[f.vatType]})</Text>
+                <Text>{fmtEuro(f.quoteAmount)}</Text>
+              </View>
+            )}
+            {f.meerwerk > 0 && (
+              <View style={styles.summaryLine}>
+                <Text>Meerwerk (akkoord, {VAT_TYPE_LABEL[f.vatType]})</Text>
+                <Text>{fmtEuro(f.meerwerk)}</Text>
+              </View>
+            )}
+            {f.minderwerk > 0 && (
+              <View style={styles.summaryLine}>
+                <Text>Minderwerk (akkoord, {VAT_TYPE_LABEL[f.vatType]})</Text>
+                <Text>− {fmtEuro(f.minderwerk)}</Text>
+              </View>
+            )}
+            <View style={styles.summaryLineStrong}>
+              <Text>Eindtotaal ({VAT_TYPE_LABEL[f.vatType]})</Text>
+              <Text>{fmtEuro(f.total)}</Text>
+            </View>
           </View>
-          <View style={styles.summaryLine}>
-            <Text>Meerwerk (akkoord)</Text>
-            <Text>{fmtEuro(meerwerk)}</Text>
-          </View>
-          <View style={styles.summaryLine}>
-            <Text>Minderwerk (akkoord)</Text>
-            <Text>− {fmtEuro(minderwerk)}</Text>
-          </View>
-          <View style={styles.summaryLineStrong}>
-            <Text>Eindtotaal</Text>
-            <Text>{fmtEuro(eindtotaal)}</Text>
-          </View>
-        </View>
+        ))}
 
         {extraWork.length > 0 && (
           <View>

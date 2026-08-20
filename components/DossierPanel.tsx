@@ -18,8 +18,9 @@ import {
   updateDossierSettings,
 } from "@/lib/actions/dossier";
 import { warrantyEndDate } from "@/lib/warranty";
+import { computeDossierFinancials } from "@/lib/dossierFinancials";
 import type { DossierWarrantyItem } from "@/lib/dossierData";
-import { WARRANTY_TYPE_LABEL } from "@/types/database";
+import { VAT_TYPE_LABEL, WARRANTY_TYPE_LABEL } from "@/types/database";
 import type { ClientChoice, CompletionPoint, ExtraWork, PhotoCategory, Project, Role, WarrantyType, WarrantyUnit } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
@@ -63,8 +64,6 @@ export function DossierPanel({
   role,
   project,
   completionPoints,
-  meerwerkAkkoord,
-  minderwerkAkkoord,
   extraWork,
   warrantyItems,
   photosByCategory,
@@ -79,8 +78,6 @@ export function DossierPanel({
   role: Role;
   project: Project;
   completionPoints: CompletionPoint[];
-  meerwerkAkkoord: number;
-  minderwerkAkkoord: number;
   extraWork: ExtraWork[];
   warrantyItems: DossierWarrantyItem[];
   photosByCategory: Record<PhotoCategory, DossierPhoto[]>;
@@ -112,7 +109,7 @@ export function DossierPanel({
   const [copied, setCopied] = useState(false);
   const [, startTransition] = useTransition();
 
-  const eindtotaal = Number(project.quote_amount || 0) + meerwerkAkkoord - minderwerkAkkoord;
+  const financials = computeDossierFinancials(project, extraWork);
   const allApproved = completionPoints.length > 0 && completionPoints.every((p) => p.status === "goedgekeurd");
   const warrantyBase = project.delivery_signed_at || project.delivery_date;
 
@@ -297,23 +294,33 @@ export function DossierPanel({
         </div>
       )}
 
-      <div className="calc-summary">
-        <div className="calc-line">
-          <span>Offertebedrag</span>
-          <span className="mono">{fmtEuro(project.quote_amount)}</span>
-        </div>
-        <div className="calc-line">
-          <span>Meerwerk (akkoord)</span>
-          <span className="mono">{fmtEuro(meerwerkAkkoord)}</span>
-        </div>
-        <div className="calc-line">
-          <span>Minderwerk (akkoord)</span>
-          <span className="mono">− {fmtEuro(minderwerkAkkoord)}</span>
-        </div>
-        <div className="calc-line calc-line-strong">
-          <span>Eindtotaal</span>
-          <span className="mono">{fmtEuro(eindtotaal)}</span>
-        </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {financials.map((f) => (
+          <div className="calc-summary" key={f.vatType}>
+            {f.isQuoteVatType && (
+              <div className="calc-line">
+                <span>Offertebedrag ({VAT_TYPE_LABEL[f.vatType]})</span>
+                <span className="mono">{fmtEuro(f.quoteAmount)}</span>
+              </div>
+            )}
+            {f.meerwerk > 0 && (
+              <div className="calc-line">
+                <span>Meerwerk (akkoord, {VAT_TYPE_LABEL[f.vatType]})</span>
+                <span className="mono">{fmtEuro(f.meerwerk)}</span>
+              </div>
+            )}
+            {f.minderwerk > 0 && (
+              <div className="calc-line">
+                <span>Minderwerk (akkoord, {VAT_TYPE_LABEL[f.vatType]})</span>
+                <span className="mono">− {fmtEuro(f.minderwerk)}</span>
+              </div>
+            )}
+            <div className="calc-line calc-line-strong">
+              <span>Eindtotaal ({VAT_TYPE_LABEL[f.vatType]})</span>
+              <span className="mono">{fmtEuro(f.total)}</span>
+            </div>
+          </div>
+        ))}
       </div>
 
       {project.delivery_date && (
