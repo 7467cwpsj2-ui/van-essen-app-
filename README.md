@@ -53,8 +53,9 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0038_notifications.sql`, `0039_approve_extra_work_idempotent.sql`,
 `0040_project_client_access.sql`,
 `0041_project_client_access_select.sql`,
-`0042_project_client_access_limit.sql`, `0043_subsidies.sql`, en klik
-telkens Run), of met de Supabase CLI:
+`0042_project_client_access_limit.sql`, `0043_subsidies.sql`,
+`0044_subsidy_check_item_photos.sql`, en klik telkens Run), of met de
+Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

@@ -1,6 +1,7 @@
 import "server-only";
-import { Document, Page, View, Text, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
 import type { Project, SubsidyCheckItem } from "@/types/database";
+import type { SubsidyDocumentPhoto } from "@/lib/subsidyData";
 
 const styles = StyleSheet.create({
   page: { padding: 40, paddingBottom: 60, fontSize: 10, fontFamily: "Helvetica", color: "#111111" },
@@ -52,6 +53,10 @@ const styles = StyleSheet.create({
   summarySub: { fontSize: 8, color: "#5b5f66", marginTop: 4 },
   checklistItem: { flexDirection: "row", gap: 6, marginBottom: 4 },
   checklistBox: { width: 9, height: 9, border: "1pt solid #5b5f66", marginTop: 1 },
+  photoGroup: { marginTop: 10 },
+  photoGroupTitle: { fontSize: 9, fontFamily: "Helvetica-Bold", marginBottom: 6 },
+  photoGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  photo: { width: 130, height: 95, objectFit: "cover", borderRadius: 4 },
   footer: { position: "absolute", bottom: 24, left: 40, right: 40, fontSize: 7, color: "#8a8e96", textAlign: "center" },
 });
 
@@ -78,15 +83,18 @@ export function SubsidyDocument({
   project,
   clientName,
   items,
+  photosByItem,
   totalIndicativeSubsidy,
   checkedAt,
 }: {
   project: Project;
   clientName: string | null;
   items: SubsidyCheckItem[];
+  photosByItem: Record<string, SubsidyDocumentPhoto[]>;
   totalIndicativeSubsidy: number;
   checkedAt: string;
 }) {
+  const itemsWithPhotos = items.filter((it) => (photosByItem[it.id] ?? []).some((ph) => ph.url));
   return (
     <Document title={`Subsidie-indicatie ISDE — ${project.name}`}>
       <Page size="A4" style={styles.page}>
@@ -168,6 +176,27 @@ export function SubsidyDocument({
 
         <Footer />
       </Page>
+
+      {itemsWithPhotos.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>Bewijsfoto&apos;s</Text>
+          {itemsWithPhotos.map((it) => (
+            <View key={it.id} style={styles.photoGroup}>
+              <Text style={styles.photoGroupTitle}>
+                {it.measure} — {it.product_name}
+              </Text>
+              <View style={styles.photoGrid}>
+                {(photosByItem[it.id] ?? [])
+                  .filter((ph) => ph.url)
+                  .map((ph) => (
+                    <Image key={ph.id} style={styles.photo} src={ph.url as string} />
+                  ))}
+              </View>
+            </View>
+          ))}
+          <Footer />
+        </Page>
+      )}
     </Document>
   );
 }

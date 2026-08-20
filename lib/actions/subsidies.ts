@@ -166,3 +166,30 @@ export async function deleteSubsidyCheckItem(id: string, projectId: string) {
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/subsidie`);
 }
+
+// Bewijsfoto's bij een subsidieregel (bv. tijdens de uitvoering, of het
+// typeplaatje) — de foto zelf is al geüpload naar Storage door de
+// aanroeper, deze slaat alleen het pad vast.
+export async function addSubsidyCheckItemPhoto(checkItemId: string, projectId: string, filePath: string, caption: string | null) {
+  const current = await requireUser();
+  const supabase = createClient();
+  const { error } = await supabase.from("subsidy_check_item_photos").insert({
+    check_item_id: checkItemId,
+    project_id: projectId,
+    file_path: filePath,
+    caption: caption?.trim() || null,
+    uploaded_by: current.profile.name,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/subsidie`);
+}
+
+export async function deleteSubsidyCheckItemPhoto(id: string, projectId: string) {
+  await requireUser();
+  const supabase = createClient();
+  const { data: photo } = await supabase.from("subsidy_check_item_photos").select("file_path").eq("id", id).single();
+  const { error } = await supabase.from("subsidy_check_item_photos").delete().eq("id", id);
+  if (error) throw new Error(error.message);
+  if (photo?.file_path) await supabase.storage.from("project-files").remove([photo.file_path as string]);
+  revalidatePath(`/projects/${projectId}/subsidie`);
+}

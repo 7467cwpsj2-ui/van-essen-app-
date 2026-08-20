@@ -2,8 +2,20 @@
 
 import { useRef, useState, useTransition } from "react";
 import { Download, Pencil, Plus, Trash2, X, Check } from "lucide-react";
-import { addSubsidyCheckItem, deleteSubsidyCheckItem, updateSubsidyCheckItem } from "@/lib/actions/subsidies";
+import {
+  addSubsidyCheckItem,
+  addSubsidyCheckItemPhoto,
+  deleteSubsidyCheckItem,
+  deleteSubsidyCheckItemPhoto,
+  updateSubsidyCheckItem,
+} from "@/lib/actions/subsidies";
+import { FileCaptureButtons } from "@/components/FileCaptureButtons";
+import { Lightbox } from "@/components/Lightbox";
+import { processUploadedFile } from "@/lib/fileProcessing";
+import { createClient } from "@/lib/supabase/client";
 import type { SubsidyCheckItem, SubsidyProduct } from "@/types/database";
+
+type ItemPhoto = { id: string; url: string | null; caption: string | null };
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso));
@@ -18,12 +30,14 @@ export function SubsidyCheckPanel({
   isLocked,
   products,
   items,
+  photosByItem,
 }: {
   projectId: string;
   projectName: string;
   isLocked: boolean;
   products: SubsidyProduct[];
   items: SubsidyCheckItem[];
+  photosByItem: Record<string, ItemPhoto[]>;
 }) {
   const [search, setSearch] = useState("");
   const [quantity, setQuantity] = useState("1");
@@ -34,12 +48,38 @@ export function SubsidyCheckPanel({
   const [editQuantity, setEditQuantity] = useState("1");
   const [editDate, setEditDate] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [uploadingId, setUploadingId] = useState<string | null>(null);
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
   const [, startTransition] = useTransition();
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
       fn().catch((err) => alert(err instanceof Error ? err.message : "Er ging iets mis."));
     });
+  };
+
+  const uploadPhoto = async (itemId: string, file: File) => {
+    setUploadingId(itemId);
+    try {
+      const processed = await processUploadedFile(file);
+      const supabase = createClient();
+      const ext = processed.fileName.split(".").pop() || "jpg";
+      const path = `${projectId}/subsidie/${itemId}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, processed.blob, {
+        contentType: "image/jpeg",
+      });
+      if (uploadError) throw new Error(uploadError.message);
+      await addSubsidyCheckItemPhoto(itemId, projectId, path, null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Foto toevoegen mislukt.");
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
+  const removePhoto = (id: string) => {
+    if (!confirm("Deze foto verwijderen?")) return;
+    run(() => deleteSubsidyCheckItemPhoto(id, projectId));
   };
 
   const selectedProduct = products.find((p) => productLabel(p) === search) ?? null;
@@ -126,6 +166,33 @@ export function SubsidyCheckPanel({
                     <span className="mono">{fmtEuro(it.indicative_subsidy)}</span>
                   </div>
                   {it.notes && <div className="task-meta">{it.notes}</div>}
+                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center", marginTop: 6 }}>
+                    {(photosByItem[it.id] ?? []).map((ph) => (
+                      <div key={ph.id} style={{ position: "relative" }}>
+                        <button type="button" className="thumb-btn" onClick={() => ph.url && setLightboxSrc(ph.url)}>
+                          {ph.url && <img src={ph.url} alt="" className="work-attachment-thumb" />}
+                        </button>
+                        {!isLocked && (
+                          <button
+                            type="button"
+                            className="icon-btn danger ghost"
+                            style={{ position: "absolute", top: -6, right: -6, background: "var(--panel)" }}
+                            onClick={() => removePhoto(ph.id)}
+                          >
+                            <X size={11} />
+                          </button>
+                        )}
+                      </div>
+                    ))}
+                    {!isLocked && (
+                      <FileCaptureButtons
+                        accept="image/*"
+                        variant="icon"
+                        busy={uploadingId === it.id}
+                        onPicked={(file) => uploadPhoto(it.id, file)}
+                      />
+                    )}
+                  </div>
                 </div>
                 {!isLocked && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
@@ -142,6 +209,7 @@ export function SubsidyCheckPanel({
           )}
         </div>
       )}
+      <Lightbox src={lightboxSrc} onClose={() => setLightboxSrc(null)} />
 
       <div className="netto-bar" style={{ marginTop: 12 }}>
         <div className="netto-item netto-total">

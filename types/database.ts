@@ -405,3 +405,13 @@ export interface SubsidyCheckItem {
   created_by: string | null;
   created_at: string;
 }
+
+export interface SubsidyCheckItemPhoto {
+  id: string;
+  check_item_id: string;
+  project_id: string;
+  file_path: string;
+  caption: string | null;
+  uploaded_by: string | null;
+  created_at: string;
+}

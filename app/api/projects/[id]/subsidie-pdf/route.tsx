@@ -23,6 +23,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
       project={data.project}
       clientName={data.clientName}
       items={data.items}
+      photosByItem={data.photosByItem}
       totalIndicativeSubsidy={data.totalIndicativeSubsidy}
       checkedAt={data.checkedAt}
     />
