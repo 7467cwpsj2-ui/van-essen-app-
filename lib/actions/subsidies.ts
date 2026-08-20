@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import type { SubsidyApplicationStatus } from "@/types/database";
 
 export interface SubsidyProductInput {
   category: string;
@@ -233,6 +234,38 @@ export async function cancelSubsidyAuthorization(id: string, projectId: string) 
   const { error } = await supabase.from("subsidy_authorizations").delete().eq("id", id).eq("status", "wacht_op_klant");
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/machtiging`);
+}
+
+export interface SubsidyApplicationInput {
+  status: SubsidyApplicationStatus;
+  applicationNumber: string | null;
+  submittedAt: string | null;
+  decisionAmount: number | null;
+  notes: string | null;
+}
+
+// Aanvraagregistratie: puur eigen administratie van wat de eigenaar zelf
+// bij RVO heeft ingediend (via eHerkenning, buiten de app) — de app
+// dient nooit zelf iets in.
+export async function saveSubsidyApplication(projectId: string, data: SubsidyApplicationInput) {
+  const current = await requireUser();
+  if (current.profile.role !== "eigenaar") throw new Error("Alleen de eigenaar heeft toegang tot de subsidiemodule.");
+  const supabase = createClient();
+  const { error } = await supabase.from("subsidy_applications").upsert(
+    {
+      project_id: projectId,
+      status: data.status,
+      application_number: data.applicationNumber?.trim() || null,
+      submitted_at: data.submittedAt || null,
+      decision_amount: data.decisionAmount,
+      notes: data.notes?.trim() || null,
+      updated_by: current.profile.name,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "project_id" }
+  );
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/subsidie`);
 }
 
 // De klant zet hier zijn handtekening — de handtekening zelf is al

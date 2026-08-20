@@ -447,3 +447,45 @@ export interface CompanyDetails {
   company_phone: string | null;
   company_email: string | null;
 }
+
+export type SubsidyApplicationStatus =
+  | "concept"
+  | "ingediend"
+  | "in_behandeling"
+  | "aanvullende_info_gevraagd"
+  | "goedgekeurd"
+  | "afgewezen"
+  | "uitbetaald";
+
+export const SUBSIDY_APPLICATION_STATUS_ORDER: SubsidyApplicationStatus[] = [
+  "concept",
+  "ingediend",
+  "in_behandeling",
+  "aanvullende_info_gevraagd",
+  "goedgekeurd",
+  "afgewezen",
+  "uitbetaald",
+];
+
+export const SUBSIDY_APPLICATION_STATUS_LABEL: Record<SubsidyApplicationStatus, string> = {
+  concept: "Concept",
+  ingediend: "Ingediend",
+  in_behandeling: "In behandeling bij RVO",
+  aanvullende_info_gevraagd: "Aanvullende informatie gevraagd",
+  goedgekeurd: "Goedgekeurd",
+  afgewezen: "Afgewezen",
+  uitbetaald: "Subsidie ontvangen",
+};
+
+export interface SubsidyApplication {
+  id: string;
+  project_id: string;
+  status: SubsidyApplicationStatus;
+  application_number: string | null;
+  submitted_at: string | null;
+  decision_amount: number | null;
+  notes: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
