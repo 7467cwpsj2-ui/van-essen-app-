@@ -40,6 +40,11 @@ export default async function ProjectLayout({
   const showHours = canSeeHours(current);
   const showCalc = canSeeCalc(current);
   const showSubsidies = canSeeSubsidies(current);
+  let showAuthorization = showSubsidies;
+  if (!showAuthorization && current.profile.role === "klant") {
+    const { data: authorization } = await supabase.from("subsidy_authorizations").select("id").eq("project_id", p.id).maybeSingle();
+    showAuthorization = !!authorization;
+  }
   const isLocked = !!p.delivery_signed_at;
 
   return (
@@ -111,6 +116,7 @@ export default async function ProjectLayout({
           showHours={showHours}
           showCalc={showCalc}
           showSubsidies={showSubsidies}
+          showAuthorization={showAuthorization}
         />
         <form action={`/projects/${p.id}/zoeken`} className="project-search">
           <Search size={14} />

@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
-import { Download, FileText, Pencil, Plus, Trash2, X, Check } from "lucide-react";
+import Link from "next/link";
+import { Download, FileSignature, FileText, Pencil, Plus, Trash2, X, Check } from "lucide-react";
 import {
   addSubsidyCheckItem,
   addSubsidyCheckItemPhoto,
@@ -130,7 +131,12 @@ export function SubsidyCheckPanel({
     <div className="panel">
       <div className="hint-bar">
         Bouw hier de subsidiecheck voor dit project op. De meldcodes en bedragen komen uit de meldcodedatabase (Subsidies in het
-        menu) — wijzig je die later, dan blijft deze check ongewijzigd staan.
+        menu) — wijzig je die later, dan blijft deze check ongewijzigd staan. Wil je de aanvraag namens de klant indienen? Vraag
+        eerst de{" "}
+        <Link href={`/projects/${projectId}/machtiging`} style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+          <FileSignature size={12} /> machtiging
+        </Link>{" "}
+        aan.
       </div>
 
       {items.length === 0 ? (

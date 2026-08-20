@@ -416,3 +416,34 @@ export interface SubsidyCheckItemPhoto {
   uploaded_by: string | null;
   created_at: string;
 }
+
+export type SubsidyAuthorizationScope = "aanvraag" | "aanvraag_beheer" | "aanvraag_beheer_bezwaar";
+export type SubsidyAuthorizationStatus = "wacht_op_klant" | "ondertekend";
+
+export const SUBSIDY_AUTHORIZATION_SCOPE_LABEL: Record<SubsidyAuthorizationScope, string> = {
+  aanvraag: "de aanvraag indienen",
+  aanvraag_beheer: "de aanvraag indienen en beheren",
+  aanvraag_beheer_bezwaar: "de aanvraag indienen, beheren en eventueel bezwaar maken",
+};
+
+export interface SubsidyAuthorization {
+  id: string;
+  project_id: string;
+  scope: SubsidyAuthorizationScope;
+  status: SubsidyAuthorizationStatus;
+  requested_by: string | null;
+  requested_at: string;
+  client_signature_path: string | null;
+  client_signed_by: string | null;
+  client_signed_at: string | null;
+  created_at: string;
+}
+
+export interface CompanyDetails {
+  company_name: string;
+  company_kvk: string | null;
+  company_address: string | null;
+  company_postal_city: string | null;
+  company_phone: string | null;
+  company_email: string | null;
+}

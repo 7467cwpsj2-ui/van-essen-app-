@@ -55,8 +55,9 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0041_project_client_access_select.sql`,
 `0042_project_client_access_limit.sql`, `0043_subsidies.sql`,
 `0044_subsidy_check_item_photos.sql`,
-`0045_subsidy_check_item_photos_file_type.sql`, en klik telkens Run),
-of met de Supabase CLI:
+`0045_subsidy_check_item_photos_file_type.sql`,
+`0046_subsidy_authorizations.sql`, en klik telkens Run), of met de
+Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>

@@ -201,3 +201,55 @@ export async function deleteSubsidyCheckItemPhoto(id: string, projectId: string)
   if (photo?.file_path) await supabase.storage.from("project-files").remove([photo.file_path as string]);
   revalidatePath(`/projects/${projectId}/subsidie`);
 }
+
+// Machtiging (ISDE-machtigingsformulier voor woningeigenaren) — de
+// eigenaar/team vraagt 'm aan, de klant tekent zelf digitaal, net als bij
+// meerwerk en het opleverdossier.
+export async function requestSubsidyAuthorization(projectId: string) {
+  const current = await requireUser();
+  if (current.profile.role === "klant") throw new Error("Alleen Van Essen kan een machtiging aanvragen.");
+  const supabase = createClient();
+  const { error } = await supabase.from("subsidy_authorizations").insert({
+    project_id: projectId,
+    scope: "aanvraag_beheer_bezwaar",
+    status: "wacht_op_klant",
+    requested_by: current.profile.name,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/machtiging`);
+}
+
+// Trekt een nog niet ondertekende aanvraag weer in, zodat opnieuw
+// aangevraagd kan worden (bv. bij een tikfout).
+export async function cancelSubsidyAuthorization(id: string, projectId: string) {
+  const current = await requireUser();
+  if (current.profile.role === "klant") throw new Error("Alleen Van Essen kan dit intrekken.");
+  const supabase = createClient();
+  const { error } = await supabase.from("subsidy_authorizations").delete().eq("id", id).eq("status", "wacht_op_klant");
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/machtiging`);
+}
+
+// De klant zet hier zijn handtekening — de handtekening zelf is al
+// geüpload naar Storage door de aanroeper, dit legt alleen de
+// ondertekening vast. Bewust idempotent (net als bij meerwerk): een
+// dubbele tik op "Ondertekenen" faalt niet, maar doet ook niets extra's.
+export async function signSubsidyAuthorization(id: string, projectId: string, signaturePath: string) {
+  const current = await requireUser();
+  if (current.profile.role !== "klant") throw new Error("Alleen de klant kan dit ondertekenen.");
+  const supabase = createClient();
+  const { data: existing } = await supabase.from("subsidy_authorizations").select("status").eq("id", id).single();
+  if (existing?.status === "ondertekend") return;
+  const { error } = await supabase
+    .from("subsidy_authorizations")
+    .update({
+      status: "ondertekend",
+      client_signature_path: signaturePath,
+      client_signed_by: current.profile.name,
+      client_signed_at: new Date().toISOString(),
+    })
+    .eq("id", id)
+    .eq("status", "wacht_op_klant");
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/machtiging`);
+}

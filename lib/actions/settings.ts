@@ -22,3 +22,33 @@ export async function updateLeadReminderDays(days: number) {
   if (error) throw new Error(error.message);
   revalidatePath("/instellingen");
 }
+
+export interface CompanyDetailsInput {
+  companyName: string;
+  companyKvk: string;
+  companyAddress: string;
+  companyPostalCity: string;
+  companyPhone: string;
+  companyEmail: string;
+}
+
+// Bedrijfsgegevens van Van Essen zelf, o.a. gebruikt als "gemachtigde"
+// op het ISDE-machtigingsformulier.
+export async function updateCompanyDetails(data: CompanyDetailsInput) {
+  await requireOwner();
+  if (!data.companyName.trim()) throw new Error("Bedrijfsnaam is verplicht.");
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("app_settings")
+    .update({
+      company_name: data.companyName.trim(),
+      company_kvk: data.companyKvk.trim() || null,
+      company_address: data.companyAddress.trim() || null,
+      company_postal_city: data.companyPostalCity.trim() || null,
+      company_phone: data.companyPhone.trim() || null,
+      company_email: data.companyEmail.trim() || null,
+    })
+    .eq("id", true);
+  if (error) throw new Error(error.message);
+  revalidatePath("/instellingen");
+}
