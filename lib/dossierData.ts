@@ -2,7 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProjectClientName } from "@/lib/clientNames";
-import type { ClientChoice, CompletionPoint, Drawing, ExtraWork, Photo, PhotoCategory, Project, WarrantyItem } from "@/types/database";
+import type { ClientChoice, CompanyDetails, CompletionPoint, Drawing, ExtraWork, Photo, PhotoCategory, Project, WarrantyItem } from "@/types/database";
 
 export interface DossierPhoto {
   id: string;
@@ -17,17 +17,23 @@ export interface DossierDrawing {
   fileType: string | null;
 }
 
+export interface DossierWarrantyItem extends WarrantyItem {
+  certificateUrl: string | null;
+}
+
 export interface DossierData {
   project: Project;
   clientName: string | null;
   completionPoints: CompletionPoint[];
   extraWork: ExtraWork[];
-  warrantyItems: WarrantyItem[];
+  warrantyItems: DossierWarrantyItem[];
   photosByCategory: Record<PhotoCategory, DossierPhoto[]>;
   clientChoices: ClientChoice[];
   drawings: DossierDrawing[];
   signatureUrl: string | null;
   reviewUrl: string | null;
+  coverPhotoUrl: string | null;
+  company: CompanyDetails;
 }
 
 // Eén centrale plek om alle gegevens voor het opleverdossier op te
@@ -80,11 +86,7 @@ export async function loadDossierData(
   if (!project) return null;
   const p = project as Project;
 
-  let clientName: string | null = null;
-  if (p.client_id) {
-    const { data: client } = await supabase.from("clients").select("name").eq("id", p.client_id).single();
-    clientName = (client?.name as string | undefined) ?? null;
-  }
+  const clientName = await getProjectClientName(supabase, projectId, p.client_id);
 
   const photosByCategory: Record<PhotoCategory, DossierPhoto[]> = { voor: [], tijdens: [], na: [], oplevering: [] };
   for (const ph of (photos ?? []) as Photo[]) {
@@ -95,10 +97,20 @@ export async function loadDossierData(
     }
     photosByCategory[ph.category].push({ id: ph.id, title: ph.title, url });
   }
-  // Voor/tijdens/na is een verhaal, geen archief — beperk per categorie
-  // zodat een project met heel veel foto's het dossier niet onwerkbaar maakt.
+  // Voor/tijdens/na is een verhaal, geen onbeperkt archief — een ruime
+  // grens (was 8) zodat het dossier écht uitgebreid kan zijn zonder dat
+  // een project met honderden foto's de PDF onwerkbaar traag maakt.
   for (const cat of ["voor", "tijdens", "na"] as const) {
-    photosByCategory[cat] = photosByCategory[cat].slice(0, 8);
+    photosByCategory[cat] = photosByCategory[cat].slice(0, 40);
+  }
+
+  let coverPhotoUrl: string | null = null;
+  if (p.cover_photo_path) {
+    const { data } = await supabase.storage.from("project-files").createSignedUrl(p.cover_photo_path, urlTtlSeconds);
+    coverPhotoUrl = data?.signedUrl ?? null;
+  }
+  if (!coverPhotoUrl) {
+    coverPhotoUrl = photosByCategory.oplevering[0]?.url ?? photosByCategory.na[0]?.url ?? null;
   }
 
   const drawingData: DossierDrawing[] = await Promise.all(
@@ -112,6 +124,17 @@ export async function loadDossierData(
     })
   );
 
+  const warrantyData: DossierWarrantyItem[] = await Promise.all(
+    ((warrantyItems ?? []) as WarrantyItem[]).map(async (w) => {
+      let certificateUrl: string | null = null;
+      if (w.certificate_path) {
+        const { data } = await supabase.storage.from("project-files").createSignedUrl(w.certificate_path, urlTtlSeconds);
+        certificateUrl = data?.signedUrl ?? null;
+      }
+      return { ...w, certificateUrl };
+    })
+  );
+
   let signatureUrl: string | null = null;
   if (p.delivery_signature_path) {
     const { data } = await supabase.storage.from("project-files").createSignedUrl(p.delivery_signature_path, urlTtlSeconds);
@@ -119,18 +142,31 @@ export async function loadDossierData(
   }
 
   const admin = createAdminClient();
-  const { data: settings } = await admin.from("app_settings").select("google_review_url").eq("id", true).single();
+  const { data: settings } = await admin
+    .from("app_settings")
+    .select("google_review_url,company_name,company_kvk,company_address,company_postal_city,company_phone,company_email")
+    .eq("id", true)
+    .single();
 
   return {
     project: p,
     clientName,
     completionPoints: (completionPoints ?? []) as CompletionPoint[],
     extraWork: (extraWork ?? []) as ExtraWork[],
-    warrantyItems: (warrantyItems ?? []) as WarrantyItem[],
+    warrantyItems: warrantyData,
     photosByCategory,
     clientChoices: (clientChoices ?? []) as ClientChoice[],
     drawings: drawingData,
     signatureUrl,
     reviewUrl: (settings?.google_review_url as string | null | undefined) ?? null,
+    coverPhotoUrl,
+    company: {
+      company_name: (settings?.company_name as string | undefined) ?? "Van Essen Bouw & Onderhoud",
+      company_kvk: (settings?.company_kvk as string | null | undefined) ?? null,
+      company_address: (settings?.company_address as string | null | undefined) ?? null,
+      company_postal_city: (settings?.company_postal_city as string | null | undefined) ?? null,
+      company_phone: (settings?.company_phone as string | null | undefined) ?? null,
+      company_email: (settings?.company_email as string | null | undefined) ?? null,
+    },
   };
 }

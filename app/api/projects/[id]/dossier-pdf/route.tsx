@@ -36,6 +36,8 @@ export async function GET(request: Request, { params }: { params: { id: string }
       drawings={data.drawings}
       signatureUrl={data.signatureUrl}
       reviewQrDataUrl={reviewQrDataUrl}
+      coverPhotoUrl={data.coverPhotoUrl}
+      company={data.company}
     />
   );
 
@@ -43,7 +45,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Disposition": `inline; filename="${filename}"`,
     },
   });
 }

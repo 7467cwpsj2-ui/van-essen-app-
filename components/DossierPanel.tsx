@@ -1,20 +1,26 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { CheckCircle2, Copy, Download, FileText, Link2, Lock, Plus, Printer, Trash2 } from "lucide-react";
+import { CheckCircle2, Copy, Download, FileText, Link2, Lock, Plus, Printer, Trash2, X } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
+import { FileCaptureButtons } from "@/components/FileCaptureButtons";
+import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
 import {
   createWarrantyItem,
   deleteWarrantyItem,
   getOrCreateDossierShareLink,
+  removeWarrantyCertificate,
   revokeDossierShareLink,
+  setWarrantyCertificate,
   signDelivery,
   updateDossierSettings,
 } from "@/lib/actions/dossier";
 import { warrantyEndDate } from "@/lib/warranty";
-import type { ClientChoice, CompletionPoint, PhotoCategory, Project, Role, WarrantyItem, WarrantyUnit } from "@/types/database";
+import type { DossierWarrantyItem } from "@/lib/dossierData";
+import { WARRANTY_TYPE_LABEL } from "@/types/database";
+import type { ClientChoice, CompletionPoint, PhotoCategory, Project, Role, WarrantyType, WarrantyUnit } from "@/types/database";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
@@ -59,7 +65,7 @@ export function DossierPanel({
   completionPoints: CompletionPoint[];
   meerwerkAkkoord: number;
   minderwerkAkkoord: number;
-  warrantyItems: WarrantyItem[];
+  warrantyItems: DossierWarrantyItem[];
   photosByCategory: Record<PhotoCategory, DossierPhoto[]>;
   clientChoices: ClientChoice[];
   drawings: DossierDrawing[];
@@ -71,10 +77,18 @@ export function DossierPanel({
   const [deliveryDate, setDeliveryDate] = useState(project.delivery_date || "");
   const [warrantyText, setWarrantyText] = useState(project.warranty_text || "");
   const [deliveryReady, setDeliveryReady] = useState(project.delivery_ready);
-  const [warrantyForm, setWarrantyForm] = useState({ item: "", amount: "", unit: "jaren" as WarrantyUnit });
+  const [warrantyForm, setWarrantyForm] = useState({
+    item: "",
+    amount: "",
+    unit: "jaren" as WarrantyUnit,
+    warrantyType: "eigen" as WarrantyType,
+    manufacturer: "",
+    startDate: "",
+  });
   const [signing, setSigning] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [certificateUploadingId, setCertificateUploadingId] = useState<string | null>(null);
   const [shareUrl, setShareUrl] = useState(initialShareUrl);
   const [shareBusy, setShareBusy] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -100,11 +114,42 @@ export function DossierPanel({
   const addWarranty = () => {
     if (!warrantyForm.item.trim() || !Number(warrantyForm.amount)) return;
     startTransition(() => {
-      createWarrantyItem(projectId, warrantyForm.item, Number(warrantyForm.amount), warrantyForm.unit).catch((err) =>
-        alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
-      );
+      createWarrantyItem(
+        projectId,
+        warrantyForm.item,
+        Number(warrantyForm.amount),
+        warrantyForm.unit,
+        warrantyForm.warrantyType,
+        warrantyForm.manufacturer || null,
+        warrantyForm.startDate || null
+      ).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setWarrantyForm({ item: "", amount: "", unit: "jaren" });
+    setWarrantyForm({ item: "", amount: "", unit: "jaren", warrantyType: "eigen", manufacturer: "", startDate: "" });
+  };
+
+  const uploadCertificate = async (id: string, file: File) => {
+    setCertificateUploadingId(id);
+    try {
+      const processed = await processUploadedFile(file);
+      const supabase = createClient();
+      const ext = processed.fileName.split(".").pop() || (processed.fileType === "pdf" ? "pdf" : "jpg");
+      const path = `${projectId}/warranty/${id}/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, processed.blob, {
+        contentType: processed.fileType === "pdf" ? "application/pdf" : "image/jpeg",
+      });
+      if (uploadError) throw new Error(uploadError.message);
+      await setWarrantyCertificate(id, projectId, path, processed.fileType);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
+    } finally {
+      setCertificateUploadingId(null);
+    }
+  };
+
+  const removeCertificate = (id: string) => {
+    startTransition(() => {
+      removeWarrantyCertificate(id, projectId).catch((err) => alert(err instanceof Error ? err.message : "Verwijderen mislukt."));
+    });
   };
 
   const handleSign = async (blob: Blob) => {
@@ -328,10 +373,17 @@ export function DossierPanel({
         <div className="warranty-list">
           {warrantyItems.length === 0 && <div className="empty-hint">Nog geen garantie-items.</div>}
           {warrantyItems.map((w) => {
-            const end = warrantyBase ? warrantyEndDate(warrantyBase, w.amount, w.unit) : null;
+            const base = w.start_date || warrantyBase;
+            const end = base ? warrantyEndDate(base, w.amount, w.unit) : null;
             return (
-              <div key={w.id} className="warranty-row">
-                {w.item}
+              <div key={w.id} className="warranty-row" style={{ flexWrap: "wrap" }}>
+                <div>
+                  {w.item}
+                  <span className={"stamp " + (w.warranty_type === "fabrikant" ? "stamp-open" : "stamp-akkoord")} style={{ marginLeft: 8 }}>
+                    {WARRANTY_TYPE_LABEL[w.warranty_type]}
+                  </span>
+                  {w.manufacturer && <div className="access-summary-sub">{w.manufacturer}</div>}
+                </div>
                 <span style={{ marginLeft: "auto", textAlign: "right" }}>
                   <b style={{ marginLeft: 0 }}>
                     {w.amount} {w.unit}
@@ -340,14 +392,49 @@ export function DossierPanel({
                     <span style={{ display: "block", fontSize: 11, color: "var(--text-faint)" }}>tot {fmtDate(end)}</span>
                   )}
                 </span>
-                {role === "eigenaar" && !isLocked && (
-                  <button
-                    className="icon-btn danger ghost no-print"
-                    onClick={() => startTransition(() => deleteWarrantyItem(projectId, w.id).catch((err) => alert(err.message)))}
-                  >
-                    <Trash2 size={12} />
-                  </button>
-                )}
+                <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                  {w.certificateUrl ? (
+                    <div style={{ position: "relative" }}>
+                      {w.certificate_file_type === "pdf" ? (
+                        <a href={w.certificateUrl} target="_blank" rel="noreferrer" className="work-attachment-link">
+                          <FileText size={13} /> Certificaat
+                        </a>
+                      ) : (
+                        <button type="button" className="thumb-btn" onClick={() => setPreview(w.certificateUrl)}>
+                          <img src={w.certificateUrl} alt="" className="sig-thumb" />
+                        </button>
+                      )}
+                      {role === "eigenaar" && !isLocked && (
+                        <button
+                          type="button"
+                          className="icon-btn danger ghost no-print"
+                          style={{ position: "absolute", top: -8, right: -8, background: "var(--panel)" }}
+                          onClick={() => removeCertificate(w.id)}
+                        >
+                          <X size={11} />
+                        </button>
+                      )}
+                    </div>
+                  ) : (
+                    role === "eigenaar" &&
+                    !isLocked && (
+                      <FileCaptureButtons
+                        accept="image/*,application/pdf"
+                        variant="icon"
+                        busy={certificateUploadingId === w.id}
+                        onPicked={(file) => uploadCertificate(w.id, file)}
+                      />
+                    )
+                  )}
+                  {role === "eigenaar" && !isLocked && (
+                    <button
+                      className="icon-btn danger ghost no-print"
+                      onClick={() => startTransition(() => deleteWarrantyItem(projectId, w.id).catch((err) => alert(err.message)))}
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
               </div>
             );
           })}
@@ -355,16 +442,42 @@ export function DossierPanel({
         {role === "eigenaar" && !isLocked && (
           <div className="add-form no-print" style={{ marginTop: 8 }}>
             <div className="add-form-grid">
-              <input placeholder="Onderdeel (bv. Dakbedekking)" value={warrantyForm.item} onChange={(e) => setWarrantyForm({ ...warrantyForm, item: e.target.value })} />
+              <input
+                placeholder="Onderdeel (bv. Warmtepomp)"
+                value={warrantyForm.item}
+                onChange={(e) => setWarrantyForm({ ...warrantyForm, item: e.target.value })}
+              />
+              <select
+                value={warrantyForm.warrantyType}
+                onChange={(e) => setWarrantyForm({ ...warrantyForm, warrantyType: e.target.value as WarrantyType })}
+              >
+                <option value="eigen">Eigen garantie (Van Essen)</option>
+                <option value="fabrikant">Fabrieksgarantie</option>
+              </select>
+              <input
+                placeholder="Fabrikant (optioneel)"
+                value={warrantyForm.manufacturer}
+                onChange={(e) => setWarrantyForm({ ...warrantyForm, manufacturer: e.target.value })}
+              />
               <input type="number" placeholder="Aantal" value={warrantyForm.amount} onChange={(e) => setWarrantyForm({ ...warrantyForm, amount: e.target.value })} />
               <select value={warrantyForm.unit} onChange={(e) => setWarrantyForm({ ...warrantyForm, unit: e.target.value as WarrantyUnit })}>
                 <option value="weken">weken</option>
                 <option value="maanden">maanden</option>
                 <option value="jaren">jaren</option>
               </select>
+              <input
+                type="date"
+                title="Ingangsdatum (optioneel — anders geldt de opleverdatum)"
+                value={warrantyForm.startDate}
+                onChange={(e) => setWarrantyForm({ ...warrantyForm, startDate: e.target.value })}
+              />
               <button className="btn-primary" onClick={addWarranty}>
                 <Plus size={14} /> Toevoegen
               </button>
+            </div>
+            <div className="hint-bar small">
+              Bij fabrieksgarantie (bv. warmtepomp, cv-ketel, sanitair) kun je een eigen ingangsdatum invullen als die afwijkt van de
+              opleverdatum, en achteraf een garantiecertificaat toevoegen.
             </div>
           </div>
         )}

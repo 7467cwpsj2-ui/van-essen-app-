@@ -296,6 +296,12 @@ export interface ClientChoice {
 }
 
 export type WarrantyUnit = "weken" | "maanden" | "jaren";
+export type WarrantyType = "eigen" | "fabrikant";
+
+export const WARRANTY_TYPE_LABEL: Record<WarrantyType, string> = {
+  eigen: "Eigen garantie (Van Essen)",
+  fabrikant: "Fabrieksgarantie",
+};
 
 export interface WarrantyItem {
   id: string;
@@ -303,6 +309,11 @@ export interface WarrantyItem {
   item: string;
   amount: number;
   unit: WarrantyUnit;
+  warranty_type: WarrantyType;
+  manufacturer: string | null;
+  start_date: string | null;
+  certificate_path: string | null;
+  certificate_file_type: FileType | null;
   created_at: string;
 }
 

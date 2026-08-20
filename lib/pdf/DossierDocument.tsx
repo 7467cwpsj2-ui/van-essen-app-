@@ -1,8 +1,9 @@
 import "server-only";
-import { Document, Page, View, Text, Image, StyleSheet } from "@react-pdf/renderer";
+import { Document, Page, View, Text, Image, Link, StyleSheet } from "@react-pdf/renderer";
 import { warrantyEndDate } from "@/lib/warranty";
-import type { ClientChoice, CompletionPoint, ExtraWork, PhotoCategory, Project, WarrantyItem } from "@/types/database";
-import type { DossierDrawing, DossierPhoto } from "@/lib/dossierData";
+import { WARRANTY_TYPE_LABEL } from "@/types/database";
+import type { ClientChoice, CompanyDetails, CompletionPoint, ExtraWork, PhotoCategory, Project } from "@/types/database";
+import type { DossierDrawing, DossierPhoto, DossierWarrantyItem } from "@/lib/dossierData";
 
 const styles = StyleSheet.create({
   page: { padding: 40, paddingBottom: 60, fontSize: 10, fontFamily: "Helvetica", color: "#111111" },
@@ -51,11 +52,53 @@ const styles = StyleSheet.create({
   reviewQr: { width: 64, height: 64 },
   reviewText: { fontSize: 9, color: "#5b5f66", maxWidth: 380 },
   footer: { position: "absolute", bottom: 24, left: 40, right: 40, fontSize: 7, color: "#8a8e96", textAlign: "center" },
+
+  // Voorblad
+  coverPage: { padding: 0, fontFamily: "Helvetica" },
+  coverImage: { width: "100%", height: 380, objectFit: "cover" },
+  coverBody: { padding: 40, flexGrow: 1, justifyContent: "space-between" },
+  coverBrandSub: { fontSize: 9, color: "#33a8e8", letterSpacing: 2, marginTop: 4, textTransform: "uppercase" },
+  coverEyebrow: { fontSize: 10, color: "#5b5f66", letterSpacing: 2, textTransform: "uppercase", marginBottom: 8 },
+  coverTitle: { fontSize: 30, fontFamily: "Helvetica-Bold", marginBottom: 14, lineHeight: 1.15 },
+  coverMetaBox: { borderTop: "1pt solid #dddddd", paddingTop: 14, gap: 4 },
+  coverMetaLine: { flexDirection: "row", gap: 8, fontSize: 10, color: "#333333" },
+  coverMetaLabel: { color: "#5b5f66", width: 90 },
+
+  // Inhoudsopgave
+  tocItem: { flexDirection: "row", alignItems: "baseline", gap: 8, paddingVertical: 7, borderBottom: "0.5pt solid #eeeeee" },
+  tocNumber: { fontSize: 10, color: "#33a8e8", fontFamily: "Helvetica-Bold", width: 20 },
+  tocLabel: { fontSize: 11 },
+
+  // Garantietabel
+  warrantyTableHead: {
+    flexDirection: "row",
+    borderBottom: "1pt solid #33a8e8",
+    paddingBottom: 6,
+    marginBottom: 2,
+    fontFamily: "Helvetica-Bold",
+    fontSize: 8,
+    color: "#1c86c4",
+    textTransform: "uppercase",
+  },
+  warrantyRow: { flexDirection: "row", paddingVertical: 7, borderBottom: "0.5pt solid #eeeeee", alignItems: "flex-start" },
+  wColItem: { width: "34%" },
+  wColType: { width: "20%" },
+  wColManufacturer: { width: "18%" },
+  wColPeriod: { width: "16%" },
+  wColCert: { width: "12%" },
+  pill: { fontSize: 7, borderRadius: 8, paddingVertical: 2, paddingHorizontal: 6, alignSelf: "flex-start" },
+  pillEigen: { backgroundColor: "#eaf6fd", color: "#1c86c4" },
+  pillFabrikant: { backgroundColor: "#fdf3e2", color: "#946a10" },
+
+  // Contactpagina
+  contactBox: { backgroundColor: "#eaf6fd", borderRadius: 6, padding: 16, marginTop: 8 },
+  contactLine: { flexDirection: "row", gap: 8, fontSize: 10, marginBottom: 4 },
+  contactLabel: { color: "#5b5f66", width: 90 },
 });
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
 const fmtDate = (iso: string | null) =>
-  iso ? new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso)) : "";
+  iso ? new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso.length === 10 ? iso + "T00:00:00Z" : iso)) : "";
 
 const PHOTO_STORY_LABEL: Record<"voor" | "tijdens" | "na", string> = {
   voor: "Voor de start",
@@ -68,6 +111,18 @@ function Footer() {
     <Text style={styles.footer} fixed>
       Van Essen Bouw & Onderhoud — automatisch gegenereerd opleverdossier
     </Text>
+  );
+}
+
+function BrandMark() {
+  return (
+    <View>
+      <View style={styles.brandRow}>
+        <Text style={styles.brandVan}>VAN </Text>
+        <Text style={styles.brandEssen}>ESSEN</Text>
+      </View>
+      <Text style={styles.brandSub}>BOUW & ONDERHOUD</Text>
+    </View>
   );
 }
 
@@ -101,17 +156,21 @@ export function DossierDocument({
   drawings,
   signatureUrl,
   reviewQrDataUrl,
+  coverPhotoUrl,
+  company,
 }: {
   project: Project;
   clientName: string | null;
   completionPoints: CompletionPoint[];
   extraWork: ExtraWork[];
-  warrantyItems: WarrantyItem[];
+  warrantyItems: DossierWarrantyItem[];
   photosByCategory: Record<PhotoCategory, DossierPhoto[]>;
   clientChoices: ClientChoice[];
   drawings: DossierDrawing[];
   signatureUrl: string | null;
   reviewQrDataUrl: string | null;
+  coverPhotoUrl: string | null;
+  company: CompanyDetails;
 }) {
   const meerwerk = extraWork.filter((w) => w.type === "meerwerk").reduce((s, w) => s + Number(w.amount), 0);
   const minderwerk = extraWork.filter((w) => w.type === "minderwerk").reduce((s, w) => s + Number(w.amount), 0);
@@ -119,28 +178,74 @@ export function DossierDocument({
   const warrantyBase = project.delivery_signed_at || project.delivery_date;
   const drawingsWithImage = drawings.filter((d) => d.fileType === "image" && d.url);
   const drawingsWithoutImage = drawings.filter((d) => !(d.fileType === "image" && d.url));
+  const hasPhotoPages =
+    photosByCategory.voor.some((p) => p.url) ||
+    photosByCategory.tijdens.some((p) => p.url) ||
+    photosByCategory.na.some((p) => p.url) ||
+    photosByCategory.oplevering.some((p) => p.url);
+
+  const toc = [
+    "Financieel overzicht, opleverpunten & klantkeuzes",
+    warrantyItems.length > 0 ? "Materialen & garantie" : null,
+    hasPhotoPages ? "Foto's van het project" : null,
+    drawings.length > 0 ? "Tekeningen" : null,
+    "Contact & vervolgstappen",
+    "Ondertekening",
+  ].filter((t): t is string => !!t);
 
   return (
     <Document title={`Opleverdossier — ${project.name}`}>
+      {/* Voorblad */}
+      <Page size="A4" style={styles.coverPage}>
+        {coverPhotoUrl && <Image style={styles.coverImage} src={coverPhotoUrl} />}
+        <View style={styles.coverBody}>
+          <View>
+            <BrandMark />
+            <Text style={styles.coverEyebrow}>{"\n"}Opleverdossier</Text>
+            <Text style={styles.coverTitle}>{project.name}</Text>
+          </View>
+          <View style={styles.coverMetaBox}>
+            {project.address && (
+              <View style={styles.coverMetaLine}>
+                <Text style={styles.coverMetaLabel}>Adres</Text>
+                <Text>{project.address}</Text>
+              </View>
+            )}
+            {clientName && (
+              <View style={styles.coverMetaLine}>
+                <Text style={styles.coverMetaLabel}>Klant</Text>
+                <Text>{clientName}</Text>
+              </View>
+            )}
+            <View style={styles.coverMetaLine}>
+              <Text style={styles.coverMetaLabel}>Datum</Text>
+              <Text>{fmtDate(project.delivery_signed_at || project.delivery_date) || "—"}</Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+
+      {/* Inhoudsopgave */}
       <Page size="A4" style={styles.page}>
         <View style={styles.header}>
-          <View>
-            <View style={styles.brandRow}>
-              <Text style={styles.brandVan}>VAN </Text>
-              <Text style={styles.brandEssen}>ESSEN</Text>
-            </View>
-            <Text style={styles.brandSub}>BOUW & ONDERHOUD</Text>
-          </View>
-          <Text style={styles.docTitle}>
-            Opleverdossier{"\n"}
-            {fmtDate(project.delivery_signed_at || project.delivery_date)}
-          </Text>
+          <BrandMark />
+          <Text style={styles.docTitle}>Opleverdossier{"\n"}{project.name}</Text>
         </View>
+        <Text style={styles.sectionTitle}>In dit dossier</Text>
+        {toc.map((label, i) => (
+          <View key={label} style={styles.tocItem}>
+            <Text style={styles.tocNumber}>{String(i + 1).padStart(2, "0")}</Text>
+            <Text style={styles.tocLabel}>{label}</Text>
+          </View>
+        ))}
+        <Footer />
+      </Page>
 
-        <Text style={styles.h1}>{project.name}</Text>
-        <View style={styles.metaRow}>
-          {project.address && <Text>{project.address}</Text>}
-          {clientName && <Text>Klant: {clientName}</Text>}
+      {/* Financieel, opleverpunten, klantkeuzes */}
+      <Page size="A4" style={styles.page}>
+        <View style={styles.header}>
+          <BrandMark />
+          <Text style={styles.docTitle}>Opleverdossier{"\n"}{project.name}</Text>
         </View>
 
         <Text style={styles.sectionTitle}>Financieel overzicht</Text>
@@ -189,48 +294,54 @@ export function DossierDocument({
             ))}
           </View>
         )}
-
-        {warrantyItems.length > 0 && (
-          <View>
-            <Text style={styles.sectionTitle}>Garantie</Text>
-            {project.warranty_text && <Text style={{ marginBottom: 6 }}>{project.warranty_text}</Text>}
-            {warrantyItems.map((w) => {
-              const end = warrantyEndDate(warrantyBase, w.amount, w.unit);
-              return (
-                <View key={w.id} style={styles.row}>
-                  <Text>{w.item}</Text>
-                  <View>
-                    <Text>
-                      {w.amount} {w.unit}
-                    </Text>
-                    {end && <Text style={styles.rowSub}>tot {fmtDate(end)}</Text>}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
-
-        {project.delivery_signed_by && (
-          <View style={styles.signatureBox}>
-            <Text>
-              Ondertekend door {project.delivery_signed_by} op {fmtDate(project.delivery_signed_at)}.
-            </Text>
-            {signatureUrl && <Image style={styles.signatureImg} src={signatureUrl} />}
-          </View>
-        )}
-
-        {reviewQrDataUrl && (
-          <View style={styles.reviewBox}>
-            <Image style={styles.reviewQr} src={reviewQrDataUrl} />
-            <Text style={styles.reviewText}>
-              Bedankt voor het vertrouwen! Scan de QR-code om een review achter te laten — daar zijn we je heel dankbaar voor.
-            </Text>
-          </View>
-        )}
-
         <Footer />
       </Page>
+
+      {/* Materialen & garantie */}
+      {warrantyItems.length > 0 && (
+        <Page size="A4" style={styles.page}>
+          <Text style={styles.sectionTitle}>Materialen & garantie</Text>
+          {project.warranty_text && <Text style={{ marginBottom: 10 }}>{project.warranty_text}</Text>}
+          <View style={styles.warrantyTableHead}>
+            <Text style={styles.wColItem}>Onderdeel</Text>
+            <Text style={styles.wColType}>Type</Text>
+            <Text style={styles.wColManufacturer}>Fabrikant</Text>
+            <Text style={styles.wColPeriod}>Geldig tot</Text>
+            <Text style={styles.wColCert}>Certificaat</Text>
+          </View>
+          {warrantyItems.map((w) => {
+            const base = w.start_date || warrantyBase;
+            const end = base ? warrantyEndDate(base, w.amount, w.unit) : null;
+            return (
+              <View key={w.id} style={styles.warrantyRow}>
+                <Text style={styles.wColItem}>{w.item}</Text>
+                <View style={styles.wColType}>
+                  <Text style={[styles.pill, w.warranty_type === "fabrikant" ? styles.pillFabrikant : styles.pillEigen]}>
+                    {WARRANTY_TYPE_LABEL[w.warranty_type]}
+                  </Text>
+                </View>
+                <Text style={styles.wColManufacturer}>{w.manufacturer || "—"}</Text>
+                <View style={styles.wColPeriod}>
+                  <Text>{end ? fmtDate(end) : "—"}</Text>
+                  <Text style={styles.rowSub}>
+                    {w.amount} {w.unit}
+                  </Text>
+                </View>
+                <View style={styles.wColCert}>
+                  {w.certificateUrl ? (
+                    <Link src={w.certificateUrl} style={{ fontSize: 8, color: "#1c86c4" }}>
+                      Bekijken
+                    </Link>
+                  ) : (
+                    <Text style={styles.rowSub}>—</Text>
+                  )}
+                </View>
+              </View>
+            );
+          })}
+          <Footer />
+        </Page>
+      )}
 
       {(["voor", "tijdens", "na"] as const).map((cat) => (
         <PhotoPage key={cat} title={PHOTO_STORY_LABEL[cat]} photos={photosByCategory[cat]} />
@@ -263,6 +374,81 @@ export function DossierDocument({
           <Footer />
         </Page>
       )}
+
+      {/* Contact & vervolgstappen */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Contact & vervolgstappen</Text>
+        <Text>
+          Bedankt voor het vertrouwen in {company.company_name}. Dit dossier is uw persoonlijke naslagwerk: hierin vindt u alles
+          terug over het uitgevoerde werk, de toegepaste materialen en de bijbehorende garanties.
+        </Text>
+        <View style={styles.contactBox}>
+          <Text style={{ fontFamily: "Helvetica-Bold", marginBottom: 8 }}>Vragen of een garantiekwestie?</Text>
+          <View style={styles.contactLine}>
+            <Text style={styles.contactLabel}>Bedrijf</Text>
+            <Text>{company.company_name}</Text>
+          </View>
+          {company.company_address && (
+            <View style={styles.contactLine}>
+              <Text style={styles.contactLabel}>Adres</Text>
+              <Text>
+                {company.company_address}
+                {company.company_postal_city ? `, ${company.company_postal_city}` : ""}
+              </Text>
+            </View>
+          )}
+          {company.company_phone && (
+            <View style={styles.contactLine}>
+              <Text style={styles.contactLabel}>Telefoon</Text>
+              <Text>{company.company_phone}</Text>
+            </View>
+          )}
+          {company.company_email && (
+            <View style={styles.contactLine}>
+              <Text style={styles.contactLabel}>E-mail</Text>
+              <Text>{company.company_email}</Text>
+            </View>
+          )}
+          {company.company_kvk && (
+            <View style={styles.contactLine}>
+              <Text style={styles.contactLabel}>KVK</Text>
+              <Text>{company.company_kvk}</Text>
+            </View>
+          )}
+        </View>
+        <Text style={{ marginTop: 14, fontFamily: "Helvetica-Bold" }}>Een garantieclaim indienen</Text>
+        <Text style={{ marginTop: 4 }}>
+          Neem bij een garantiekwestie contact op via bovenstaande gegevens en vermeld het projectadres en het betreffende
+          onderdeel uit de materialenlijst op de vorige pagina&apos;s. Gaat het om fabrieksgarantie, dan verwijzen wij u zo nodig
+          door naar de fabrikant of leverancier.
+        </Text>
+        <Footer />
+      </Page>
+
+      {/* Ondertekening */}
+      <Page size="A4" style={styles.page}>
+        <Text style={styles.sectionTitle}>Ondertekening</Text>
+        {project.delivery_signed_by ? (
+          <View style={styles.signatureBox}>
+            <Text>
+              Ondertekend door {project.delivery_signed_by} op {fmtDate(project.delivery_signed_at)}.
+            </Text>
+            {signatureUrl && <Image style={styles.signatureImg} src={signatureUrl} />}
+          </View>
+        ) : (
+          <Text>Dit dossier is nog niet ondertekend.</Text>
+        )}
+
+        {reviewQrDataUrl && (
+          <View style={styles.reviewBox}>
+            <Image style={styles.reviewQr} src={reviewQrDataUrl} />
+            <Text style={styles.reviewText}>
+              Bedankt voor het vertrouwen! Scan de QR-code om een review achter te laten — daar zijn we je heel dankbaar voor.
+            </Text>
+          </View>
+        )}
+        <Footer />
+      </Page>
     </Document>
   );
 }

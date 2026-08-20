@@ -4,7 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { WarrantyUnit } from "@/types/database";
+import type { FileType, WarrantyType, WarrantyUnit } from "@/types/database";
 
 const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -26,11 +26,27 @@ export async function updateDossierSettings(
   revalidatePath(`/projects/${projectId}/dossier`);
 }
 
-export async function createWarrantyItem(projectId: string, item: string, amount: number, unit: WarrantyUnit) {
+export async function createWarrantyItem(
+  projectId: string,
+  item: string,
+  amount: number,
+  unit: WarrantyUnit,
+  warrantyType: WarrantyType,
+  manufacturer: string | null,
+  startDate: string | null
+) {
   await requireOwner();
   if (!item.trim() || !(amount > 0)) throw new Error("Item en aantal zijn verplicht.");
   const supabase = createClient();
-  const { error } = await supabase.from("warranty_items").insert({ project_id: projectId, item: item.trim(), amount, unit });
+  const { error } = await supabase.from("warranty_items").insert({
+    project_id: projectId,
+    item: item.trim(),
+    amount,
+    unit,
+    warranty_type: warrantyType,
+    manufacturer: manufacturer?.trim() || null,
+    start_date: startDate || null,
+  });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/dossier`);
 }
@@ -38,8 +54,34 @@ export async function createWarrantyItem(projectId: string, item: string, amount
 export async function deleteWarrantyItem(projectId: string, id: string) {
   await requireOwner();
   const supabase = createClient();
+  const { data: item } = await supabase.from("warranty_items").select("certificate_path").eq("id", id).single();
   const { error } = await supabase.from("warranty_items").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  if (item?.certificate_path) await supabase.storage.from("project-files").remove([item.certificate_path as string]);
+  revalidatePath(`/projects/${projectId}/dossier`);
+}
+
+// Garantiecertificaat/document (bv. van de fabrikant) bij een
+// garantie-item — het bestand zelf is al geüpload naar Storage door de
+// aanroeper, dit legt alleen het pad vast.
+export async function setWarrantyCertificate(id: string, projectId: string, filePath: string, fileType: FileType) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("warranty_items")
+    .update({ certificate_path: filePath, certificate_file_type: fileType })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/dossier`);
+}
+
+export async function removeWarrantyCertificate(id: string, projectId: string) {
+  await requireOwner();
+  const supabase = createClient();
+  const { data: item } = await supabase.from("warranty_items").select("certificate_path").eq("id", id).single();
+  const { error } = await supabase.from("warranty_items").update({ certificate_path: null, certificate_file_type: null }).eq("id", id);
+  if (error) throw new Error(error.message);
+  if (item?.certificate_path) await supabase.storage.from("project-files").remove([item.certificate_path as string]);
   revalidatePath(`/projects/${projectId}/dossier`);
 }
 

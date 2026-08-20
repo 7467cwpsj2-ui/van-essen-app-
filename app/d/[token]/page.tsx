@@ -4,6 +4,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { loadDossierData } from "@/lib/dossierData";
 import { warrantyEndDate } from "@/lib/warranty";
 import { Brandmark } from "@/components/Brandmark";
+import { WARRANTY_TYPE_LABEL } from "@/types/database";
 import type { PhotoCategory } from "@/types/database";
 
 export const dynamic = "force-dynamic";
@@ -154,10 +155,22 @@ export default async function PublicDossierPage({ params }: { params: { token: s
           {p.warranty_text && <div className="hint-bar small">{p.warranty_text}</div>}
           <div className="warranty-list">
             {data.warrantyItems.map((w) => {
-              const end = warrantyBase ? warrantyEndDate(warrantyBase, w.amount, w.unit) : null;
+              const base = w.start_date || warrantyBase;
+              const end = base ? warrantyEndDate(base, w.amount, w.unit) : null;
               return (
                 <div key={w.id} className="warranty-row">
-                  {w.item}
+                  <div>
+                    {w.item}
+                    <span className={"stamp " + (w.warranty_type === "fabrikant" ? "stamp-open" : "stamp-akkoord")} style={{ marginLeft: 8 }}>
+                      {WARRANTY_TYPE_LABEL[w.warranty_type]}
+                    </span>
+                    {w.manufacturer && <div className="hint-bar small" style={{ marginTop: 2 }}>{w.manufacturer}</div>}
+                    {w.certificateUrl && (
+                      <a href={w.certificateUrl} target="_blank" rel="noreferrer" className="work-attachment-link" style={{ marginTop: 4 }}>
+                        Certificaat bekijken
+                      </a>
+                    )}
+                  </div>
                   <span style={{ marginLeft: "auto", textAlign: "right" }}>
                     <b style={{ marginLeft: 0 }}>
                       {w.amount} {w.unit}
