@@ -31,6 +31,20 @@ const PHOTO_STORY_LABEL: Record<Exclude<PhotoCategory, "oplevering">, string> = 
   na: "Na afronding",
 };
 
+// Geen wettelijk vastgelegde garantietermijnen per vakgebied — die
+// bestaan niet in de Nederlandse wet — maar gebruikelijke branchetermijnen
+// (o.a. via garantieregelingen als BouwGarant) als startpunt. Altijd
+// aan te passen vóór het toevoegen.
+const WARRANTY_PRESETS: { item: string; amount: number; unit: WarrantyUnit }[] = [
+  { item: "Tegelwerk", amount: 5, unit: "jaren" },
+  { item: "Sanitair (aansluiting)", amount: 1, unit: "jaren" },
+  { item: "Leidingwerk / elektra", amount: 2, unit: "jaren" },
+  { item: "Timmerwerk", amount: 2, unit: "jaren" },
+  { item: "Stucwerk", amount: 2, unit: "jaren" },
+  { item: "Schilderwerk", amount: 1, unit: "jaren" },
+  { item: "Metsel-/steenwerk (lekkages)", amount: 6, unit: "jaren" },
+];
+
 interface DossierPhoto {
   id: string;
   title: string;
@@ -58,6 +72,7 @@ export function DossierPanel({
   signatureUrl,
   reviewQrDataUrl,
   shareUrl: initialShareUrl,
+  companyName,
 }: {
   projectId: string;
   role: Role;
@@ -72,6 +87,7 @@ export function DossierPanel({
   signatureUrl: string | null;
   reviewQrDataUrl: string | null;
   shareUrl: string | null;
+  companyName: string;
 }) {
   const isLocked = !!project.delivery_signed_at;
   const [deliveryDate, setDeliveryDate] = useState(project.delivery_date || "");
@@ -246,6 +262,9 @@ export function DossierPanel({
             <Printer size={13} /> Printen
           </button>
         </div>
+      </div>
+      <div className="access-summary-sub no-print" style={{ marginTop: -8, marginBottom: 4 }}>
+        Dit dossier voldoet aan het wettelijk verplichte consumentendossier (art. 7:757a BW).
       </div>
 
       {!isLocked && !allApproved && completionPoints.length > 0 && (
@@ -441,6 +460,22 @@ export function DossierPanel({
         </div>
         {role === "eigenaar" && !isLocked && (
           <div className="add-form no-print" style={{ marginTop: 8 }}>
+            <div className="access-summary-sub">Snelkeuze (gebruikelijke branchetermijn, altijd aan te passen):</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 4 }}>
+              {WARRANTY_PRESETS.map((preset) => (
+                <button
+                  key={preset.item}
+                  type="button"
+                  className="btn-ghost"
+                  style={{ padding: "4px 10px", fontSize: 12 }}
+                  onClick={() =>
+                    setWarrantyForm({ ...warrantyForm, item: preset.item, amount: String(preset.amount), unit: preset.unit })
+                  }
+                >
+                  {preset.item} ({preset.amount} {preset.unit})
+                </button>
+              ))}
+            </div>
             <div className="add-form-grid">
               <input
                 placeholder="Onderdeel (bv. Warmtepomp)"
@@ -481,6 +516,11 @@ export function DossierPanel({
             </div>
           </div>
         )}
+        <div className="hint-bar small" style={{ marginTop: 8 }}>
+          Op grond van artikel 7:758 lid 4 BW blijft {companyName} aansprakelijk voor gebreken die bij oplevering niet zijn
+          ontdekt, tenzij het gebrek niet aan {companyName} kan worden toegerekend — dit geldt naast bovenstaande
+          garantietermijnen en kan niet in uw nadeel worden uitgesloten.
+        </div>
       </div>
 
       {isLocked ? (

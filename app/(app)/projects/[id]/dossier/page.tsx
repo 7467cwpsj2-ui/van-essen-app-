@@ -38,6 +38,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
       signatureUrl={data.signatureUrl}
       reviewQrDataUrl={reviewQrDataUrl}
       shareUrl={shareUrl}
+      companyName={data.company.company_name}
     />
   );
 }

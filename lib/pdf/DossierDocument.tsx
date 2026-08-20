@@ -339,6 +339,11 @@ export function DossierDocument({
               </View>
             );
           })}
+          <Text style={{ ...styles.rowSub, marginTop: 14, fontSize: 8 }}>
+            Op grond van artikel 7:758 lid 4 van het Burgerlijk Wetboek blijft {company.company_name} aansprakelijk voor gebreken
+            die bij oplevering niet zijn ontdekt, tenzij het gebrek niet aan {company.company_name} kan worden toegerekend — dit
+            geldt naast bovenstaande garantietermijnen en kan niet in het nadeel van de consument worden uitgesloten.
+          </Text>
           <Footer />
         </Page>
       )}
@@ -380,7 +385,8 @@ export function DossierDocument({
         <Text style={styles.sectionTitle}>Contact & vervolgstappen</Text>
         <Text>
           Bedankt voor het vertrouwen in {company.company_name}. Dit dossier is uw persoonlijke naslagwerk: hierin vindt u alles
-          terug over het uitgevoerde werk, de toegepaste materialen en de bijbehorende garanties.
+          terug over het uitgevoerde werk, de toegepaste materialen en de bijbehorende garanties. Het voldoet tevens aan het
+          wettelijk verplichte consumentendossier zoals bedoeld in artikel 7:757a van het Burgerlijk Wetboek.
         </Text>
         <View style={styles.contactBox}>
           <Text style={{ fontFamily: "Helvetica-Bold", marginBottom: 8 }}>Vragen of een garantiekwestie?</Text>

@@ -181,6 +181,12 @@ export default async function PublicDossierPage({ params }: { params: { token: s
               );
             })}
           </div>
+          <div className="hint-bar small" style={{ marginTop: 8 }}>
+            Op grond van artikel 7:758 lid 4 BW blijft {data.company.company_name} aansprakelijk voor gebreken die bij oplevering
+            niet zijn ontdekt, tenzij het gebrek niet aan {data.company.company_name} kan worden toegerekend — dit geldt naast
+            bovenstaande garantietermijnen en kan niet in uw nadeel worden uitgesloten. Dit dossier voldoet tevens aan het
+            wettelijk verplichte consumentendossier (art. 7:757a BW).
+          </div>
         </div>
 
         {p.delivery_signed_by && (
