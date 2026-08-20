@@ -4,9 +4,23 @@ import { getOwnerUserIds, getProjectClientUserIds, getProjectInternalUserIds, ge
 
 export const dynamic = "force-dynamic";
 
-// Draait dagelijks (zie vercel.json) en stuurt een pushmelding voor elk
-// te-doen en opleverpunt met een deadline morgen, zodat iemand niet pas
-// ná het verstrijken ervan ziet dat het rood is geworden.
+// Vercel Cron kent geen tijdzones (alleen UTC), en NL wisselt tussen
+// zomer- en wintertijd. Om dit toch echt om 10:00 NL-tijd te laten
+// afgaan, roept vercel.json deze route op twee UTC-uren per dag aan
+// ("0 8,9 * * *" — één die in de zomer klopt, één die in de winter),
+// hier wordt gecontroleerd of het daadwerkelijk 10 uur NL-tijd is; het
+// verkeerde moment van de twee doet dan gewoon niets. Zelfde patroon als
+// de uren-herinnering.
+function isTargetHourInAmsterdam(): boolean {
+  const hour = new Intl.DateTimeFormat("nl-NL", { timeZone: "Europe/Amsterdam", hour: "2-digit", hour12: false }).format(new Date());
+  return Number(hour) === 10;
+}
+
+// Draait dagelijks rond 10:00 NL-tijd (zie vercel.json) en stuurt een
+// pushmelding voor elk te-doen dat vandaag gepland staat — naar wie het
+// item ook toegewezen is (eigenaar, team of klant), zodat niemand het
+// vergeet. Bewust los van de "deadline morgen"-cron, die om 06:00 blijft
+// draaien (te vroeg voor deze herinnering).
 export async function GET(request: Request) {
   if (process.env.CRON_SECRET) {
     const authHeader = request.headers.get("authorization");
@@ -15,8 +29,12 @@ export async function GET(request: Request) {
     }
   }
 
+  if (!isTargetHourInAmsterdam()) {
+    return NextResponse.json({ ok: true, skipped: "niet het juiste NL-tijdstip (zomer/wintertijd-check)" });
+  }
+
   const admin = createAdminClient();
-  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);
 
   const projectNameCache = new Map<string, string>();
   const nameFor = async (projectId: string) => {
@@ -24,18 +42,11 @@ export async function GET(request: Request) {
     return projectNameCache.get(projectId)!;
   };
 
-  const [{ data: tasks }, { data: points }] = await Promise.all([
-    admin
-      .from("tasks")
-      .select("id,project_id,title,assignee_type,assignee_team_member_ids")
-      .eq("due_date", tomorrow)
-      .eq("done", false),
-    admin
-      .from("completion_points")
-      .select("id,project_id,description,responsible_team_member_id")
-      .eq("deadline", tomorrow)
-      .neq("status", "goedgekeurd"),
-  ]);
+  const { data: tasks } = await admin
+    .from("tasks")
+    .select("id,project_id,title,assignee_type,assignee_team_member_ids")
+    .eq("due_date", today)
+    .eq("done", false);
 
   let tasksNotified = 0;
   for (const t of tasks ?? []) {
@@ -57,7 +68,7 @@ export async function GET(request: Request) {
     if (recipients.length) {
       const projectName = await nameFor(projectId);
       await sendPushToUsers(recipients, {
-        title: `Deadline morgen — ${projectName}`,
+        title: `Te doen vandaag — ${projectName}`,
         body: t.title as string,
         url: `/projects/${projectId}/planning`,
       });
@@ -65,22 +76,5 @@ export async function GET(request: Request) {
     }
   }
 
-  let pointsNotified = 0;
-  for (const p of points ?? []) {
-    const projectId = p.project_id as string;
-    const responsible = p.responsible_team_member_id ? await getTeamMemberUserIds(p.responsible_team_member_id as string) : [];
-    const owners = await getOwnerUserIds();
-    const recipients = Array.from(new Set([...owners, ...responsible]));
-    if (recipients.length) {
-      const projectName = await nameFor(projectId);
-      await sendPushToUsers(recipients, {
-        title: `Opleverpunt-deadline morgen — ${projectName}`,
-        body: p.description as string,
-        url: `/projects/${projectId}/opleverpunten`,
-      });
-      pointsNotified++;
-    }
-  }
-
-  return NextResponse.json({ ok: true, tasksNotified, pointsNotified });
+  return NextResponse.json({ ok: true, tasksNotified });
 }
