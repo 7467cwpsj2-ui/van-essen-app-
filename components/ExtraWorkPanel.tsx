@@ -254,11 +254,17 @@ export function ExtraWorkPanel({
                   {w.type === "meerwerk" ? "+" : "−"} {fmtEuro(Number(w.amount))}{" "}
                   <span className="vat-pill">{VAT_TYPE_LABEL[w.vat_type]}</span>
                 </div>
-                {role === "eigenaar" && (
+                {role === "eigenaar" ? (
                   <label className="checkbox-label" style={{ marginTop: 2 }}>
                     <input type="checkbox" checked={w.invoiced} disabled={busy} onChange={() => handleToggleInvoiced(w.id, !w.invoiced)} />
                     Gefactureerd aan klant
                   </label>
+                ) : (
+                  w.invoiced && (
+                    <div className="work-sub">
+                      <span className="stamp stamp-akkoord">Gefactureerd</span>
+                    </div>
+                  )
                 )}
                 {!!w.extra_days && (
                   <div className="work-sub">
