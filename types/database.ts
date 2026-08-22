@@ -247,6 +247,7 @@ export interface ExtraWork {
   rejected_by: string | null;
   rejected_date: string | null;
   signature_path: string | null;
+  invoiced: boolean;
   created_by: string | null;
   created_at: string;
 }

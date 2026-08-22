@@ -58,7 +58,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0045_subsidy_check_item_photos_file_type.sql`,
 `0046_subsidy_authorizations.sql`, `0047_subsidies_owner_only.sql`,
 `0048_subsidy_applications.sql`, `0049_project_hidden_tabs.sql`,
-`0050_warranty_items_extended.sql`, en klik telkens Run), of met de
+`0050_warranty_items_extended.sql`, `0051_extra_work_invoiced.sql`, en
+klik telkens Run), of met de
 Supabase CLI:
 
 ```bash

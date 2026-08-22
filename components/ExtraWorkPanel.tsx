@@ -8,7 +8,15 @@ import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { FilePreview } from "@/components/FilePreview";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
-import { approveExtraWork, createExtraWork, deleteExtraWork, rejectExtraWork, resetExtraWork, toggleExtraWorkSchedule } from "@/lib/actions/extraWork";
+import {
+  approveExtraWork,
+  createExtraWork,
+  deleteExtraWork,
+  rejectExtraWork,
+  resetExtraWork,
+  toggleExtraWorkInvoiced,
+  toggleExtraWorkSchedule,
+} from "@/lib/actions/extraWork";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import { VAT_TYPE_LABEL, type ExtraWork, type ExtraWorkStatus, type ExtraWorkType, type ExtraWorkVatType, type Role, type SchedulePhase } from "@/types/database";
 
@@ -110,6 +118,17 @@ export function ExtraWorkPanel({
       if (status === "akkoord") await approveExtraWork(projectId, id, null);
       else if (status === "afgewezen") await rejectExtraWork(projectId, id);
       else await resetExtraWork(projectId, id);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Bijwerken mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleToggleInvoiced = async (id: string, invoiced: boolean) => {
+    setBusy(true);
+    try {
+      await toggleExtraWorkInvoiced(projectId, id, invoiced);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Bijwerken mislukt.");
     } finally {
@@ -235,6 +254,12 @@ export function ExtraWorkPanel({
                   {w.type === "meerwerk" ? "+" : "−"} {fmtEuro(Number(w.amount))}{" "}
                   <span className="vat-pill">{VAT_TYPE_LABEL[w.vat_type]}</span>
                 </div>
+                {role === "eigenaar" && (
+                  <label className="checkbox-label" style={{ marginTop: 2 }}>
+                    <input type="checkbox" checked={w.invoiced} disabled={busy} onChange={() => handleToggleInvoiced(w.id, !w.invoiced)} />
+                    Gefactureerd aan klant
+                  </label>
+                )}
                 {!!w.extra_days && (
                   <div className="work-sub">
                     {w.extra_days > 0

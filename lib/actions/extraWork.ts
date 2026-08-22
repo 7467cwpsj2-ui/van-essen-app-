@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/auth";
+import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getOwnerUserIds, getProjectClientUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
 import type { ExtraWorkType, ExtraWorkVatType } from "@/types/database";
@@ -108,6 +108,17 @@ export async function toggleExtraWorkSchedule(projectId: string, workId: string,
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/meerwerk`);
   revalidatePath(`/projects/${projectId}/bouwplanning`);
+}
+
+// Los van de goedkeuringsstatus: heeft de eigenaar dit item al aan de
+// klant gefactureerd? Puur eigen administratie, geen klant-zichtbaar
+// gegeven.
+export async function toggleExtraWorkInvoiced(projectId: string, workId: string, invoiced: boolean) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from("extra_work").update({ invoiced }).eq("id", workId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/meerwerk`);
 }
 
 export async function deleteExtraWork(projectId: string, workId: string) {
