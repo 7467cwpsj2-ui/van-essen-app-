@@ -219,7 +219,11 @@ export function TeamMemberRow({
               Team / onderaannemer
             </label>
           </div>
-          <PermGrid perm={member.permissions} onToggle={(key: ModuleKey) => run(() => toggleTeamModulePermission(member.id, key, !member.permissions[key]))} />
+          <PermGrid
+            perm={member.permissions}
+            onToggle={(key: ModuleKey) => run(() => toggleTeamModulePermission(member.id, key, !member.permissions[key]))}
+            excludeKeys={["meerwerk"]}
+          />
           <label className="checkbox-label edit-right">
             <input
               type="checkbox"

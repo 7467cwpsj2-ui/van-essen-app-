@@ -54,7 +54,8 @@ export async function requireOwner(): Promise<CurrentUser> {
 // zou falen.
 export function canSeeModule(current: CurrentUser, moduleKey: ModuleKey): boolean {
   if (current.profile.role === "eigenaar") return true;
-  if (current.profile.role === "team") return current.teamMember?.permissions?.[moduleKey] ?? true;
+  // Meer-/minderwerk is een harde regel: nooit voor team, geen toggle.
+  if (current.profile.role === "team") return moduleKey !== "meerwerk" && (current.teamMember?.permissions?.[moduleKey] ?? true);
   if (current.profile.role === "klant") return current.client?.permissions?.[moduleKey] ?? true;
   return false;
 }
