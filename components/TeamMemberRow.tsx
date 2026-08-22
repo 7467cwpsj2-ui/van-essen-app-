@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, RefreshCw, Trash2 } from "lucide-react";
 import { PermGrid } from "@/components/PermGrid";
 import {
   removeTeamMember,
+  resendTeamInvite,
   toggleTeamCanEditSchedule,
   toggleTeamModulePermission,
   toggleTeamProjectAccess,
@@ -12,6 +13,7 @@ import {
   updateTeamMemberDetails,
   updateTeamMemberType,
 } from "@/lib/actions/team";
+import type { InviteStatus } from "@/lib/inviteStatus";
 import { VAT_TYPE_LABEL, type ExtraWorkVatType, type ModuleKey, type TeamMember, type TeamMemberType } from "@/types/database";
 
 const TRADES = [
@@ -30,10 +32,12 @@ export function TeamMemberRow({
   member,
   projects,
   access,
+  inviteStatus,
 }: {
   member: TeamMember;
   projects: { id: string; name: string }[];
   access: string[];
+  inviteStatus?: InviteStatus;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(member.name);
@@ -42,6 +46,9 @@ export function TeamMemberRow({
   const [customTrade, setCustomTrade] = useState(isKnownTrade ? "" : member.trade || "");
   const [hourlyRate, setHourlyRate] = useState(member.hourly_rate != null ? String(member.hourly_rate) : "");
   const [, startTransition] = useTransition();
+  const [resending, setResending] = useState(false);
+  const [resendLink, setResendLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const projectCount = member.sees_all_projects ? projects.length : access.length;
 
@@ -49,6 +56,30 @@ export function TeamMemberRow({
     startTransition(() => {
       fn().catch((err) => alert(err instanceof Error ? err.message : "Er ging iets mis."));
     });
+  };
+
+  const resend = async () => {
+    setResending(true);
+    setCopied(false);
+    try {
+      const link = await resendTeamInvite(member.id);
+      setResendLink(link);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Opnieuw uitnodigen mislukt.");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!resendLink) return;
+    try {
+      await navigator.clipboard.writeText(resendLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // negeren — link staat gewoon zichtbaar om handmatig te kopiëren
+    }
   };
 
   const commitTrade = (sel: string, custom: string) => {
@@ -70,6 +101,7 @@ export function TeamMemberRow({
           <span className="access-summary-sub">
             {member.trade || "Overig"} ·{" "}
             {member.sees_all_projects ? "alle projecten" : `${projectCount} project${projectCount === 1 ? "" : "en"}`}
+            {inviteStatus?.pending && <span className="stamp stamp-open" style={{ marginLeft: 8 }}>Uitnodiging niet geaccepteerd</span>}
           </span>
         </span>
         <ChevronDown size={14} className={"access-chevron" + (expanded ? " open" : "")} />
@@ -118,6 +150,26 @@ export function TeamMemberRow({
               <Trash2 size={13} />
             </button>
           </div>
+
+          {inviteStatus?.pending && (
+            <div className="hint-bar small">
+              Uitnodiging nog niet geaccepteerd door {inviteStatus.email || "dit teamlid"} — de link kan verlopen zijn.
+              <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                <button type="button" className="btn-ghost" disabled={resending} onClick={resend}>
+                  <RefreshCw size={13} /> {resending ? "Bezig…" : "Opnieuw uitnodigen"}
+                </button>
+                {resendLink && (
+                  <>
+                    <input value={resendLink} readOnly onFocus={(e) => e.target.select()} style={{ minWidth: 220 }} />
+                    <button type="button" className="btn-ghost" onClick={copyLink}>
+                      <Copy size={13} /> {copied ? "Gekopieerd!" : "Kopieer link"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="add-form-grid">
             <label className="field-with-label">
               <span className="field-label">Uurtarief (voor nacalculatie, optioneel)</span>

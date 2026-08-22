@@ -1,28 +1,35 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronDown, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, RefreshCw, Trash2 } from "lucide-react";
 import { PermGrid } from "@/components/PermGrid";
 import {
   removeClient,
+  resendClientInvite,
   setClientProject,
   toggleClientCanEditSchedule,
   toggleClientModulePermission,
   updateClientDetails,
 } from "@/lib/actions/clients";
+import type { InviteStatus } from "@/lib/inviteStatus";
 import type { Client, ModuleKey } from "@/types/database";
 import { MODULE_KEYS } from "@/types/database";
 
 export function ClientRow({
   client,
   projects,
+  inviteStatus,
 }: {
   client: Client;
   projects: { id: string; name: string; clientIds: string[] }[];
+  inviteStatus?: InviteStatus;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(client.name);
   const [, startTransition] = useTransition();
+  const [resending, setResending] = useState(false);
+  const [resendLink, setResendLink] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const permCount = MODULE_KEYS.filter((k) => client.permissions[k]).length;
   const linkedProjects = projects.filter((p) => p.clientIds.includes(client.id));
 
@@ -30,6 +37,30 @@ export function ClientRow({
     startTransition(() => {
       fn().catch((err) => alert(err instanceof Error ? err.message : "Er ging iets mis."));
     });
+  };
+
+  const resend = async () => {
+    setResending(true);
+    setCopied(false);
+    try {
+      const link = await resendClientInvite(client.id);
+      setResendLink(link);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Opnieuw uitnodigen mislukt.");
+    } finally {
+      setResending(false);
+    }
+  };
+
+  const copyLink = async () => {
+    if (!resendLink) return;
+    try {
+      await navigator.clipboard.writeText(resendLink);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // negeren — link staat gewoon zichtbaar om handmatig te kopiëren
+    }
   };
 
   return (
@@ -41,6 +72,7 @@ export function ClientRow({
           <span className="access-summary-sub">
             {permCount}/{MODULE_KEYS.length} onderdelen zichtbaar · {linkedProjects.length} project
             {linkedProjects.length === 1 ? "" : "en"}
+            {inviteStatus?.pending && <span className="stamp stamp-open" style={{ marginLeft: 8 }}>Uitnodiging niet geaccepteerd</span>}
           </span>
         </span>
         <ChevronDown size={14} className={"access-chevron" + (expanded ? " open" : "")} />
@@ -67,6 +99,26 @@ export function ClientRow({
               <Trash2 size={13} />
             </button>
           </div>
+
+          {inviteStatus?.pending && (
+            <div className="hint-bar small">
+              Uitnodiging nog niet geaccepteerd door {inviteStatus.email || "deze klant"} — de link kan verlopen zijn.
+              <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
+                <button type="button" className="btn-ghost" disabled={resending} onClick={resend}>
+                  <RefreshCw size={13} /> {resending ? "Bezig…" : "Opnieuw uitnodigen"}
+                </button>
+                {resendLink && (
+                  <>
+                    <input value={resendLink} readOnly onFocus={(e) => e.target.select()} style={{ minWidth: 220 }} />
+                    <button type="button" className="btn-ghost" onClick={copyLink}>
+                      <Copy size={13} /> {copied ? "Gekopieerd!" : "Kopieer link"}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
           <PermGrid perm={client.permissions} onToggle={(key: ModuleKey) => run(() => toggleClientModulePermission(client.id, key, !client.permissions[key]))} />
           <label className="checkbox-label edit-right">
             <input

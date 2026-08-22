@@ -45,6 +45,33 @@ export async function inviteClient(formData: FormData) {
   revalidatePath("/clients");
 }
 
+// Opnieuw uitnodigen als de vorige link is verlopen — zonder de klant en
+// diens rechten/projectkoppelingen te hoeven verwijderen en opnieuw aan
+// te maken. generateLink (i.p.v. inviteUserByEmail) werkt ook voor een
+// account dat al bestaat maar de uitnodiging nog niet heeft geaccepteerd,
+// en geeft de link direct terug zodat je 'm ook handmatig kunt delen als
+// de uitnodigingsmail zelf niet aankomt.
+export async function resendClientInvite(clientId: string): Promise<string> {
+  await requireOwner();
+  const supabase = createClient();
+  const admin = createAdminClient();
+  const { data: profile } = await supabase.from("profiles").select("id").eq("client_id", clientId).maybeSingle();
+  if (!profile) throw new Error("Geen account gekoppeld aan deze klant.");
+  const { data: userData, error: userError } = await admin.auth.admin.getUserById(profile.id);
+  const email = userData?.user?.email;
+  if (userError || !email) throw new Error(userError?.message || "Kon het e-mailadres niet vinden.");
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const { data: link, error } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}` },
+  });
+  if (error || !link?.properties?.action_link) throw new Error(error?.message || "Opnieuw uitnodigen mislukt.");
+  revalidatePath("/clients");
+  return link.properties.action_link;
+}
+
 export async function updateClientDetails(id: string, patch: { name?: string }) {
   await requireOwner();
   const supabase = createClient();

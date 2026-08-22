@@ -49,6 +49,30 @@ export async function inviteTeamMember(formData: FormData) {
   revalidatePath("/personeel");
 }
 
+// Opnieuw uitnodigen als de vorige link is verlopen — zonder het teamlid
+// en diens rechten/projectkoppelingen te hoeven verwijderen en opnieuw
+// aan te maken. Zie resendClientInvite voor de uitleg van de aanpak.
+export async function resendTeamInvite(teamMemberId: string): Promise<string> {
+  await requireOwner();
+  const supabase = createClient();
+  const admin = createAdminClient();
+  const { data: profile } = await supabase.from("profiles").select("id").eq("team_member_id", teamMemberId).maybeSingle();
+  if (!profile) throw new Error("Geen account gekoppeld aan dit teamlid.");
+  const { data: userData, error: userError } = await admin.auth.admin.getUserById(profile.id);
+  const email = userData?.user?.email;
+  if (userError || !email) throw new Error(userError?.message || "Kon het e-mailadres niet vinden.");
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const { data: link, error } = await admin.auth.admin.generateLink({
+    type: "invite",
+    email,
+    options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}` },
+  });
+  if (error || !link?.properties?.action_link) throw new Error(error?.message || "Opnieuw uitnodigen mislukt.");
+  revalidatePath("/personeel");
+  return link.properties.action_link;
+}
+
 export async function updateTeamMemberDetails(
   id: string,
   patch: { name?: string; trade?: string | null; hourly_rate?: number | null; hourly_rate_vat_type?: "excl" | "incl" }
