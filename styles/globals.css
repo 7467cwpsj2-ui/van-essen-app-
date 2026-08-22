@@ -2906,9 +2906,11 @@ a.dash-panel-row:hover {
 }
 .chat-input-row {
   display: flex;
+  align-items: flex-end;
   gap: 8px;
 }
-.chat-input-row input {
+.chat-input-row input,
+.chat-input-row textarea {
   flex: 1;
   background: var(--panel);
   border: 1px solid var(--border);
@@ -2916,6 +2918,13 @@ a.dash-panel-row:hover {
   padding: 9px 12px;
   border-radius: 6px;
   font-size: 13px;
+}
+.chat-input-row textarea {
+  resize: none;
+  max-height: 160px;
+  overflow-y: auto;
+  line-height: 1.4;
+  font-family: var(--font-body);
 }
 
 /* ---------- opleverpunten / klantkeuzes (generieke lijstrij) ---------- */

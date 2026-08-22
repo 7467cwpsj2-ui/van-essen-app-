@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { FileText, Lock, Paperclip, Send } from "lucide-react";
 import { useRealtimeRefresh } from "@/lib/useRealtimeRefresh";
 import { FileCaptureButtons } from "@/components/FileCaptureButtons";
@@ -43,6 +43,12 @@ export function ChatPanel({
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [, startTransition] = useTransition();
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const resizeTextarea = (el: HTMLTextAreaElement) => {
+    el.style.height = "auto";
+    el.style.height = `${el.scrollHeight}px`;
+  };
 
   useRealtimeRefresh(realtimeTable, projectId);
 
@@ -62,6 +68,7 @@ export function ChatPanel({
     if (!text.trim() && !pending) return;
     const value = text;
     setText("");
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
     setBusy(true);
     try {
       let file: { path: string; type: "image" | "pdf" } | null = null;
@@ -132,11 +139,21 @@ export function ChatPanel({
             variant="icon"
           />
         )}
-        <input
+        <textarea
+          ref={textareaRef}
+          rows={1}
           placeholder="Typ een bericht…"
           value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && send()}
+          onChange={(e) => {
+            setText(e.target.value);
+            resizeTextarea(e.target);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && !e.shiftKey) {
+              e.preventDefault();
+              send();
+            }
+          }}
         />
         <button className="btn-primary" onClick={send} disabled={busy || (!text.trim() && !pending)}>
           <Send size={14} />
