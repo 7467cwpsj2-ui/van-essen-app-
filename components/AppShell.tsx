@@ -169,43 +169,66 @@ export function AppShell({
 
         <div className="project-list">
           {projects.length === 0 && <div className="empty-hint">Nog geen projecten.</div>}
-          {STATUSES.map((status) => {
-            const groupProjects = projects.filter((p) => p.status === status);
-            if (projects.length > 0 && groupProjects.length === 0) return null;
-            const isCollapsed = !!collapsed[status];
-            return (
-              <div key={status} className="project-group">
-                <button type="button" className="project-group-header" onClick={() => toggleGroup(status)}>
-                  <ChevronDown size={13} className={"access-chevron" + (isCollapsed ? "" : " open")} />
-                  <span>{STATUS_LABEL[status]}</span>
-                  <span className="count-badge">{groupProjects.length}</span>
-                </button>
-                {!isCollapsed &&
-                  groupProjects.map((p) => {
-                    const active = pathname.startsWith(`/projects/${p.id}`);
-                    return (
-                      <Link
-                        key={p.id}
-                        href={`/projects/${p.id}/planning`}
-                        className={"project-item" + (active ? " active" : "")}
-                        onClick={() => setSidebarOpen(false)}
-                      >
-                        <div className="project-item-thumb">
-                          <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />
-                        </div>
-                        <div className="project-item-info">
-                          <span className="project-item-name">{p.name}</span>
-                          <span className="project-item-sub">{p.clientName || "geen klant gekoppeld"}</span>
-                          <div className="project-item-progress">
-                            <div className="project-item-progress-fill" style={{ width: `${p.progress}%` }} />
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-              </div>
-            );
-          })}
+          {role === "klant"
+            ? projects.map((p) => {
+                const active = pathname.startsWith(`/projects/${p.id}`);
+                return (
+                  <Link
+                    key={p.id}
+                    href={`/projects/${p.id}/planning`}
+                    className={"project-item" + (active ? " active" : "")}
+                    onClick={() => setSidebarOpen(false)}
+                  >
+                    <div className="project-item-thumb">
+                      <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />
+                    </div>
+                    <div className="project-item-info">
+                      <span className="project-item-name">{p.name}</span>
+                      <span className="project-item-sub">{p.clientName || "geen klant gekoppeld"}</span>
+                      <div className="project-item-progress">
+                        <div className="project-item-progress-fill" style={{ width: `${p.progress}%` }} />
+                      </div>
+                    </div>
+                  </Link>
+                );
+              })
+            : STATUSES.map((status) => {
+                const groupProjects = projects.filter((p) => p.status === status);
+                if (projects.length > 0 && groupProjects.length === 0) return null;
+                const isCollapsed = !!collapsed[status];
+                return (
+                  <div key={status} className="project-group">
+                    <button type="button" className="project-group-header" onClick={() => toggleGroup(status)}>
+                      <ChevronDown size={13} className={"access-chevron" + (isCollapsed ? "" : " open")} />
+                      <span>{STATUS_LABEL[status]}</span>
+                      <span className="count-badge">{groupProjects.length}</span>
+                    </button>
+                    {!isCollapsed &&
+                      groupProjects.map((p) => {
+                        const active = pathname.startsWith(`/projects/${p.id}`);
+                        return (
+                          <Link
+                            key={p.id}
+                            href={`/projects/${p.id}/planning`}
+                            className={"project-item" + (active ? " active" : "")}
+                            onClick={() => setSidebarOpen(false)}
+                          >
+                            <div className="project-item-thumb">
+                              <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />
+                            </div>
+                            <div className="project-item-info">
+                              <span className="project-item-name">{p.name}</span>
+                              <span className="project-item-sub">{p.clientName || "geen klant gekoppeld"}</span>
+                              <div className="project-item-progress">
+                                <div className="project-item-progress-fill" style={{ width: `${p.progress}%` }} />
+                              </div>
+                            </div>
+                          </Link>
+                        );
+                      })}
+                  </div>
+                );
+              })}
         </div>
 
         <Link
