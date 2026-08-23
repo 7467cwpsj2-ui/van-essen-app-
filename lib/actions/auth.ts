@@ -9,7 +9,7 @@ import { redirect } from "next/navigation";
 // zo'n zelfde bescherming heeft) — na deze tijd krijgt de gebruiker een
 // duidelijke "probeer het nog eens"-melding in plaats van dat de pagina
 // blijft hangen tot Vercel de aanvraag zelf afbreekt.
-const SIGN_IN_TIMEOUT_MS = 12000;
+const SIGN_IN_TIMEOUT_MS = 8000;
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
