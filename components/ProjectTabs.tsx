@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
@@ -20,6 +20,7 @@ import {
   Leaf,
   FileSignature,
   SlidersHorizontal,
+  ChevronDown,
 } from "lucide-react";
 import { updateHiddenTabs } from "@/lib/actions/projects";
 import type { ModuleKey } from "@/types/database";
@@ -83,6 +84,17 @@ export function ProjectTabs({
   const [customizing, setCustomizing] = useState(false);
   const [selection, setSelection] = useState<string[]>(hiddenTabs);
   const [pending, startTransition] = useTransition();
+  const [jumpOpen, setJumpOpen] = useState(false);
+  const jumpRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!jumpOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (jumpRef.current && !jumpRef.current.contains(e.target as Node)) setJumpOpen(false);
+    };
+    document.addEventListener("mousedown", onClickOutside);
+    return () => document.removeEventListener("mousedown", onClickOutside);
+  }, [jumpOpen]);
 
   const candidates: TabCandidate[] = [
     ...TAB_ORDER.filter((t) => visibleTabs.includes(t)).map((key) => ({ key, label: TAB_META[key].label, icon: TAB_META[key].icon, visible: true })),
@@ -117,21 +129,53 @@ export function ProjectTabs({
 
   return (
     <>
-      <div className="tabs">
-        {shown.map((t) => {
-          const href = `/projects/${projectId}/${t.key}`;
-          const active = pathname.startsWith(href);
-          return (
-            <Link key={t.key} href={href} className={"tab-btn" + (active ? " active" : "")}>
-              {t.icon} {t.label}
-            </Link>
-          );
-        })}
-        {canCustomize && (
-          <button type="button" className="tab-btn tab-btn-customize" onClick={openCustomize} title="Tabs aanpassen">
-            <SlidersHorizontal size={14} />
-          </button>
-        )}
+      <div className="tabs-scroll-wrap">
+        <div className="tabs">
+          {shown.map((t) => {
+            const href = `/projects/${projectId}/${t.key}`;
+            const active = pathname.startsWith(href);
+            return (
+              <Link key={t.key} href={href} className={"tab-btn" + (active ? " active" : "")}>
+                {t.icon} {t.label}
+              </Link>
+            );
+          })}
+        </div>
+        <div className="tabs-pinned-actions">
+          <div className="tabs-jump-wrap" ref={jumpRef}>
+            <button
+              type="button"
+              className="tab-btn tab-btn-customize"
+              onClick={() => setJumpOpen((v) => !v)}
+              title="Alle tabs van dit project"
+            >
+              <ChevronDown size={14} className={jumpOpen ? "open" : ""} />
+            </button>
+            {jumpOpen && (
+              <div className="route-menu-panel tabs-jump-panel">
+                {shown.map((t) => {
+                  const href = `/projects/${projectId}/${t.key}`;
+                  const active = pathname.startsWith(href);
+                  return (
+                    <Link
+                      key={t.key}
+                      href={href}
+                      onClick={() => setJumpOpen(false)}
+                      className={"tabs-jump-row" + (active ? " active" : "")}
+                    >
+                      {t.icon} {t.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+          {canCustomize && (
+            <button type="button" className="tab-btn tab-btn-customize" onClick={openCustomize} title="Tabs aanpassen">
+              <SlidersHorizontal size={14} />
+            </button>
+          )}
+        </div>
       </div>
 
       {customizing && (

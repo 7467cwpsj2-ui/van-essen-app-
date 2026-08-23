@@ -981,6 +981,13 @@ a:has(> .brandmark) {
   gap: 10px;
   margin-bottom: 20px;
 }
+.tabs-scroll-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
 .tabs {
   display: flex;
   gap: 2px;
@@ -989,6 +996,49 @@ a:has(> .brandmark) {
   border: 1px solid var(--border);
   border-radius: 13px;
   padding: 4px;
+  min-width: 0;
+}
+.tabs-pinned-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 4px;
+}
+.tabs-jump-wrap {
+  position: relative;
+  display: flex;
+}
+.tabs-jump-wrap svg.open {
+  transform: rotate(180deg);
+}
+.tabs-jump-panel {
+  min-width: 200px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.tabs-jump-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+  text-decoration: none;
+}
+.tabs-jump-row:hover {
+  background: var(--panel-2);
+  color: var(--brand);
+}
+.tabs-jump-row.active {
+  background: var(--brand-soft);
+  color: var(--brand-dim);
+  font-weight: 600;
 }
 .project-search {
   display: flex;
