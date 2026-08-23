@@ -1,4 +1,4 @@
-import { gradientForProject, initialsForProject } from "@/lib/projectColor";
+import { gradientForProject, initialsForProject, readableTextColor } from "@/lib/projectColor";
 
 export function ProjectThumb({
   id,
@@ -15,7 +15,7 @@ export function ProjectThumb({
   const [from, to] = gradientForProject(id, planningColor);
   return (
     <div className="thumb-fallback" style={{ background: `linear-gradient(135deg, ${from}, ${to})` }}>
-      <span>{initialsForProject(name)}</span>
+      <span style={{ color: readableTextColor(from) }}>{initialsForProject(name)}</span>
     </div>
   );
 }

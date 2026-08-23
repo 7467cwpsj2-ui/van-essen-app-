@@ -42,6 +42,21 @@ export function gradientForProject(projectId: string, planningColor?: string | n
   return from === to ? [from, PROJECT_COLORS[(hash + 1) % PROJECT_COLORS.length]] : [from, to];
 }
 
+// Een lichte, zelfgekozen planningskleur (via de kleurkiezer in de
+// algemene planning) gaf witte initialen die er bijna onleesbaar bovenop
+// stonden — hier wordt op basis van de helderheid van de kleur gekozen
+// tussen witte of donkere tekst, zodat het contrast altijd goed blijft,
+// ongeacht welke kleur er is gekozen of automatisch is toegewezen.
+export function readableTextColor(hex: string): string {
+  const clean = hex.replace("#", "");
+  if (clean.length !== 6) return "#ffffff";
+  const r = parseInt(clean.slice(0, 2), 16);
+  const g = parseInt(clean.slice(2, 4), 16);
+  const b = parseInt(clean.slice(4, 6), 16);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? "#111111" : "#ffffff";
+}
+
 export function initialsForProject(name: string): string {
   const words = name.trim().split(/\s+/).filter(Boolean);
   if (words.length === 0) return "?";
