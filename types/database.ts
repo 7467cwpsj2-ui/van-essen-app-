@@ -339,6 +339,19 @@ export interface OwnerClientMessage {
   created_at: string;
 }
 
+export interface DirectMessage {
+  id: string;
+  team_member_id: string;
+  author_id: string | null;
+  author_name: string | null;
+  text: string;
+  file_path: string | null;
+  file_type: "image" | "pdf" | null;
+  read_by_owner: boolean;
+  read_by_member: boolean;
+  created_at: string;
+}
+
 export type LeadStatus = "open" | "offerte_verzonden" | "gewonnen" | "verloren";
 
 export const LEAD_STATUS_LABEL: Record<LeadStatus, string> = {

@@ -9,6 +9,7 @@ import {
   FileText,
   LayoutDashboard,
   Leaf,
+  MessageCircle,
   Plus,
   Users,
   Settings,
@@ -51,12 +52,14 @@ export function AppShell({
   name,
   projects,
   notifications,
+  unreadMessages,
   children,
 }: {
   role: Role;
   name: string;
   projects: SidebarProject[];
   notifications: { items: AppNotification[]; unreadCount: number };
+  unreadMessages: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -110,6 +113,20 @@ export function AppShell({
         >
           <LayoutDashboard size={14} /> Dashboard
         </Link>
+        {role !== "klant" && (
+          <Link
+            href="/berichten"
+            className={"toegang-toggle" + (pathname.startsWith("/berichten") ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <MessageCircle size={14} /> Berichten
+            {unreadMessages > 0 && (
+              <span className="notif-badge" style={{ position: "static", marginLeft: "auto" }}>
+                {unreadMessages}
+              </span>
+            )}
+          </Link>
+        )}
         {role === "eigenaar" && (
           <>
             <Link href="/projects/new" className="new-project-toggle" onClick={() => setSidebarOpen(false)}>
