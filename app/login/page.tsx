@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { signIn } from "@/lib/actions/auth";
+import { LoginSubmitButton } from "@/components/LoginSubmitButton";
 import { KeyRound } from "lucide-react";
 
 export default function LoginPage({
@@ -28,9 +29,7 @@ export default function LoginPage({
           <input type="email" name="email" placeholder="E-mailadres" autoComplete="username" required />
           <input type="password" name="password" placeholder="Wachtwoord" autoComplete="current-password" required />
           {searchParams.error && <div className="login-error">{searchParams.error}</div>}
-          <button type="submit" className="btn-primary">
-            Inloggen
-          </button>
+          <LoginSubmitButton />
         </form>
         <div className="login-hint">
           <Link href="/wachtwoord-vergeten">Wachtwoord vergeten?</Link>
