@@ -8,6 +8,7 @@ import { Lightbox } from "@/components/Lightbox";
 import { VisibilityReview } from "@/components/VisibilityReview";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import { createDrawing, deleteDrawing, setDrawingVisibility } from "@/lib/actions/documents";
 import type { Drawing, Role } from "@/types/database";
 
@@ -51,7 +52,7 @@ export function DrawingsPanel({
       const supabase = createClient();
       const ext = pending.fileName.split(".").pop() || (pending.fileType === "pdf" ? "pdf" : "jpg");
       const path = `${projectId}/drawings/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, pending.blob, {
+      const { error: uploadError } = await uploadWithRetry(supabase, path, pending.blob, {
         contentType: pending.fileType === "pdf" ? "application/pdf" : "image/jpeg",
       });
       if (uploadError) throw new Error(uploadError.message);

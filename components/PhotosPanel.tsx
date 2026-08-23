@@ -8,6 +8,7 @@ import { Lightbox } from "@/components/Lightbox";
 import { VisibilityReview } from "@/components/VisibilityReview";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import { createPhoto, deletePhoto, setPhotoVisibility } from "@/lib/actions/documents";
 import type { Photo, PhotoCategory, Role } from "@/types/database";
 
@@ -76,7 +77,7 @@ export function PhotosPanel({
         pending.map(async (p) => {
           const ext = p.fileName.split(".").pop() || "jpg";
           const path = `${projectId}/photos/${crypto.randomUUID()}.${ext}`;
-          const { error: uploadError } = await supabase.storage.from("project-files").upload(path, p.blob, {
+          const { error: uploadError } = await uploadWithRetry(supabase, path, p.blob, {
             contentType: "image/jpeg",
           });
           if (uploadError) throw new Error(uploadError.message);

@@ -8,6 +8,7 @@ import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { FilePreview } from "@/components/FilePreview";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import {
   approveExtraWork,
   createExtraWork,
@@ -85,7 +86,7 @@ export function ExtraWorkPanel({
         const supabase = createClient();
         const ext = pending.fileName.split(".").pop() || (pending.fileType === "pdf" ? "pdf" : "jpg");
         const path = `${projectId}/extra-work/${crypto.randomUUID()}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("project-files").upload(path, pending.blob, {
+        const { error: uploadError } = await uploadWithRetry(supabase, path, pending.blob, {
           contentType: pending.fileType === "pdf" ? "application/pdf" : "image/jpeg",
         });
         if (uploadError) throw new Error(uploadError.message);
@@ -152,7 +153,7 @@ export function ExtraWorkPanel({
     try {
       const supabase = createClient();
       const path = `${projectId}/signatures/${crypto.randomUUID()}.png`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, signatureBlob, {
+      const { error: uploadError } = await uploadWithRetry(supabase, path, signatureBlob, {
         contentType: "image/png",
       });
       if (uploadError) throw new Error(uploadError.message);

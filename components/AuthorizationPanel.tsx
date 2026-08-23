@@ -5,6 +5,7 @@ import { CheckCircle2, Clock, Download, FileSignature, X } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { cancelSubsidyAuthorization, requestSubsidyAuthorization, signSubsidyAuthorization } from "@/lib/actions/subsidies";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import { SUBSIDY_AUTHORIZATION_SCOPE_LABEL } from "@/types/database";
 import type { CompanyDetails, Role, SubsidyAuthorization } from "@/types/database";
 
@@ -47,7 +48,7 @@ export function AuthorizationPanel({
     if (!authorization) return;
     const supabase = createClient();
     const path = `${projectId}/machtiging/${crypto.randomUUID()}.png`;
-    const { error: uploadError } = await supabase.storage.from("project-files").upload(path, blob, { contentType: "image/png" });
+    const { error: uploadError } = await uploadWithRetry(supabase, path, blob, { contentType: "image/png" });
     if (uploadError) throw new Error(uploadError.message);
     await signSubsidyAuthorization(authorization.id, projectId, path);
     setSigning(false);

@@ -14,6 +14,7 @@ import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { Lightbox } from "@/components/Lightbox";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import type { FileType, SubsidyCheckItem, SubsidyProduct } from "@/types/database";
 
 type ItemPhoto = { id: string; url: string | null; fileType: FileType; caption: string | null };
@@ -70,7 +71,7 @@ export function SubsidyCheckPanel({
       const supabase = createClient();
       const ext = processed.fileName.split(".").pop() || (processed.fileType === "pdf" ? "pdf" : "jpg");
       const path = `${projectId}/subsidie/${itemId}/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, processed.blob, {
+      const { error: uploadError } = await uploadWithRetry(supabase, path, processed.blob, {
         contentType: processed.fileType === "pdf" ? "application/pdf" : "image/jpeg",
       });
       if (uploadError) throw new Error(uploadError.message);

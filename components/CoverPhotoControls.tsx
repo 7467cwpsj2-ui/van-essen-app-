@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import { setCoverPhoto, removeCoverPhoto } from "@/lib/actions/projects";
 
 export function CoverPhotoControls({ projectId, hasPhoto }: { projectId: string; hasPhoto: boolean }) {
@@ -17,7 +18,7 @@ export function CoverPhotoControls({ projectId, hasPhoto }: { projectId: string;
       const supabase = createClient();
       const ext = fileName.split(".").pop() || "jpg";
       const path = `${projectId}/cover/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, blob, {
+      const { error: uploadError } = await uploadWithRetry(supabase, path, blob, {
         contentType: "image/jpeg",
       });
       if (uploadError) throw new Error(uploadError.message);

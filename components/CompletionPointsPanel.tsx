@@ -16,6 +16,7 @@ import { FilePreview } from "@/components/FilePreview";
 import { Lightbox } from "@/components/Lightbox";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import type { CompletionPoint, CompletionPointStatus, Role } from "@/types/database";
 
 const STATUS_LABEL: Record<CompletionPointStatus, string> = {
@@ -83,7 +84,7 @@ export function CompletionPointsPanel({
         const supabase = createClient();
         const ext = pending.fileName.split(".").pop() || (pending.fileType === "pdf" ? "pdf" : "jpg");
         const path = `${projectId}/completion-points/${crypto.randomUUID()}.${ext}`;
-        const { error: uploadError } = await supabase.storage.from("project-files").upload(path, pending.blob, {
+        const { error: uploadError } = await uploadWithRetry(supabase, path, pending.blob, {
           contentType: pending.fileType === "pdf" ? "application/pdf" : "image/jpeg",
         });
         if (uploadError) throw new Error(uploadError.message);

@@ -7,6 +7,7 @@ import { Lightbox } from "@/components/Lightbox";
 import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
+import { uploadWithRetry } from "@/lib/uploadWithRetry";
 import {
   createWarrantyItem,
   deleteWarrantyItem,
@@ -149,7 +150,7 @@ export function DossierPanel({
       const supabase = createClient();
       const ext = processed.fileName.split(".").pop() || (processed.fileType === "pdf" ? "pdf" : "jpg");
       const path = `${projectId}/warranty/${id}/${crypto.randomUUID()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, processed.blob, {
+      const { error: uploadError } = await uploadWithRetry(supabase, path, processed.blob, {
         contentType: processed.fileType === "pdf" ? "application/pdf" : "image/jpeg",
       });
       if (uploadError) throw new Error(uploadError.message);
@@ -172,7 +173,7 @@ export function DossierPanel({
     try {
       const supabase = createClient();
       const path = `${projectId}/delivery/${crypto.randomUUID()}.png`;
-      const { error: uploadError } = await supabase.storage.from("project-files").upload(path, blob, { contentType: "image/png" });
+      const { error: uploadError } = await uploadWithRetry(supabase, path, blob, { contentType: "image/png" });
       if (uploadError) throw new Error(uploadError.message);
       await signDelivery(projectId, path);
       setSigning(false);
