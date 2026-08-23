@@ -2936,7 +2936,7 @@ a.dash-panel-row:hover {
 }
 .chat-msg.mine {
   align-self: flex-end;
-  background: var(--brand);
+  background: linear-gradient(135deg, var(--brand), var(--brand-dim));
   border-color: var(--brand);
   color: #ffffff;
 }
