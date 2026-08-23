@@ -304,18 +304,23 @@ a:has(> .brandmark) {
   border: 1px solid var(--border);
   color: var(--text-dim);
   padding: 9px 10px;
-  border-radius: 6px;
+  border-radius: 9px;
   font-size: 12.5px;
   cursor: pointer;
   font-family: var(--font-body);
   text-decoration: none;
 }
-.toegang-toggle.active,
 .toegang-toggle:hover,
-.nav-link.active,
 .nav-link:hover {
   border-color: var(--brand);
   color: var(--text);
+}
+.toegang-toggle.active,
+.nav-link.active {
+  background: var(--brand-soft);
+  border-color: transparent;
+  color: var(--brand-dim);
+  font-weight: 600;
 }
 
 .new-project-toggle {
@@ -3207,6 +3212,13 @@ a.dash-panel-row:hover {
   }
   .sidebar.open {
     display: flex;
+  }
+  /* De bovenbalk toont de merknaam/bel/thema-knop al permanent — dezelfde
+     rij nogmaals bovenaan het opengeklapte menu duwde de inhoud omlaag en
+     zorgde ervoor dat alleen het onderschrift nog half zichtbaar bleef,
+     vlak tegen de bovenbalk aan. */
+  .sidebar-top {
+    display: none;
   }
   .mobile-bar {
     display: flex;
