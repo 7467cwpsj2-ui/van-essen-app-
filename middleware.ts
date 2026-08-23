@@ -1,5 +1,6 @@
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { withTimeout } from "@/lib/withTimeout";
 
 // /api/cron/* heeft geen gebruikerssessie (Vercel Cron roept dit aan
 // zonder cookies) — die route bewaakt zichzelf met een eigen
@@ -15,10 +16,6 @@ const PUBLIC_PATHS = ["/login", "/wachtwoord-vergeten", "/auth/callback", "/mani
 // gestuurd, een veel vriendelijker resultaat voor exact hetzelfde
 // onderliggende probleem.
 const AUTH_CHECK_TIMEOUT_MS = 8000;
-
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
-  return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
-}
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });

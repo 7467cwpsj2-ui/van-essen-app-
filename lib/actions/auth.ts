@@ -1,7 +1,15 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { withTimeout } from "@/lib/withTimeout";
 import { redirect } from "next/navigation";
+
+// Bij een trage/tijdelijke Supabase-hapering bleef inloggen zelf ook
+// onbeperkt hangen (los van de sessiecheck in middleware.ts, die al
+// zo'n zelfde bescherming heeft) — na deze tijd krijgt de gebruiker een
+// duidelijke "probeer het nog eens"-melding in plaats van dat de pagina
+// blijft hangen tot Vercel de aanvraag zelf afbreekt.
+const SIGN_IN_TIMEOUT_MS = 12000;
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get("email") || "").trim();
@@ -13,9 +21,13 @@ export async function signIn(formData: FormData) {
   }
 
   const supabase = createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const result = await withTimeout(supabase.auth.signInWithPassword({ email, password }), SIGN_IN_TIMEOUT_MS);
 
-  if (error) {
+  if (!result) {
+    redirect(`/login?error=${encodeURIComponent("Inloggen duurt nu ongewoon lang. Probeer het over een paar seconden opnieuw.")}`);
+  }
+
+  if (result.error) {
     redirect(`/login?error=${encodeURIComponent("Inloggen mislukt. Controleer je e-mailadres en wachtwoord.")}`);
   }
 
