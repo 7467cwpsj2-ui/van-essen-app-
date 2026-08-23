@@ -20,6 +20,7 @@ import {
   Smartphone,
   X,
 } from "lucide-react";
+import { AppBadge } from "@/components/AppBadge";
 import { Brandmark } from "@/components/Brandmark";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ProjectThumb } from "@/components/ProjectThumb";
@@ -83,6 +84,7 @@ export function AppShell({
 
   return (
     <div className="app-shell">
+      <AppBadge count={notifications.unreadCount} />
       <div className="mobile-bar">
         <button type="button" onClick={() => setSidebarOpen((v) => !v)}>
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />} Menu

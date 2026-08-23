@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, MessageCircle, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import {
@@ -8,6 +8,7 @@ import {
   getMySchedule,
   getProjectsWithProgress,
   getTodayStaffSchedule,
+  getUnreadDirectMessageCount,
   type ActivityItem,
 } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
@@ -41,6 +42,7 @@ export default async function DashboardPage({
     current.profile.role === "team" && current.profile.team_member_id ? await getMySchedule(current.profile.team_member_id) : [];
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
+  const unreadMessages = await getUnreadDirectMessageCount(current.profile.role);
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -63,6 +65,17 @@ export default async function DashboardPage({
       <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
         Dashboard
       </h1>
+
+      {unreadMessages > 0 && (
+        <Link href="/berichten" className="unread-messages-banner">
+          <span className="unread-messages-banner-icon">
+            <MessageCircle size={16} />
+          </span>
+          <span>
+            {unreadMessages === 1 ? "1 nieuw bericht" : `${unreadMessages} nieuwe berichten`} — bekijk je gesprekken
+          </span>
+        </Link>
+      )}
 
       <div className="dash-cards">
         <a href="/dashboard?status=lopend#alle-projecten" className="dash-card">

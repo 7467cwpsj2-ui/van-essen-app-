@@ -2629,6 +2629,40 @@ a:has(> .brandmark) {
   font-size: 11px;
   color: var(--text-dim);
 }
+.unread-messages-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, var(--brand), var(--brand-dim));
+  color: #fff;
+  border-radius: var(--radius-md);
+  padding: 12px 16px;
+  margin: 12px 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: var(--shadow-card);
+  animation: unreadPulse 1.8s ease-in-out 2;
+}
+.unread-messages-banner-icon {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+@keyframes unreadPulse {
+  0%,
+  100% {
+    box-shadow: var(--shadow-card);
+  }
+  50% {
+    box-shadow: 0 1px 1px rgba(17, 17, 17, 0.03), 0 8px 24px -8px color-mix(in srgb, var(--brand) 70%, transparent);
+  }
+}
 .dash-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
