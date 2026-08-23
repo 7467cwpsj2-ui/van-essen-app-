@@ -29,7 +29,11 @@ const ACTIVITY_ICON: Record<ActivityItem["kind"], React.ReactNode> = {
   foto: <Camera size={14} />,
 };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { status?: string };
+}) {
   const current = await requireUser();
   const projects = await getProjectsWithProgress();
   const extras = await getDashboardExtras(projects);
@@ -48,6 +52,9 @@ export default async function DashboardPage() {
     .sort((a, b) => (a.status === "lopend" ? -1 : 1) - (b.status === "lopend" ? -1 : 1))
     .slice(0, 5);
 
+  const statusFilter = searchParams.status === "gepland" || searchParams.status === "lopend" || searchParams.status === "afgerond" ? searchParams.status : null;
+  const visibleProjects = statusFilter ? projects.filter((p) => p.status === statusFilter) : projects;
+
   return (
     <div className="dashboard">
       <div className="header-eyebrow">
@@ -58,7 +65,7 @@ export default async function DashboardPage() {
       </h1>
 
       <div className="dash-cards">
-        <a href="#alle-projecten" className="dash-card">
+        <a href="/dashboard?status=lopend#alle-projecten" className="dash-card">
           <div className="dash-card-icon">
             <Building2 size={16} />
           </div>
@@ -293,22 +300,29 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div id="alle-projecten" className="dash-section-title">
-        Alle projecten
+      <div id="alle-projecten" className="dash-section-title" style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        {statusFilter ? STATUS_LABEL[statusFilter] + " projecten" : "Alle projecten"}
+        {statusFilter && (
+          <Link href="/dashboard#alle-projecten" className="link-btn" style={{ fontSize: 12, fontWeight: 500 }}>
+            Alles tonen
+          </Link>
+        )}
       </div>
-      {projects.length === 0 ? (
+      {visibleProjects.length === 0 ? (
         <div className="empty-hint">
-          {current.profile.role === "eigenaar" ? (
-            <>
-              Nog geen projecten. <Link href="/projects/new" className="link-btn">Maak je eerste project aan.</Link>
-            </>
-          ) : (
-            "Nog geen projecten toegewezen."
-          )}
+          {statusFilter
+            ? `Geen ${STATUS_LABEL[statusFilter].toLowerCase()} projecten.`
+            : current.profile.role === "eigenaar"
+            ? (
+              <>
+                Nog geen projecten. <Link href="/projects/new" className="link-btn">Maak je eerste project aan.</Link>
+              </>
+            )
+            : "Nog geen projecten toegewezen."}
         </div>
       ) : (
         <div className="proj-card-grid">
-          {projects.map((p) => (
+          {visibleProjects.map((p) => (
             <Link key={p.id} href={`/projects/${p.id}/planning`} className="proj-card">
               <div className="proj-card-thumb">
                 <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planning_color} />
