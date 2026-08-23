@@ -23,8 +23,8 @@
   --radius-lg: 20px;
   --radius-md: 14px;
   --radius-sm: 10px;
-  --shadow-card: 0 1px 1px rgba(17, 17, 17, 0.03), 0 8px 24px -12px rgba(17, 17, 17, 0.1);
-  --shadow-elevated: 0 2px 6px rgba(17, 17, 17, 0.05), 0 28px 56px -20px rgba(17, 17, 17, 0.18);
+  --shadow-card: 0 1px 1px rgba(17, 17, 17, 0.03), 0 8px 24px -12px color-mix(in srgb, var(--brand) 45%, rgba(17, 17, 17, 0.1));
+  --shadow-elevated: 0 2px 6px rgba(17, 17, 17, 0.05), 0 28px 56px -20px color-mix(in srgb, var(--brand) 55%, rgba(17, 17, 17, 0.18));
   --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
@@ -43,8 +43,8 @@
     --text: #f2f4f7;
     --text-dim: #aab0ba;
     --text-faint: #767c87;
-    --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-    --shadow-elevated: 0 2px 6px rgba(0, 0, 0, 0.35), 0 28px 56px -20px rgba(0, 0, 0, 0.6);
+    --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 24px -12px color-mix(in srgb, var(--brand) 35%, rgba(0, 0, 0, 0.5));
+    --shadow-elevated: 0 2px 6px rgba(0, 0, 0, 0.35), 0 28px 56px -20px color-mix(in srgb, var(--brand) 45%, rgba(0, 0, 0, 0.6));
   }
 }
 :root[data-theme="dark"] {
@@ -61,8 +61,8 @@
   --text: #f2f4f7;
   --text-dim: #aab0ba;
   --text-faint: #767c87;
-  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
-  --shadow-elevated: 0 2px 6px rgba(0, 0, 0, 0.35), 0 28px 56px -20px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 1px 1px rgba(0, 0, 0, 0.3), 0 8px 24px -12px color-mix(in srgb, var(--brand) 35%, rgba(0, 0, 0, 0.5));
+  --shadow-elevated: 0 2px 6px rgba(0, 0, 0, 0.35), 0 28px 56px -20px color-mix(in srgb, var(--brand) 45%, rgba(0, 0, 0, 0.6));
 }
 
 * {
@@ -1022,8 +1022,8 @@ a:has(> .brandmark) {
   color: var(--text);
 }
 .tab-btn.active {
-  background: var(--panel);
-  color: var(--brand-dim);
+  background: linear-gradient(135deg, var(--brand), var(--brand-dim));
+  color: #fff;
   font-weight: 600;
   box-shadow: var(--shadow-card);
 }
@@ -2086,6 +2086,16 @@ a:has(> .brandmark) {
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.gantt-row-swatch {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
 }
 .gantt-conflict-icon {
   display: inline-flex;
@@ -2558,24 +2568,25 @@ a:has(> .brandmark) {
   box-shadow: var(--shadow-card);
 }
 .dash-card-icon {
-  width: 30px;
-  height: 30px;
-  border-radius: 9px;
-  background: var(--brand-soft);
-  color: var(--brand);
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--brand-soft), color-mix(in srgb, var(--brand) 22%, var(--brand-soft)));
+  color: var(--brand-dim);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 2px;
 }
 .dash-card-icon.warning {
-  background: var(--warning-soft);
+  background: linear-gradient(135deg, var(--warning-soft), color-mix(in srgb, var(--warning) 25%, var(--warning-soft)));
   color: var(--warning);
 }
 .dash-card-value {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 26px;
+  font-size: 29px;
+  letter-spacing: -0.01em;
   color: var(--text);
 }
 .dash-card.accent .dash-card-value {
@@ -2618,6 +2629,22 @@ a:has(> .brandmark) {
   padding: 8px 2px;
   font-size: 12px;
 }
+.empty-hint-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.empty-hint-icon-chip {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text-faint);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .dash-panel-row {
   display: flex;
   align-items: center;
@@ -2638,8 +2665,8 @@ a.dash-panel-row:hover {
   height: 26px;
   flex-shrink: 0;
   border-radius: 8px;
-  background: var(--panel-2);
-  color: var(--text-dim);
+  background: var(--brand-soft);
+  color: var(--brand-dim);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2703,9 +2730,35 @@ a.dash-panel-row:hover {
   justify-content: center;
   min-height: 100vh;
   min-height: 100dvh;
-  background: var(--bg);
   flex-direction: column;
   padding: 30px;
+  position: relative;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 15% 0%, color-mix(in srgb, var(--brand) 16%, var(--bg)) 0%, var(--bg) 55%),
+    radial-gradient(100% 80% at 100% 100%, color-mix(in srgb, var(--brand) 12%, var(--bg)) 0%, var(--bg) 60%);
+}
+.login-shell::before,
+.login-shell::after {
+  content: "";
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+}
+.login-shell::before {
+  width: 360px;
+  height: 360px;
+  top: -140px;
+  left: -120px;
+  background: color-mix(in srgb, var(--brand) 35%, transparent);
+}
+.login-shell::after {
+  width: 300px;
+  height: 300px;
+  bottom: -120px;
+  right: -100px;
+  background: color-mix(in srgb, var(--brand-dim) 30%, transparent);
 }
 .login-card {
   display: flex;
@@ -2719,6 +2772,19 @@ a.dash-panel-row:hover {
   max-width: 360px;
   width: 100%;
   text-align: center;
+  position: relative;
+  z-index: 1;
+  box-shadow: var(--shadow-elevated);
+  overflow: hidden;
+}
+.login-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--brand), var(--brand-dim));
 }
 .login-title {
   font-family: var(--font-display);
@@ -3127,6 +3193,7 @@ a.dash-panel-row:hover {
     position: sticky;
     top: 0;
     z-index: 10;
+    box-shadow: var(--shadow-card);
   }
   .mobile-bar button {
     display: flex;
@@ -3155,6 +3222,10 @@ a.dash-panel-row:hover {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     max-width: 100%;
+    /* Zachte uitloop aan de randen als aanwijzing dat er meer tabs zijn
+       om naar te scrollen, i.p.v. tekst die abrupt wordt afgesneden. */
+    mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
   }
   .tabs::-webkit-scrollbar {
     display: none;

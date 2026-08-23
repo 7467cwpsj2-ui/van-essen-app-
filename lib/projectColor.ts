@@ -25,6 +25,13 @@ export function colorForProject(projectId: string): string {
   return PROJECT_COLORS[hashString(projectId) % PROJECT_COLORS.length];
 }
 
+// Zelfde herleiding, maar voor willekeurige tekst — gebruikt om bijv.
+// bouwplanning-fases een eigen kleur per aannemer/uitvoerder te geven
+// binnen één project, zonder dat daar een apart kleurveld voor nodig is.
+export function colorForKey(key: string): string {
+  return PROJECT_COLORS[hashString(key) % PROJECT_COLORS.length];
+}
+
 // Twee tinten voor een zachte kleurverloop-tegel — gebruikt de expliciete
 // planning-kleur van het project als startpunt zodra die is ingesteld,
 // anders volledig herleid uit het project-id.

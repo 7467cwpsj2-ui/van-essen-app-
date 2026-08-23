@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import {
@@ -115,7 +115,12 @@ export default async function DashboardPage() {
               </Link>
             </div>
             {staffToday.length === 0 ? (
-              <div className="empty-hint small">Niemand van je eigen personeel staat vandaag ingepland.</div>
+              <div className="empty-hint small empty-hint-row">
+                <span className="empty-hint-icon-chip">
+                  <MapPin size={13} />
+                </span>
+                Niemand van je eigen personeel staat vandaag ingepland.
+              </div>
             ) : (
               <div className="dash-panel-list">
                 {staffToday.map((s, idx) => {
@@ -153,7 +158,12 @@ export default async function DashboardPage() {
               <span>Mijn planning</span>
             </div>
             {mySchedule.length === 0 ? (
-              <div className="empty-hint small">Je staat momenteel nergens ingepland.</div>
+              <div className="empty-hint small empty-hint-row">
+                <span className="empty-hint-icon-chip">
+                  <Clock size={13} />
+                </span>
+                Je staat momenteel nergens ingepland.
+              </div>
             ) : (
               <div className="dash-panel-list">
                 {mySchedule.map((s) => {
@@ -225,7 +235,12 @@ export default async function DashboardPage() {
             </Link>
           </div>
           {extras.todayTasks.length === 0 ? (
-            <div className="empty-hint small">Niets te doen gepland voor vandaag.</div>
+            <div className="empty-hint small empty-hint-row">
+              <span className="empty-hint-icon-chip">
+                <Clock size={13} />
+              </span>
+              Niets te doen gepland voor vandaag.
+            </div>
           ) : (
             <div className="dash-panel-list">
               {extras.todayTasks.map((t) => (
@@ -250,7 +265,12 @@ export default async function DashboardPage() {
             <span>Laatste meldingen</span>
           </div>
           {extras.activity.length === 0 ? (
-            <div className="empty-hint small">Nog geen activiteit.</div>
+            <div className="empty-hint small empty-hint-row">
+              <span className="empty-hint-icon-chip">
+                <Sparkles size={13} />
+              </span>
+              Nog geen activiteit.
+            </div>
           ) : (
             <div className="dash-panel-list">
               {extras.activity.map((a) => (
