@@ -8,6 +8,18 @@ import { NextResponse, type NextRequest } from "next/server";
 // eigen niet-raadbare token in de URL, niet door een sessie.
 const PUBLIC_PATHS = ["/login", "/wachtwoord-vergeten", "/auth/callback", "/manifest.webmanifest", "/api/cron/", "/api/review", "/d/"];
 
+// Als Supabase zelf een keer traag reageert, moet de hele app niet
+// onbeperkt blijven hangen tot Vercel de aanvraag hardhandig afbreekt
+// (een kale 504 Gateway Timeout-pagina) — na dit aantal seconden wordt
+// de gebruiker in plaats daarvan gewoon (opnieuw) naar het inlogscherm
+// gestuurd, een veel vriendelijker resultaat voor exact hetzelfde
+// onderliggende probleem.
+const AUTH_CHECK_TIMEOUT_MS = 8000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
+  return Promise.race([promise, new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
+}
+
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({ request });
 
@@ -28,9 +40,8 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const result = await withTimeout(supabase.auth.getUser(), AUTH_CHECK_TIMEOUT_MS);
+  const user = result?.data.user ?? null;
 
   const isPublic = PUBLIC_PATHS.some((path) => request.nextUrl.pathname.startsWith(path));
 
