@@ -571,7 +571,12 @@ a:has(> .brandmark) {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(8, 11, 16, 0.3) 0%, rgba(8, 11, 16, 0.68) 100%);
+  background: linear-gradient(
+    180deg,
+    rgba(8, 11, 16, 0.08) 0%,
+    rgba(8, 11, 16, 0.3) 50%,
+    color-mix(in srgb, var(--brand-dim) 45%, rgba(8, 11, 16, 0.86)) 100%
+  );
 }
 .header-grid-texture {
   position: absolute;
@@ -2500,7 +2505,7 @@ a:has(> .brandmark) {
   border-color: var(--brand);
 }
 .proj-card-thumb {
-  height: 100px;
+  height: 128px;
   background: var(--panel-2);
   overflow: hidden;
   display: flex;
