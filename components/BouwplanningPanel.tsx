@@ -4,7 +4,7 @@ import { Fragment, useState, useTransition } from "react";
 import { AlertTriangle, Lock, Pencil, Plus, Trash2, Unlock, X } from "lucide-react";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { ScrollToToday } from "@/components/ScrollToToday";
-import { createPhase, deletePhase, setPhaseFixedDate, updatePhaseDates } from "@/lib/actions/schedule";
+import { createPhase, deletePhase, setPhaseFixedDate, updatePhaseColor, updatePhaseDates } from "@/lib/actions/schedule";
 import { colorForKey } from "@/lib/projectColor";
 import { endDateForWorkingDays } from "@/lib/workingDays";
 import type { SchedulePhase, Task } from "@/types/database";
@@ -147,12 +147,23 @@ export function BouwplanningPanel({
                 const wd = d.getUTCDay();
                 return t >= start && t <= end && wd !== 0 && wd !== 6;
               });
-              const phaseColor = colorForKey(phaseAssigneeLabel(i) || i.title);
+              const phaseColor = i.color || colorForKey(phaseAssigneeLabel(i) || i.title);
               return (
                 <Fragment key={i.id}>
                   <div className={"gantt-cell gantt-row-label" + (canEdit ? " gantt-row-label-actions" : "")}>
                     <div className="gantt-row-title">
-                      <span className="gantt-row-swatch" style={{ background: phaseColor }} />
+                      {canEdit ? (
+                        <input
+                          type="color"
+                          value={phaseColor}
+                          onChange={(e) => startTransition(() => updatePhaseColor(projectId, i.id, e.target.value).catch(() => {}))}
+                          onClick={(e) => e.stopPropagation()}
+                          className="planning-legend-swatch gantt-row-swatch-input"
+                          title="Kleur van deze fase aanpassen"
+                        />
+                      ) : (
+                        <span className="gantt-row-swatch" style={{ background: phaseColor }} />
+                      )}
                       {i.title}
                       {i.fixed_date && (
                         <span className="gantt-fixed-icon" title="Deze fase schuift niet automatisch mee met andere wijzigingen.">

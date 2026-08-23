@@ -98,6 +98,16 @@ export async function updatePhaseDates(
   revalidatePath("/planning-overzicht");
 }
 
+export async function updatePhaseColor(projectId: string, phaseId: string, color: string | null) {
+  await requireUser();
+  const supabase = createClient();
+  const { error } = await supabase.from("schedule_phases").update({ color }).eq("id", phaseId);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${projectId}/bouwplanning`);
+  revalidatePath(`/projects/${projectId}/planning`);
+  revalidatePath("/planning-overzicht");
+}
+
 export async function deletePhase(projectId: string, phaseId: string) {
   await requireUser();
   const supabase = createClient();

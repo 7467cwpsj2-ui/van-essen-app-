@@ -2108,6 +2108,20 @@ a:has(> .brandmark) {
   border-radius: 999px;
   flex-shrink: 0;
 }
+.gantt-row-swatch-input {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  border: none;
+}
+.gantt-row-swatch-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+  border-radius: 999px;
+}
+.gantt-row-swatch-input::-webkit-color-swatch {
+  border: none;
+  border-radius: 999px;
+}
 .gantt-conflict-icon {
   display: inline-flex;
   color: var(--danger);

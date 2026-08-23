@@ -146,6 +146,7 @@ export interface SchedulePhase {
   start_date: string;
   end_date: string;
   fixed_date: boolean;
+  color: string | null;
   created_at: string;
 }
 
