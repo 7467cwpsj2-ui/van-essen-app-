@@ -3218,7 +3218,10 @@ a.dash-panel-row:hover {
     position: sticky;
     top: 0;
     z-index: 10;
-    box-shadow: var(--shadow-card);
+    /* Bewust een veel zachtere, kortere schaduw dan --shadow-card — die
+       is gemaakt voor zwevende kaarten, niet voor een vaste balk over de
+       volledige breedte, waar dezelfde schaduw als een zware band oogt. */
+    box-shadow: 0 2px 6px -3px color-mix(in srgb, var(--brand) 20%, rgba(17, 17, 17, 0.1));
   }
   .mobile-bar button {
     display: flex;
