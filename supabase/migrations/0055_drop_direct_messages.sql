@@ -1,15 +1,17 @@
 -- Ongedaan maken van 0054_direct_messages.sql — de rechtstreekse-
 -- berichten-functie is toch weer uit de app gehaald.
 --
--- Let op: Supabase staat een rechtstreekse `delete from storage.objects`
--- via de SQL Editor niet toe (foutmelding 42501, "Use the Storage API
--- instead") — dat moet via Storage → team-messages in het dashboard,
--- vóórdat deze migratie draait, maar alleen als die map niet al leeg is.
+-- Let op: de team-messages bucket zelf verwijder je NIET via deze
+-- migratie, maar handmatig in het dashboard: Storage → team-messages →
+-- (···)-menu → Delete bucket. Supabase blokkeert een rechtstreekse
+-- delete op storage.objects/storage.buckets via de SQL Editor
+-- (foutmelding 42501, "Use the Storage API instead") — en dat blijkt ook
+-- te gelden zodra het verwijderen van de bucket zelf geprobeerd wordt om
+-- de bijbehorende bestanden mee te laten cascaderen. De dashboard-knop
+-- gebruikt wél de Storage API en werkt daardoor gewoon.
 
 drop policy if exists team_messages_files_select on storage.objects;
 drop policy if exists team_messages_files_insert on storage.objects;
 drop policy if exists team_messages_files_delete on storage.objects;
-
-delete from storage.buckets where id = 'team-messages';
 
 drop table if exists direct_messages;
