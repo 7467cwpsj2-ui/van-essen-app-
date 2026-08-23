@@ -254,7 +254,11 @@ export default async function DashboardPage() {
           ) : (
             <div className="dash-panel-list">
               {extras.activity.map((a) => (
-                <div key={a.id} className="dash-panel-row static">
+                <Link
+                  key={a.id}
+                  href={`/projects/${a.projectId}/${a.kind === "foto" ? "fotos" : "meerwerk"}`}
+                  className="dash-panel-row"
+                >
                   <div className={"dash-panel-row-icon activity-" + a.kind}>{ACTIVITY_ICON[a.kind]}</div>
                   <div className="dash-panel-row-body">
                     <div className="dash-panel-row-title">{a.text}</div>
@@ -262,7 +266,7 @@ export default async function DashboardPage() {
                       {a.projectName} · {timeAgo(a.createdAt)}
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}

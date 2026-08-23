@@ -48,6 +48,7 @@ export interface ActivityItem {
   id: string;
   kind: "meerwerk" | "minderwerk" | "foto";
   text: string;
+  projectId: string;
   projectName: string;
   createdAt: string;
 }
@@ -267,6 +268,7 @@ export async function getDashboardExtras(projects: ProjectWithProgress[]): Promi
       id: `w-${w.id}`,
       kind: (w.type === "meerwerk" ? "meerwerk" : "minderwerk") as ActivityItem["kind"],
       text: (w.type === "meerwerk" ? "Nieuw meerwerk ontvangen: " : "Nieuw minderwerk ontvangen: ") + w.description,
+      projectId: w.project_id as string,
       projectName: projectNameMap[w.project_id as string] ?? "",
       createdAt: w.created_at as string,
     })),
@@ -274,6 +276,7 @@ export async function getDashboardExtras(projects: ProjectWithProgress[]): Promi
       id: `p-${ph.id}`,
       kind: "foto" as const,
       text: `Foto toegevoegd: ${ph.title}`,
+      projectId: ph.project_id as string,
       projectName: projectNameMap[ph.project_id as string] ?? "",
       createdAt: ph.created_at as string,
     })),
