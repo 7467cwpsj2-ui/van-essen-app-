@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
 import { getProjectClientNamesMap } from "@/lib/clientNames";
-import type { AppNotification, Project, Role, SchedulePhase } from "@/types/database";
+import type { AppNotification, Project, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
@@ -202,76 +202,6 @@ export async function getNotifications(): Promise<NotificationsSummary> {
     supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false),
   ]);
   return { items: (items ?? []) as AppNotification[], unreadCount: count ?? 0 };
-}
-
-export interface DirectMessageThread {
-  teamMemberId: string;
-  name: string;
-  memberType: string;
-  trade: string | null;
-  lastText: string | null;
-  lastFileType: "image" | "pdf" | null;
-  lastAt: string | null;
-  unreadCount: number;
-}
-
-// Eén rij per teamlid/onderaannemer, met het laatste bericht en het
-// aantal ongelezen berichten — de "gesprekkenlijst" voor de eigenaar,
-// zoals bij WhatsApp. RLS laat de eigenaar alle direct_messages zien,
-// dus dit hoeft niet per teamlid apart bevraagd te worden.
-export async function getDirectMessageThreads(): Promise<DirectMessageThread[]> {
-  const supabase = createClient();
-  const { data: members } = await supabase.from("team_members").select("id,name,member_type,trade").order("name");
-  const teamMembers = (members ?? []) as { id: string; name: string; member_type: string; trade: string | null }[];
-  if (teamMembers.length === 0) return [];
-
-  const { data: messagesData } = await supabase
-    .from("direct_messages")
-    .select("team_member_id,text,file_type,created_at,read_by_owner")
-    .order("created_at", { ascending: false });
-  const messages = (messagesData ?? []) as {
-    team_member_id: string;
-    text: string;
-    file_type: "image" | "pdf" | null;
-    created_at: string;
-    read_by_owner: boolean;
-  }[];
-
-  return teamMembers
-    .map((m) => {
-      const own = messages.filter((msg) => msg.team_member_id === m.id);
-      const last = own[0] ?? null;
-      return {
-        teamMemberId: m.id,
-        name: m.name,
-        memberType: m.member_type,
-        trade: m.trade,
-        lastText: last?.text ?? null,
-        lastFileType: last?.file_type ?? null,
-        lastAt: last?.created_at ?? null,
-        unreadCount: own.filter((msg) => !msg.read_by_owner).length,
-      };
-    })
-    .sort((a, b) => {
-      if (!a.lastAt && !b.lastAt) return a.name.localeCompare(b.name, "nl");
-      if (!a.lastAt) return 1;
-      if (!b.lastAt) return -1;
-      return b.lastAt.localeCompare(a.lastAt);
-    });
-}
-
-// Werkt voor eigenaar én teamlid met dezelfde query: RLS laat de
-// eigenaar alle direct_messages zien (dus dit telt automatisch over alle
-// gesprekken heen) en een teamlid alleen zijn eigen gesprek met de
-// eigenaar (dus dit telt dan vanzelf alleen dat ene gesprek).
-export async function getUnreadDirectMessageCount(role: Role): Promise<number> {
-  if (role === "klant") return 0;
-  const supabase = createClient();
-  const { count } = await supabase
-    .from("direct_messages")
-    .select("id", { count: "exact", head: true })
-    .eq(role === "eigenaar" ? "read_by_owner" : "read_by_member", false);
-  return count ?? 0;
 }
 
 export interface DashboardExtras {

@@ -59,8 +59,8 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0046_subsidy_authorizations.sql`, `0047_subsidies_owner_only.sql`,
 `0048_subsidy_applications.sql`, `0049_project_hidden_tabs.sql`,
 `0050_warranty_items_extended.sql`, `0051_extra_work_invoiced.sql`,
-`0052_meerwerk_never_team.sql`, `0053_schedule_phase_color.sql`,
-`0054_direct_messages.sql`, en klik telkens Run), of met de Supabase CLI:
+`0052_meerwerk_never_team.sql`, `0053_schedule_phase_color.sql`, en klik
+telkens Run), of met de Supabase CLI:
 
 ```bash
 supabase link --project-ref <jouw-project-ref>
