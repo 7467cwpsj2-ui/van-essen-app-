@@ -63,7 +63,7 @@ export default async function DashboardPage({
       <div className="header-eyebrow">
         {timeAwareGreeting()}, {current.profile.name}
       </div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
+      <h1 className="page-title">
         Dashboard
       </h1>
 

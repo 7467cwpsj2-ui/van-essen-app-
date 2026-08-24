@@ -79,7 +79,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
   return (
     <div>
       <div className="header-eyebrow">Uren</div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 12px", textTransform: "uppercase" }}>
+      <h1 className="page-title">
         Uren registreren
       </h1>
       {nothingToPick ? (

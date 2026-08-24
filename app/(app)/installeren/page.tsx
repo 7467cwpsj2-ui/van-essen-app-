@@ -18,7 +18,7 @@ export default function InstallPage() {
   return (
     <div className="dashboard">
       <div className="header-eyebrow">Welkom</div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
+      <h1 className="page-title">
         Zet de app op je beginscherm
       </h1>
       <div className="hint-bar">

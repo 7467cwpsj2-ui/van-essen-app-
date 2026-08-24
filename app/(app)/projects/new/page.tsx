@@ -12,7 +12,7 @@ export default async function NewProjectPage() {
   return (
     <div className="panel" style={{ maxWidth: 480 }}>
       <div className="header-eyebrow">Nieuw project</div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
+      <h1 className="page-title">
         Project aanmaken
       </h1>
       <form action={createProject} className="add-form">

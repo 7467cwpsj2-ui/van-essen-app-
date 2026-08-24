@@ -34,7 +34,7 @@ export default async function AlleMeerwerkPage() {
   return (
     <div className="dashboard">
       <div className="header-eyebrow">Overzicht</div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
+      <h1 className="page-title">
         Alle openstaand meer-/minderwerk
       </h1>
       {withOpenItems.length === 0 ? (

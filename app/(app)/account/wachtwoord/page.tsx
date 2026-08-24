@@ -4,7 +4,7 @@ export default function SetPasswordPage({ searchParams }: { searchParams: { erro
   return (
     <div className="panel" style={{ maxWidth: 380 }}>
       <div className="header-eyebrow">Welkom</div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 22, margin: "0 0 4px", textTransform: "uppercase" }}>
+      <h1 className="page-title">
         Kies je wachtwoord
       </h1>
       <p className="login-copy" style={{ textAlign: "left" }}>
