@@ -10,6 +10,13 @@ function fmtShort(iso: string) {
   return new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
 }
 
+// Inclusief weekdag, want "2026-08-24" is bij een lijst met losse
+// registraties niet in één oogopslag te lezen — welke dag het precies
+// was, is nu meteen duidelijk.
+function fmtDay(iso: string) {
+  return new Intl.DateTimeFormat("nl-NL", { weekday: "short", day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
+}
+
 function csvCell(v: string) {
   return `"${v.replace(/"/g, '""')}"`;
 }
@@ -232,7 +239,7 @@ export function HoursPanel({
                           <div key={e.id} className="task-row">
                             <div className="task-body">
                               <div className="task-title mono">
-                                {e.work_date} · {e.hours} uur
+                                {fmtDay(e.work_date)} · {e.hours} uur
                               </div>
                               {e.note && <div className="task-meta">{e.note}</div>}
                             </div>
