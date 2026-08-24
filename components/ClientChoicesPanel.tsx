@@ -21,9 +21,15 @@ export function ClientChoicesPanel({
 }) {
   const [form, setForm] = useState({ category: "", description: "", deadline: "" });
   const [choiceDrafts, setChoiceDrafts] = useState<Record<string, string>>({});
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
+
+  const closeAdd = () => {
+    setForm({ category: "", description: "", deadline: "" });
+    setShowAdd(false);
+  };
 
   const add = () => {
     if (!form.category.trim()) return;
@@ -34,12 +40,17 @@ export function ClientChoicesPanel({
         deadline: form.deadline || null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ category: "", description: "", deadline: "" });
+    closeAdd();
   };
 
   return (
     <div className="panel">
       {role === "klant" && <div className="hint-bar">Zodra je kiest of afwijst, staat dit vast — alleen de eigenaar kan het daarna nog aanpassen.</div>}
+      {role === "eigenaar" && !isLocked && (
+        <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Klantkeuze toevoegen
+        </button>
+      )}
       {choices.length === 0 && <div className="empty-hint">Nog geen klantkeuzes.</div>}
       <div className="work-list">
         {choices.map((c) => (
@@ -91,16 +102,23 @@ export function ClientChoicesPanel({
           </div>
         ))}
       </div>
-      {role === "eigenaar" && !isLocked && (
-        <div className="add-form">
-          <div className="add-form-title">Klantkeuze toevoegen</div>
-          <div className="add-form-grid">
-            <input placeholder="Categorie (bv. Kozijnkleur)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
-            <input placeholder="Toelichting / opties" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-            <button className="btn-primary" onClick={add}>
-              <Plus size={14} /> Toevoegen
-            </button>
+      {role === "eigenaar" && !isLocked && showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">Klantkeuze toevoegen</div>
+            <div className="add-form-grid">
+              <input placeholder="Categorie (bv. Kozijnkleur)" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} />
+              <input placeholder="Toelichting / opties" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={add}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -24,6 +24,7 @@ export function LeadsPanel({ leads, reminderDays }: { leads: Lead[]; reminderDay
   const [form, setForm] = useState<LeadInput>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<LeadInput>(EMPTY_FORM);
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -32,12 +33,17 @@ export function LeadsPanel({ leads, reminderDays }: { leads: Lead[]; reminderDay
 
   const visible = filter === "alle" ? leads : leads.filter((l) => l.status === filter);
 
+  const closeAdd = () => {
+    setForm(EMPTY_FORM);
+    setShowAdd(false);
+  };
+
   const addLead = () => {
     if (!form.clientName.trim()) return;
     startTransition(() => {
       createLead(form).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm(EMPTY_FORM);
+    closeAdd();
   };
 
   const startEdit = (l: Lead) => {
@@ -87,6 +93,10 @@ export function LeadsPanel({ leads, reminderDays }: { leads: Lead[]; reminderDay
           </button>
         ))}
       </div>
+
+      <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> Aanvraag toevoegen
+      </button>
 
       {visible.length === 0 ? (
         <div className="empty-hint">Niets gevonden.</div>
@@ -205,31 +215,40 @@ export function LeadsPanel({ leads, reminderDays }: { leads: Lead[]; reminderDay
         </div>
       )}
 
-      <div className="add-form">
-        <div className="add-form-title">Nieuwe aanvraag / locatiebezoek</div>
-        <div className="add-form-grid">
-          <input placeholder="Naam" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} />
-          <input placeholder="Adres" value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          <input placeholder="Telefoon" value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
-          <input placeholder="E-mail" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          <input
-            type="date"
-            value={form.visitDate ?? ""}
-            onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
-            title="Bezoekdatum"
-            max={todayIso}
-          />
-          <button className="btn-primary" onClick={addLead}>
-            <Plus size={14} /> Toevoegen
-          </button>
+      {showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Nieuwe aanvraag / locatiebezoek</div>
+            <div className="add-form-grid">
+              <input placeholder="Naam" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} />
+              <input placeholder="Adres" value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              <input placeholder="Telefoon" value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              <input placeholder="E-mail" value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              <input
+                type="date"
+                value={form.visitDate ?? ""}
+                onChange={(e) => setForm({ ...form, visitDate: e.target.value })}
+                title="Bezoekdatum"
+                max={todayIso}
+              />
+            </div>
+            <textarea
+              rows={2}
+              placeholder="Omschrijving (bv. wat wil de klant)"
+              value={form.description ?? ""}
+              onChange={(e) => setForm({ ...form, description: e.target.value })}
+            />
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addLead}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
+          </div>
         </div>
-        <textarea
-          rows={2}
-          placeholder="Omschrijving (bv. wat wil de klant)"
-          value={form.description ?? ""}
-          onChange={(e) => setForm({ ...form, description: e.target.value })}
-        />
-      </div>
+      )}
     </div>
   );
 }

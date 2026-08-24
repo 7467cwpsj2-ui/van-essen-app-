@@ -52,6 +52,7 @@ export function SubsidyCheckPanel({
   const [editNotes, setEditNotes] = useState("");
   const [uploadCounts, setUploadCounts] = useState<Record<string, number>>({});
   const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const run = (fn: () => Promise<void>) => {
@@ -99,14 +100,19 @@ export function SubsidyCheckPanel({
     }
   };
 
-  const addItem = () => {
-    const q = Number(quantity);
-    if (!selectedProduct || !(q > 0)) return;
-    run(() => addSubsidyCheckItem(projectId, selectedProduct.id, q, executionDate || null, notes || null));
+  const closeAdd = () => {
     setSearch("");
     setQuantity("1");
     setExecutionDate(todayIso());
     setNotes("");
+    setShowAdd(false);
+  };
+
+  const addItem = () => {
+    const q = Number(quantity);
+    if (!selectedProduct || !(q > 0)) return;
+    run(() => addSubsidyCheckItem(projectId, selectedProduct.id, q, executionDate || null, notes || null));
+    closeAdd();
   };
 
   const startEdit = (it: SubsidyCheckItem) => {
@@ -139,6 +145,12 @@ export function SubsidyCheckPanel({
         </Link>{" "}
         aan.
       </div>
+
+      {!isLocked && (
+        <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Maatregel toevoegen
+        </button>
+      )}
 
       {items.length === 0 ? (
         <div className="empty-hint">Nog geen maatregelen toegevoegd aan de subsidiecheck.</div>
@@ -270,44 +282,52 @@ export function SubsidyCheckPanel({
         </a>
       )}
 
-      {!isLocked && (
-        <div className="add-form">
-          <div className="add-form-title">Maatregel toevoegen aan {projectName}</div>
-          <div className="add-form-grid">
-            <input
-              list="subsidy-product-options"
-              placeholder="Typ maatregel, product, fabrikant of meldcode…"
-              value={search}
-              onChange={(e) => pickProduct(e.target.value)}
-              style={{ minWidth: 220 }}
-            />
-            <datalist id="subsidy-product-options">
-              {products.map((p) => (
-                <option key={p.id} value={productLabel(p)} />
-              ))}
-            </datalist>
-            <input
-              ref={quantityRef}
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder={selectedProduct ? `Aantal (${selectedProduct.unit})` : "Aantal"}
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && addItem()}
-            />
-            <input type="date" title="Datum uitvoering" value={executionDate} onChange={(e) => setExecutionDate(e.target.value)} />
-            <button className="btn-primary" onClick={addItem} disabled={!selectedProduct}>
-              <Plus size={14} /> Toevoegen
-            </button>
-          </div>
-          {selectedProduct && (
-            <div className="hint-bar small">
-              Meldcode: {selectedProduct.meldcode || "onbekend"} — indicatie: {fmtEuro(selectedProduct.subsidy_amount)} per{" "}
-              {selectedProduct.unit}.
+      {!isLocked && showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Maatregel toevoegen aan {projectName}</div>
+            <div className="add-form-grid">
+              <input
+                list="subsidy-product-options"
+                placeholder="Typ maatregel, product, fabrikant of meldcode…"
+                value={search}
+                onChange={(e) => pickProduct(e.target.value)}
+                style={{ minWidth: 220 }}
+                autoFocus
+              />
+              <datalist id="subsidy-product-options">
+                {products.map((p) => (
+                  <option key={p.id} value={productLabel(p)} />
+                ))}
+              </datalist>
+              <input
+                ref={quantityRef}
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder={selectedProduct ? `Aantal (${selectedProduct.unit})` : "Aantal"}
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addItem()}
+              />
+              <input type="date" title="Datum uitvoering" value={executionDate} onChange={(e) => setExecutionDate(e.target.value)} />
             </div>
-          )}
-          <textarea rows={2} placeholder="Opmerkingen (optioneel)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            {selectedProduct && (
+              <div className="hint-bar small">
+                Meldcode: {selectedProduct.meldcode || "onbekend"} — indicatie: {fmtEuro(selectedProduct.subsidy_amount)} per{" "}
+                {selectedProduct.unit}.
+              </div>
+            )}
+            <textarea rows={2} placeholder="Opmerkingen (optioneel)" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addItem} disabled={!selectedProduct}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

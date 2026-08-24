@@ -108,6 +108,7 @@ export function DossierPanel({
   const [shareUrl, setShareUrl] = useState(initialShareUrl);
   const [shareBusy, setShareBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showAddWarranty, setShowAddWarranty] = useState(false);
   const [, startTransition] = useTransition();
 
   const financials = computeDossierFinancials(project, extraWork);
@@ -127,6 +128,11 @@ export function DossierPanel({
     });
   };
 
+  const closeAddWarranty = () => {
+    setWarrantyForm({ item: "", amount: "", unit: "jaren", warrantyType: "eigen", manufacturer: "", startDate: "" });
+    setShowAddWarranty(false);
+  };
+
   const addWarranty = () => {
     if (!warrantyForm.item.trim() || !Number(warrantyForm.amount)) return;
     startTransition(() => {
@@ -140,7 +146,7 @@ export function DossierPanel({
         warrantyForm.startDate || null
       ).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setWarrantyForm({ item: "", amount: "", unit: "jaren", warrantyType: "eigen", manufacturer: "", startDate: "" });
+    closeAddWarranty();
   };
 
   const uploadCertificate = async (id: string, file: File) => {
@@ -419,6 +425,16 @@ export function DossierPanel({
       <div>
         <div className="dash-section-title">Garantie</div>
         {project.warranty_text && <div className="hint-bar small">{project.warranty_text}</div>}
+        {role === "eigenaar" && !isLocked && (
+          <button
+            type="button"
+            className="btn-primary no-print"
+            onClick={() => setShowAddWarranty(true)}
+            style={{ alignSelf: "flex-start", marginBottom: 8 }}
+          >
+            <Plus size={14} /> Garantie-item toevoegen
+          </button>
+        )}
         <div className="warranty-list">
           {warrantyItems.length === 0 && <div className="empty-hint">Nog geen garantie-items.</div>}
           {warrantyItems.map((w) => {
@@ -490,61 +506,69 @@ export function DossierPanel({
             );
           })}
         </div>
-        {role === "eigenaar" && !isLocked && (
-          <div className="add-form no-print" style={{ marginTop: 8 }}>
-            <div className="access-summary-sub">Snelkeuze (gebruikelijke branchetermijn, altijd aan te passen):</div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 4 }}>
-              {WARRANTY_PRESETS.map((preset) => (
-                <button
-                  key={preset.item}
-                  type="button"
-                  className="btn-ghost"
-                  style={{ padding: "4px 10px", fontSize: 12 }}
-                  onClick={() =>
-                    setWarrantyForm({ ...warrantyForm, item: preset.item, amount: String(preset.amount), unit: preset.unit })
-                  }
+        {role === "eigenaar" && !isLocked && showAddWarranty && (
+          <div className="sig-overlay no-print" onClick={closeAddWarranty}>
+            <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+              <div className="modal-title">Garantie-item toevoegen</div>
+              <div className="access-summary-sub">Snelkeuze (gebruikelijke branchetermijn, altijd aan te passen):</div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 4 }}>
+                {WARRANTY_PRESETS.map((preset) => (
+                  <button
+                    key={preset.item}
+                    type="button"
+                    className="btn-ghost"
+                    style={{ padding: "4px 10px", fontSize: 12 }}
+                    onClick={() =>
+                      setWarrantyForm({ ...warrantyForm, item: preset.item, amount: String(preset.amount), unit: preset.unit })
+                    }
+                  >
+                    {preset.item} ({preset.amount} {preset.unit})
+                  </button>
+                ))}
+              </div>
+              <div className="add-form-grid">
+                <input
+                  placeholder="Onderdeel (bv. Warmtepomp)"
+                  value={warrantyForm.item}
+                  onChange={(e) => setWarrantyForm({ ...warrantyForm, item: e.target.value })}
+                />
+                <select
+                  value={warrantyForm.warrantyType}
+                  onChange={(e) => setWarrantyForm({ ...warrantyForm, warrantyType: e.target.value as WarrantyType })}
                 >
-                  {preset.item} ({preset.amount} {preset.unit})
+                  <option value="eigen">Eigen garantie (Van Essen)</option>
+                  <option value="fabrikant">Fabrieksgarantie</option>
+                </select>
+                <input
+                  placeholder="Fabrikant (optioneel)"
+                  value={warrantyForm.manufacturer}
+                  onChange={(e) => setWarrantyForm({ ...warrantyForm, manufacturer: e.target.value })}
+                />
+                <input type="number" placeholder="Aantal" value={warrantyForm.amount} onChange={(e) => setWarrantyForm({ ...warrantyForm, amount: e.target.value })} />
+                <select value={warrantyForm.unit} onChange={(e) => setWarrantyForm({ ...warrantyForm, unit: e.target.value as WarrantyUnit })}>
+                  <option value="weken">weken</option>
+                  <option value="maanden">maanden</option>
+                  <option value="jaren">jaren</option>
+                </select>
+                <input
+                  type="date"
+                  title="Ingangsdatum (optioneel — anders geldt de opleverdatum)"
+                  value={warrantyForm.startDate}
+                  onChange={(e) => setWarrantyForm({ ...warrantyForm, startDate: e.target.value })}
+                />
+              </div>
+              <div className="hint-bar small">
+                Bij fabrieksgarantie (bv. warmtepomp, cv-ketel, sanitair) kun je een eigen ingangsdatum invullen als die afwijkt van de
+                opleverdatum, en achteraf een garantiecertificaat toevoegen.
+              </div>
+              <div className="modal-actions">
+                <button type="button" className="btn-ghost" onClick={closeAddWarranty}>
+                  Annuleren
                 </button>
-              ))}
-            </div>
-            <div className="add-form-grid">
-              <input
-                placeholder="Onderdeel (bv. Warmtepomp)"
-                value={warrantyForm.item}
-                onChange={(e) => setWarrantyForm({ ...warrantyForm, item: e.target.value })}
-              />
-              <select
-                value={warrantyForm.warrantyType}
-                onChange={(e) => setWarrantyForm({ ...warrantyForm, warrantyType: e.target.value as WarrantyType })}
-              >
-                <option value="eigen">Eigen garantie (Van Essen)</option>
-                <option value="fabrikant">Fabrieksgarantie</option>
-              </select>
-              <input
-                placeholder="Fabrikant (optioneel)"
-                value={warrantyForm.manufacturer}
-                onChange={(e) => setWarrantyForm({ ...warrantyForm, manufacturer: e.target.value })}
-              />
-              <input type="number" placeholder="Aantal" value={warrantyForm.amount} onChange={(e) => setWarrantyForm({ ...warrantyForm, amount: e.target.value })} />
-              <select value={warrantyForm.unit} onChange={(e) => setWarrantyForm({ ...warrantyForm, unit: e.target.value as WarrantyUnit })}>
-                <option value="weken">weken</option>
-                <option value="maanden">maanden</option>
-                <option value="jaren">jaren</option>
-              </select>
-              <input
-                type="date"
-                title="Ingangsdatum (optioneel — anders geldt de opleverdatum)"
-                value={warrantyForm.startDate}
-                onChange={(e) => setWarrantyForm({ ...warrantyForm, startDate: e.target.value })}
-              />
-              <button className="btn-primary" onClick={addWarranty}>
-                <Plus size={14} /> Toevoegen
-              </button>
-            </div>
-            <div className="hint-bar small">
-              Bij fabrieksgarantie (bv. warmtepomp, cv-ketel, sanitair) kun je een eigen ingangsdatum invullen als die afwijkt van de
-              opleverdatum, en achteraf een garantiecertificaat toevoegen.
+                <button type="button" className="btn-primary" onClick={addWarranty}>
+                  <Plus size={14} /> Toevoegen
+                </button>
+              </div>
             </div>
           </div>
         )}

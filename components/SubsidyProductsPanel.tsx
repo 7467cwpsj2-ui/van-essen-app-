@@ -79,6 +79,7 @@ export function SubsidyProductsPanel({ products }: { products: SubsidyProduct[] 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<SubsidyProductInput>(EMPTY_FORM);
   const [showInactive, setShowInactive] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const run = (fn: () => Promise<void>) => {
@@ -95,10 +96,15 @@ export function SubsidyProductsPanel({ products }: { products: SubsidyProduct[] 
     byCategory.set(p.category, list);
   });
 
+  const closeAdd = () => {
+    setForm(EMPTY_FORM);
+    setShowAdd(false);
+  };
+
   const addProduct = () => {
     if (!form.category.trim() || !form.measure.trim() || !form.productName.trim()) return;
     run(() => createSubsidyProduct(form));
-    setForm(EMPTY_FORM);
+    closeAdd();
   };
 
   const startEdit = (p: SubsidyProduct) => {
@@ -133,6 +139,10 @@ export function SubsidyProductsPanel({ products }: { products: SubsidyProduct[] 
           Alles
         </button>
       </div>
+
+      <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> Product / meldcode toevoegen
+      </button>
 
       {visible.length === 0 ? (
         <div className="empty-hint">Nog geen producten toegevoegd.</div>
@@ -194,13 +204,22 @@ export function SubsidyProductsPanel({ products }: { products: SubsidyProduct[] 
         ))
       )}
 
-      <div className="add-form">
-        <div className="add-form-title">Nieuw product / meldcode toevoegen</div>
-        <ProductFields form={form} setForm={setForm} />
-        <button className="btn-primary" onClick={addProduct}>
-          <Plus size={14} /> Toevoegen
-        </button>
-      </div>
+      {showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Nieuw product / meldcode toevoegen</div>
+            <ProductFields form={form} setForm={setForm} />
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addProduct}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -39,6 +39,7 @@ export function BouwplanningPanel({
   const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "", fixedDate: false });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
@@ -46,6 +47,11 @@ export function BouwplanningPanel({
     p.assignee_team_member_ids.length > 0 ? p.assignee_team_member_ids.map(teamMemberName).join(", ") : p.assignee;
 
   const computedEnd = form.start && Number(form.days) >= 1 ? endDateForWorkingDays(form.start, Number(form.days)) : "";
+
+  const closeAdd = () => {
+    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "", fixedDate: false });
+    setShowAdd(false);
+  };
 
   const addItem = () => {
     if (!form.title.trim() || !form.start || !computedEnd) return;
@@ -59,7 +65,7 @@ export function BouwplanningPanel({
         fixedDate: form.fixedDate,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "", fixedDate: false });
+    closeAdd();
   };
 
   const toggleFixed = (p: SchedulePhase) => {
@@ -116,6 +122,11 @@ export function BouwplanningPanel({
           Let op: sommige fases hieronder overlappen met een planning op een ander project voor dezelfde persoon — zie het
           waarschuwingsicoontje bij de betreffende fase.
         </div>
+      )}
+      {canEdit && (
+        <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Planningsonderdeel toevoegen
+        </button>
       )}
       {phases.length === 0 ? (
         <div className="empty-hint">Nog geen bouwplanning toegevoegd.</div>
@@ -291,15 +302,30 @@ export function BouwplanningPanel({
         </div>
       )}
 
-      {canEdit && (
-        <div className="add-form">
-          <div className="add-form-title">Planningsonderdeel toevoegen</div>
-          <div className="add-form-grid">
-            <input
-              placeholder="Onderdeel (bv. Ruwbouw, Dakbedekking)"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
+      {canEdit && showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Planningsonderdeel toevoegen</div>
+            <div className="add-form-grid">
+              <input
+                placeholder="Onderdeel (bv. Ruwbouw, Dakbedekking)"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+              <input
+                type="date"
+                value={form.start}
+                onChange={(e) => setForm({ ...form, start: e.target.value })}
+                title="Startdatum"
+              />
+              <input
+                type="number"
+                min="1"
+                placeholder="Aantal werkdagen"
+                value={form.days}
+                onChange={(e) => setForm({ ...form, days: e.target.value })}
+              />
+            </div>
             <AssigneeInput
               assignee={form.assignee}
               assigneeTeamMemberIds={form.assigneeTeamMemberIds}
@@ -307,35 +333,27 @@ export function BouwplanningPanel({
               onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
               teamMembers={teamMembers}
             />
-            <input
-              type="date"
-              value={form.start}
-              onChange={(e) => setForm({ ...form, start: e.target.value })}
-              title="Startdatum"
-            />
-            <input
-              type="number"
-              min="1"
-              placeholder="Aantal werkdagen"
-              value={form.days}
-              onChange={(e) => setForm({ ...form, days: e.target.value })}
-            />
-            <button className="btn-primary" onClick={addItem}>
-              <Plus size={14} /> Toevoegen
-            </button>
-          </div>
-          <label className="checkbox-label">
-            <input type="checkbox" checked={form.fixedDate} onChange={(e) => setForm({ ...form, fixedDate: e.target.checked })} />
-            Deze fase kan niet meer verplaatst worden (schuift nooit automatisch mee met meerwerk of andere wijzigingen)
-          </label>
-          <div className="hint-bar small">
-            Weekenden tellen niet mee bij het doortellen van de werkdagen.
-            {computedEnd && (
-              <>
-                {" "}
-                Deze fase loopt dan tot en met <b>{fmtDate(computedEnd)}</b>.
-              </>
-            )}
+            <label className="checkbox-label">
+              <input type="checkbox" checked={form.fixedDate} onChange={(e) => setForm({ ...form, fixedDate: e.target.checked })} />
+              Deze fase kan niet meer verplaatst worden (schuift nooit automatisch mee met meerwerk of andere wijzigingen)
+            </label>
+            <div className="hint-bar small">
+              Weekenden tellen niet mee bij het doortellen van de werkdagen.
+              {computedEnd && (
+                <>
+                  {" "}
+                  Deze fase loopt dan tot en met <b>{fmtDate(computedEnd)}</b>.
+                </>
+              )}
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addItem}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
           </div>
         </div>
       )}

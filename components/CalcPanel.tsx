@@ -42,6 +42,7 @@ export function CalcPanel({
   const [itemInvoiceNumber, setItemInvoiceNumber] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ description: "", amount: "", vatType: "excl" as ExtraWorkVatType, supplier: "", invoiceNumber: "" });
+  const [showAddCost, setShowAddCost] = useState(false);
   const [, startTransition] = useTransition();
 
   const begroot = Number(project.quote_amount) || 0;
@@ -60,6 +61,14 @@ export function CalcPanel({
     });
   };
 
+  const closeAddCost = () => {
+    setItemDescription("");
+    setItemAmount("");
+    setItemSupplier("");
+    setItemInvoiceNumber("");
+    setShowAddCost(false);
+  };
+
   const addItem = () => {
     const description = itemDescription.trim() || itemSupplier.trim();
     if (!description || !itemAmount) {
@@ -75,10 +84,7 @@ export function CalcPanel({
         invoiceNumber: itemInvoiceNumber,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setItemDescription("");
-    setItemAmount("");
-    setItemSupplier("");
-    setItemInvoiceNumber("");
+    closeAddCost();
   };
 
   const startEdit = (c: CostItem) => {
@@ -219,6 +225,11 @@ export function CalcPanel({
       <div className="add-form-title" style={{ marginTop: 4 }}>
         Overige kosten
       </div>
+      {!isLocked && (
+        <button type="button" className="btn-primary" onClick={() => setShowAddCost(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Kostenpost toevoegen
+        </button>
+      )}
       {costItems.length === 0 && <div className="empty-hint small">Nog geen overige kostenposten toegevoegd.</div>}
       <div className="task-list">
         {costItems.map((c) =>
@@ -315,11 +326,12 @@ export function CalcPanel({
         </>
       )}
 
-      {!isLocked && (
-        <>
-          <InvoiceUploadPanel projectId={projectId} projectName={project.name} />
-          <div className="add-form">
-            <div className="add-form-title">Handmatig een kostenpost toevoegen</div>
+      {!isLocked && <InvoiceUploadPanel projectId={projectId} projectName={project.name} />}
+
+      {!isLocked && showAddCost && (
+        <div className="sig-overlay" onClick={closeAddCost}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">Kostenpost toevoegen</div>
             <div className="add-form-grid">
               <input
                 placeholder="Omschrijving (bv. Materiaal bij leverancier X)"
@@ -344,12 +356,17 @@ export function CalcPanel({
                 value={itemInvoiceNumber}
                 onChange={(e) => setItemInvoiceNumber(e.target.value)}
               />
-              <button className="btn-primary" onClick={addItem}>
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAddCost}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addItem}>
                 <Plus size={14} /> Toevoegen
               </button>
             </div>
           </div>
-        </>
+        </div>
       )}
     </div>
   );

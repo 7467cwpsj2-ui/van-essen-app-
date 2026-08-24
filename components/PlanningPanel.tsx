@@ -37,6 +37,7 @@ export function PlanningPanel({
     assigneeTeamMemberIds: [],
     dueDate: "",
   });
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name;
@@ -73,6 +74,11 @@ export function PlanningPanel({
     }));
   };
 
+  const closeAdd = () => {
+    setForm({ title: "", assigneeType: "eigenaar", assigneeTeamMemberIds: [], dueDate: "" });
+    setShowAdd(false);
+  };
+
   const addTask = () => {
     if (!form.title.trim()) return;
     const isStaffPick = form.assigneeType === "team" || form.assigneeType === "personeel";
@@ -84,7 +90,7 @@ export function PlanningPanel({
         dueDate: form.dueDate || null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ title: "", assigneeType: "eigenaar", assigneeTeamMemberIds: [], dueDate: "" });
+    closeAdd();
   };
 
   const todayIso = new Date().toISOString().slice(0, 10);
@@ -104,6 +110,11 @@ export function PlanningPanel({
           Losse actiepunten en herinneringen — “bel leverancier”, “zoek iets uit”, “regel iets”. Wijs toe aan jezelf, het team, of de
           klant; alleen die persoon (of jij als eigenaar) kan het afvinken.
         </div>
+      )}
+      {canCreate && (
+        <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Actiepunt toevoegen
+        </button>
       )}
       {tasks.length === 0 && <div className="empty-hint">Nog niets te doen.</div>}
       <div className="task-list">
@@ -144,77 +155,84 @@ export function PlanningPanel({
         })}
       </div>
 
-      {canCreate && (
-        <div className="add-form">
-          <div className="add-form-title">Nieuw actiepunt</div>
-          <div className="add-form-grid">
-            <input
-              placeholder="Wat moet er gebeuren?"
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-            />
-            <select
-              value={form.assigneeType}
-              onChange={(e) => {
-                const next = e.target.value as UiAssigneeType;
-                const nextCategory: TeamMemberType = next === "personeel" ? "personeel" : "onderaannemer";
-                const autoSelf =
-                  (next === "team" || next === "personeel") && role === "team" && currentTeamMemberId && currentMemberType === nextCategory;
-                setForm({
-                  ...form,
-                  assigneeType: next,
-                  assigneeTeamMemberIds: autoSelf ? [currentTeamMemberId as string] : [],
-                });
-              }}
-            >
-              <option value="eigenaar">{role === "eigenaar" ? "Mijzelf" : "Eigenaar"}</option>
-              <option value="team">Team / onderaannemer</option>
-              <option value="personeel">Eigen personeel</option>
-              {role === "eigenaar" && <option value="klant">Klant</option>}
-            </select>
-            <label className="field-with-label">
-              <span className="field-label">Deadline (optioneel)</span>
-              <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
-            </label>
-            <button className="btn-primary" onClick={addTask}>
-              <Plus size={14} /> Toevoegen
-            </button>
-          </div>
-          {(form.assigneeType === "team" || form.assigneeType === "personeel") && (
-            <div className="task-team-picker">
-              <div className="task-team-picker-hint">
-                {pickerMembers.length === 0
-                  ? form.assigneeType === "personeel"
-                    ? "Nog geen eigen personeel toegevoegd op de Personeel-pagina."
-                    : "Nog geen team/onderaannemers toegevoegd."
-                  : "Niemand aangevinkt = iedereen in deze groep kan het afvinken."}
-              </div>
-              <div className="task-team-picker-grid">
-                {role === "team" && currentTeamMemberId && currentMemberType === pickerCategory && (
-                  <label className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={form.assigneeTeamMemberIds.includes(currentTeamMemberId)}
-                      onChange={() => toggleFormMember(currentTeamMemberId)}
-                    />
-                    Mijzelf
-                  </label>
-                )}
-                {pickerMembers
-                  .filter((m) => m.id !== currentTeamMemberId)
-                  .map((m) => (
-                    <label key={m.id} className="checkbox-label">
+      {canCreate && showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Actiepunt toevoegen</div>
+            <div className="add-form-grid">
+              <input
+                placeholder="Wat moet er gebeuren?"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+              <select
+                value={form.assigneeType}
+                onChange={(e) => {
+                  const next = e.target.value as UiAssigneeType;
+                  const nextCategory: TeamMemberType = next === "personeel" ? "personeel" : "onderaannemer";
+                  const autoSelf =
+                    (next === "team" || next === "personeel") && role === "team" && currentTeamMemberId && currentMemberType === nextCategory;
+                  setForm({
+                    ...form,
+                    assigneeType: next,
+                    assigneeTeamMemberIds: autoSelf ? [currentTeamMemberId as string] : [],
+                  });
+                }}
+              >
+                <option value="eigenaar">{role === "eigenaar" ? "Mijzelf" : "Eigenaar"}</option>
+                <option value="team">Team / onderaannemer</option>
+                <option value="personeel">Eigen personeel</option>
+                {role === "eigenaar" && <option value="klant">Klant</option>}
+              </select>
+              <label className="field-with-label">
+                <span className="field-label">Deadline (optioneel)</span>
+                <input type="date" value={form.dueDate} onChange={(e) => setForm({ ...form, dueDate: e.target.value })} />
+              </label>
+            </div>
+            {(form.assigneeType === "team" || form.assigneeType === "personeel") && (
+              <div className="task-team-picker">
+                <div className="task-team-picker-hint">
+                  {pickerMembers.length === 0
+                    ? form.assigneeType === "personeel"
+                      ? "Nog geen eigen personeel toegevoegd op de Personeel-pagina."
+                      : "Nog geen team/onderaannemers toegevoegd."
+                    : "Niemand aangevinkt = iedereen in deze groep kan het afvinken."}
+                </div>
+                <div className="task-team-picker-grid">
+                  {role === "team" && currentTeamMemberId && currentMemberType === pickerCategory && (
+                    <label className="checkbox-label">
                       <input
                         type="checkbox"
-                        checked={form.assigneeTeamMemberIds.includes(m.id)}
-                        onChange={() => toggleFormMember(m.id)}
+                        checked={form.assigneeTeamMemberIds.includes(currentTeamMemberId)}
+                        onChange={() => toggleFormMember(currentTeamMemberId)}
                       />
-                      {m.name}
+                      Mijzelf
                     </label>
-                  ))}
+                  )}
+                  {pickerMembers
+                    .filter((m) => m.id !== currentTeamMemberId)
+                    .map((m) => (
+                      <label key={m.id} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={form.assigneeTeamMemberIds.includes(m.id)}
+                          onChange={() => toggleFormMember(m.id)}
+                        />
+                        {m.name}
+                      </label>
+                    ))}
+                </div>
               </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addTask}>
+                <Plus size={14} /> Toevoegen
+              </button>
             </div>
-          )}
+          </div>
         </div>
       )}
     </div>

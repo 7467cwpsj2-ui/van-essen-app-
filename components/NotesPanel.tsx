@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Pencil, Trash2, Users, UserCheck, X } from "lucide-react";
+import { Check, Pencil, Plus, Trash2, Users, UserCheck, X } from "lucide-react";
 import { createNote, deleteNote, markNoteReviewed, setNoteVisibility, updateNoteText } from "@/lib/actions/notes";
 import type { Note, NoteVisibility, Role } from "@/types/database";
 
@@ -28,6 +28,7 @@ export function NotesPanel({
   const [visibleTeamMemberIds, setVisibleTeamMemberIds] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name;
@@ -42,14 +43,19 @@ export function NotesPanel({
     return VIS_LABEL[n.visibility];
   };
 
+  const closeAdd = () => {
+    setText("");
+    setVisibleTeamMemberIds([]);
+    setShowAdd(false);
+  };
+
   const add = () => {
     if (!text.trim()) return;
     const value = text;
-    setText("");
     startTransition(() => {
       createNote(projectId, value, visibility, visibleTeamMemberIds).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setVisibleTeamMemberIds([]);
+    closeAdd();
   };
 
   const run = (fn: () => Promise<void>) => startTransition(() => fn().catch((err) => alert(err instanceof Error ? err.message : "Actie mislukt.")));
@@ -79,6 +85,9 @@ export function NotesPanel({
       {role === "eigenaar" && notes.some((n) => !n.reviewed) && (
         <div className="hint-bar">Er staan nieuwe notities klaar om te beoordelen — kies hieronder of je ze verder deelt.</div>
       )}
+      <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> Notitie toevoegen
+      </button>
       {notes.length === 0 && <div className="empty-hint">Nog geen notities.</div>}
       <div className="note-list">
         {notes.map((n) => {
@@ -155,59 +164,66 @@ export function NotesPanel({
           );
         })}
       </div>
-      <div className="add-form">
-        <div className="add-form-title">Notitie toevoegen</div>
-        <textarea rows={3} placeholder="Typ je notitie…" value={text} onChange={(e) => setText(e.target.value)} />
-        <div className="add-form-grid">
-          {visibilityOptions.length > 1 && (
-            <select
-              value={visibility}
-              onChange={(e) => {
-                setVisibility(e.target.value as NoteVisibility);
-                setVisibleTeamMemberIds([]);
-              }}
-            >
-              {visibilityOptions.map((v) => (
-                <option key={v} value={v}>
-                  {VIS_LABEL[v]}
-                </option>
-              ))}
-            </select>
-          )}
-          <button className="btn-primary" onClick={add}>
-            Toevoegen
-          </button>
-        </div>
-        {visibility === "team" && teamMembers.length > 0 && (
-          <div className="task-team-picker">
-            <div className="task-team-picker-hint">Niemand aangevinkt = het hele team kan deze notitie zien.</div>
-            <div className="task-team-picker-grid">
-              {role === "team" && currentTeamMemberId && (
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={visibleTeamMemberIds.includes(currentTeamMemberId)}
-                    onChange={() => toggleFormMember(currentTeamMemberId)}
-                  />
-                  Mijzelf
-                </label>
-              )}
-              {teamMembers
-                .filter((m) => m.id !== currentTeamMemberId)
-                .map((m) => (
-                  <label key={m.id} className="checkbox-label">
-                    <input
-                      type="checkbox"
-                      checked={visibleTeamMemberIds.includes(m.id)}
-                      onChange={() => toggleFormMember(m.id)}
-                    />
-                    {m.name}
-                  </label>
+      {showAdd && (
+        <div className="sig-overlay" onClick={closeAdd}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Notitie toevoegen</div>
+            <textarea rows={3} placeholder="Typ je notitie…" value={text} onChange={(e) => setText(e.target.value)} autoFocus />
+            {visibilityOptions.length > 1 && (
+              <select
+                value={visibility}
+                onChange={(e) => {
+                  setVisibility(e.target.value as NoteVisibility);
+                  setVisibleTeamMemberIds([]);
+                }}
+              >
+                {visibilityOptions.map((v) => (
+                  <option key={v} value={v}>
+                    {VIS_LABEL[v]}
+                  </option>
                 ))}
+              </select>
+            )}
+            {visibility === "team" && teamMembers.length > 0 && (
+              <div className="task-team-picker">
+                <div className="task-team-picker-hint">Niemand aangevinkt = het hele team kan deze notitie zien.</div>
+                <div className="task-team-picker-grid">
+                  {role === "team" && currentTeamMemberId && (
+                    <label className="checkbox-label">
+                      <input
+                        type="checkbox"
+                        checked={visibleTeamMemberIds.includes(currentTeamMemberId)}
+                        onChange={() => toggleFormMember(currentTeamMemberId)}
+                      />
+                      Mijzelf
+                    </label>
+                  )}
+                  {teamMembers
+                    .filter((m) => m.id !== currentTeamMemberId)
+                    .map((m) => (
+                      <label key={m.id} className="checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={visibleTeamMemberIds.includes(m.id)}
+                          onChange={() => toggleFormMember(m.id)}
+                        />
+                        {m.name}
+                      </label>
+                    ))}
+                </div>
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={add}>
+                <Plus size={14} /> Toevoegen
+              </button>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
