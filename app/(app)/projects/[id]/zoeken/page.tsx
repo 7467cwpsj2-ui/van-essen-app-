@@ -106,9 +106,7 @@ export default async function ZoekenPage({ params, searchParams }: { params: { i
   return (
     <div>
       <div className="header-eyebrow">Zoeken</div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20, margin: "0 0 14px", textTransform: "uppercase" }}>
-        {q ? `Resultaten voor “${q}”` : "Zoeken"}
-      </h1>
+      <h1 className="page-title">{q ? `Resultaten voor “${q}”` : "Zoeken"}</h1>
       {!q && <div className="empty-hint">Typ een zoekterm in het zoekvak hierboven.</div>}
       {q && sections.length === 0 && <div className="empty-hint">Niets gevonden voor “{q}”.</div>}
       {sections.map((s) => (

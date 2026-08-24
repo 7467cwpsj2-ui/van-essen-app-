@@ -139,7 +139,7 @@ export function LeadsPanel({ leads, reminderDays }: { leads: Lead[]; reminderDay
                 </div>
               </div>
             ) : (
-              <div key={l.id} className="task-row">
+              <div key={l.id} className={"task-row" + (isOverdue(l) ? " overdue" : "")}>
                 <div className="task-body">
                   <div className="task-title">
                     {l.client_name}

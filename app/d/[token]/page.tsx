@@ -60,7 +60,7 @@ export default async function PublicDossierPage({ params }: { params: { token: s
       <div className="panel">
         <div className="hint-bar small">Dit is een leesalleen weergave van het opleverdossier, gedeeld via een link.</div>
 
-        <h1 style={{ fontFamily: "var(--font-display)", fontWeight: 800, fontSize: 20, margin: "8px 0 0", textTransform: "uppercase" }}>
+        <h1 className="page-title" style={{ margin: "8px 0 0" }}>
           {p.name}
         </h1>
         <div className="hint-bar small" style={{ marginTop: 4 }}>
