@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { ChevronDown, Download, Plus, Trash2, Zap } from "lucide-react";
-import { createHourEntry, createWeekHourEntries, deleteHourEntry } from "@/lib/actions/hours";
+import { createHourEntry, createWeekHourEntries, deleteHourEntry, type HoursTarget } from "@/lib/actions/hours";
 import { mondayOfWeek, weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
 
@@ -37,16 +37,16 @@ function groupByWeek(rows: HourEntry[]): WeekGroup[] {
 }
 
 export function HoursPanel({
-  projectId,
-  projectName,
+  target,
+  targetName,
   role,
   currentTeamMemberId,
   isLocked,
   entries,
   teamMembers,
 }: {
-  projectId: string;
-  projectName: string;
+  target: HoursTarget;
+  targetName: string;
   role: Role;
   currentTeamMemberId: string | null;
   isLocked: boolean;
@@ -73,7 +73,7 @@ export function HoursPanel({
       return;
     }
     startTransition(() => {
-      createHourEntry(projectId, { teamMemberId: form.teamMemberId, workDate: todayIso, hours, note: null }).catch((err) =>
+      createHourEntry(target, { teamMemberId: form.teamMemberId, workDate: todayIso, hours, note: null }).catch((err) =>
         alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
       );
     });
@@ -83,14 +83,14 @@ export function HoursPanel({
     if (!form.workDate || !Number(form.hours)) return;
     startTransition(() => {
       if (mode === "week") {
-        createWeekHourEntries(projectId, {
+        createWeekHourEntries(target, {
           teamMemberId: form.teamMemberId,
           weekDate: form.workDate,
           hoursPerDay: Number(form.hours),
           note: form.note || null,
         }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
       } else {
-        createHourEntry(projectId, {
+        createHourEntry(target, {
           teamMemberId: form.teamMemberId,
           workDate: form.workDate,
           hours: Number(form.hours),
@@ -103,7 +103,7 @@ export function HoursPanel({
 
   const remove = (id: string) => {
     startTransition(() => {
-      deleteHourEntry(projectId, id).catch((err) => alert(err instanceof Error ? err.message : "Verwijderen mislukt."));
+      deleteHourEntry(target, id).catch((err) => alert(err instanceof Error ? err.message : "Verwijderen mislukt."));
     });
   };
 
@@ -115,7 +115,7 @@ export function HoursPanel({
     const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8;" }));
     const a = document.createElement("a");
     a.href = url;
-    a.download = `uren-${projectName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`;
+    a.download = `uren-${targetName.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };

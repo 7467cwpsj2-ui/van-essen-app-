@@ -17,8 +17,8 @@ export default async function UrenPage({ params }: { params: { id: string } }) {
 
   return (
     <HoursPanel
-      projectId={params.id}
-      projectName={(project as Pick<Project, "name" | "delivery_signed_at"> | null)?.name ?? "project"}
+      target={{ projectId: params.id }}
+      targetName={(project as Pick<Project, "name" | "delivery_signed_at"> | null)?.name ?? "project"}
       role={current.profile.role}
       currentTeamMemberId={current.profile.team_member_id}
       isLocked={!!(project as Pick<Project, "delivery_signed_at"> | null)?.delivery_signed_at}

@@ -375,7 +375,8 @@ export interface AppNotification {
 
 export interface HourEntry {
   id: string;
-  project_id: string;
+  project_id: string | null;
+  quick_job_id: string | null;
   team_member_id: string;
   work_date: string;
   hours: number;
