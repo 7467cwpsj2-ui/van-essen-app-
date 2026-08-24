@@ -104,6 +104,7 @@ export function AppShell({
             <ThemeToggle />
           </div>
         </div>
+        <div className="sidebar-section-label">Overzicht</div>
         <Link
           href="/dashboard"
           className={"toegang-toggle" + (pathname === "/dashboard" ? " active" : "")}
@@ -122,6 +123,7 @@ export function AppShell({
         )}
         {role === "eigenaar" && (
           <>
+            <div className="sidebar-section-label">Werk</div>
             <Link href="/projects/new" className="new-project-toggle" onClick={() => setSidebarOpen(false)}>
               <Plus size={14} /> Nieuw project
             </Link>
@@ -132,6 +134,14 @@ export function AppShell({
             >
               <ClipboardList size={14} /> Offertes
             </Link>
+            <Link
+              href="/planning-overzicht"
+              className={"toegang-toggle" + (pathname === "/planning-overzicht" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <CalendarRange size={14} /> Algemene planning
+            </Link>
+            <div className="sidebar-section-label">Beheer</div>
             <Link
               href="/personeel"
               className={"toegang-toggle" + (pathname === "/personeel" ? " active" : "")}
@@ -145,13 +155,6 @@ export function AppShell({
               onClick={() => setSidebarOpen(false)}
             >
               <ShieldCheck size={14} /> Klanten
-            </Link>
-            <Link
-              href="/planning-overzicht"
-              className={"toegang-toggle" + (pathname === "/planning-overzicht" ? " active" : "")}
-              onClick={() => setSidebarOpen(false)}
-            >
-              <CalendarRange size={14} /> Algemene planning
             </Link>
             <Link
               href="/facturen"
