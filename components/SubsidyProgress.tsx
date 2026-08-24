@@ -9,7 +9,7 @@ function Step({ label, state, detail }: { label: string; state: StepState; detai
     state === "done" ? (
       <CheckCircle2 size={15} style={{ color: "var(--success)", flexShrink: 0 }} />
     ) : state === "pending" ? (
-      <Clock size={15} style={{ color: "var(--warning)", flexShrink: 0 }} />
+      <Clock size={15} style={{ color: "var(--attention)", flexShrink: 0 }} />
     ) : (
       <Circle size={15} style={{ color: "var(--text-dim)", flexShrink: 0 }} />
     );
