@@ -74,19 +74,61 @@ self.addEventListener("pushsubscriptionchange", (event) => {
   );
 });
 
+// Bewaart het navigatiedoel van een pushmelding in IndexedDB (gedeeld
+// tussen deze service worker en de pagina zelf) — nodig omdat op
+// sommige toestellen (vooral de op het beginscherm geïnstalleerde app
+// op iOS, als die niet al open was) clients.openWindow(url) het
+// opgegeven pad negeert en gewoon de start-pagina opent. De app leest
+// dit bij het laden zelf uit en navigeert dan alsnog naar de juiste
+// plek. Zie components/PendingPushNavigator.tsx voor de andere kant.
+function rememberPendingNav(url) {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open("van-essen-push-nav", 1);
+      req.onupgradeneeded = () => {
+        req.result.createObjectStore("pending");
+      };
+      req.onsuccess = () => {
+        const db = req.result;
+        const tx = db.transaction("pending", "readwrite");
+        tx.objectStore("pending").put({ url, at: Date.now() }, "target");
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+        tx.onerror = () => {
+          db.close();
+          resolve();
+        };
+      };
+      req.onerror = () => resolve();
+    } catch {
+      resolve();
+    }
+  });
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = (event.notification.data && event.notification.data.url) || "/dashboard";
 
   event.waitUntil(
-    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+    (async () => {
+      await rememberPendingNav(url);
+      const clientList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
-          client.navigate(url);
+          try {
+            await client.navigate(url);
+          } catch {
+            // WindowClient.navigate() wordt niet overal ondersteund —
+            // de bewaarde pending-navigatie hierboven vangt dit op
+            // zodra de pagina zelf weer aandacht krijgt.
+          }
           return client.focus();
         }
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
-    })
+    })()
   );
 });

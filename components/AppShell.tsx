@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
 import { NotificationBell } from "@/components/NotificationBell";
+import { PendingPushNavigator } from "@/components/PendingPushNavigator";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import { PushPrompt } from "@/components/PushPrompt";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -266,6 +267,7 @@ export function AppShell({
       </aside>
 
       <main className="main">
+        <PendingPushNavigator />
         <UpdateChecker />
         <PushPrompt />
         {children}
