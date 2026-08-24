@@ -179,6 +179,97 @@ export function HoursPanel({
         </button>
       )}
 
+      {!isLocked && (
+        <div className="add-form">
+          <div className="add-form-title">
+            {form.workDate === todayIso ? "Snel vandaag toevoegen" : `Snel toevoegen — ${fmtDay(form.workDate)}`}
+          </div>
+          {role === "eigenaar" && (
+            <select value={form.teamMemberId} onChange={(e) => setForm({ ...form, teamMemberId: e.target.value })}>
+              <option value="">Kies teamlid</option>
+              {teamMembers.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          )}
+          {form.workDate !== todayIso && (
+            <div className="hint-bar small">
+              Let op: deze knoppen zetten uren op <b>{fmtDay(form.workDate)}</b>, niet vandaag — dat is de datum die hieronder is
+              ingevuld. Wil je toch vandaag? Zet de datum hieronder terug op vandaag.
+            </div>
+          )}
+          <div className="quick-hours-row">
+            {[4, 6, 8].map((h) => (
+              <button key={h} type="button" className="btn-ghost" onClick={() => quickAdd(h)}>
+                <Zap size={13} /> {h} uur
+              </button>
+            ))}
+          </div>
+
+          {!showDetail ? (
+            <button type="button" className="link-btn" onClick={() => setShowDetail(true)} style={{ alignSelf: "flex-start" }}>
+              Andere datum, aantal of opmerking invoeren
+            </button>
+          ) : (
+            <>
+              <div className="add-form-title" style={{ marginTop: 6 }}>
+                Andere datum / aantal / opmerking
+              </div>
+              <div className="mode-toggle">
+                <button type="button" className={mode === "dag" ? "active" : ""} onClick={() => setMode("dag")}>
+                  Per dag
+                </button>
+                <button type="button" className={mode === "week" ? "active" : ""} onClick={() => setMode("week")}>
+                  Hele week
+                </button>
+              </div>
+              <div className="add-form-grid">
+                <label className="field-with-label">
+                  <span className="field-label">
+                    {mode === "week" ? "Een dag in die week" : "Datum"}
+                    {form.workDate !== todayIso && (
+                      <button type="button" className="link-btn" style={{ marginLeft: 8 }} onClick={() => setForm({ ...form, workDate: todayIso })}>
+                        Terug naar vandaag
+                      </button>
+                    )}
+                  </span>
+                  <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
+                </label>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0"
+                  max="24"
+                  placeholder={mode === "week" ? "Uren per dag" : "Uren"}
+                  value={form.hours}
+                  onChange={(e) => setForm({ ...form, hours: e.target.value })}
+                />
+                <input
+                  placeholder="Opmerking (optioneel)"
+                  value={form.note}
+                  onChange={(e) => setForm({ ...form, note: e.target.value })}
+                />
+                <button className="btn-primary" onClick={add}>
+                  <Plus size={14} /> Toevoegen
+                </button>
+              </div>
+              {mode === "week" && form.workDate && (
+                <div className="hint-bar small">
+                  Dit registreert {form.hours || "…"} uur op elke werkdag van ma {fmtShort(weekdaysOfWeek(form.workDate)[0])} t/m vr{" "}
+                  {fmtShort(weekdaysOfWeek(form.workDate)[4])} (weekend telt niet mee).
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
+      <div className="hours-log-divider">
+        <span>Geregistreerde uren</span>
+      </div>
+
       {groups.length === 0 && <div className="empty-hint">Nog geen uren geregistreerd.</div>}
       {groups.map((g) => {
         const total = g.rows.reduce((s, e) => s + Number(e.hours), 0);
@@ -269,93 +360,6 @@ export function HoursPanel({
           </div>
         );
       })}
-
-      {!isLocked && (
-        <div className="add-form">
-          <div className="add-form-title">
-            {form.workDate === todayIso ? "Snel vandaag toevoegen" : `Snel toevoegen — ${fmtDay(form.workDate)}`}
-          </div>
-          {role === "eigenaar" && (
-            <select value={form.teamMemberId} onChange={(e) => setForm({ ...form, teamMemberId: e.target.value })}>
-              <option value="">Kies teamlid</option>
-              {teamMembers.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name}
-                </option>
-              ))}
-            </select>
-          )}
-          {form.workDate !== todayIso && (
-            <div className="hint-bar small">
-              Let op: deze knoppen zetten uren op <b>{fmtDay(form.workDate)}</b>, niet vandaag — dat is de datum die hieronder is
-              ingevuld. Wil je toch vandaag? Zet de datum hieronder terug op vandaag.
-            </div>
-          )}
-          <div className="quick-hours-row">
-            {[4, 6, 8].map((h) => (
-              <button key={h} type="button" className="btn-ghost" onClick={() => quickAdd(h)}>
-                <Zap size={13} /> {h} uur
-              </button>
-            ))}
-          </div>
-
-          {!showDetail ? (
-            <button type="button" className="link-btn" onClick={() => setShowDetail(true)} style={{ alignSelf: "flex-start" }}>
-              Andere datum, aantal of opmerking invoeren
-            </button>
-          ) : (
-            <>
-              <div className="add-form-title" style={{ marginTop: 6 }}>
-                Andere datum / aantal / opmerking
-              </div>
-              <div className="mode-toggle">
-                <button type="button" className={mode === "dag" ? "active" : ""} onClick={() => setMode("dag")}>
-                  Per dag
-                </button>
-                <button type="button" className={mode === "week" ? "active" : ""} onClick={() => setMode("week")}>
-                  Hele week
-                </button>
-              </div>
-              <div className="add-form-grid">
-                <label className="field-with-label">
-                  <span className="field-label">
-                    {mode === "week" ? "Een dag in die week" : "Datum"}
-                    {form.workDate !== todayIso && (
-                      <button type="button" className="link-btn" style={{ marginLeft: 8 }} onClick={() => setForm({ ...form, workDate: todayIso })}>
-                        Terug naar vandaag
-                      </button>
-                    )}
-                  </span>
-                  <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
-                </label>
-                <input
-                  type="number"
-                  step="0.5"
-                  min="0"
-                  max="24"
-                  placeholder={mode === "week" ? "Uren per dag" : "Uren"}
-                  value={form.hours}
-                  onChange={(e) => setForm({ ...form, hours: e.target.value })}
-                />
-                <input
-                  placeholder="Opmerking (optioneel)"
-                  value={form.note}
-                  onChange={(e) => setForm({ ...form, note: e.target.value })}
-                />
-                <button className="btn-primary" onClick={add}>
-                  <Plus size={14} /> Toevoegen
-                </button>
-              </div>
-              {mode === "week" && form.workDate && (
-                <div className="hint-bar small">
-                  Dit registreert {form.hours || "…"} uur op elke werkdag van ma {fmtShort(weekdaysOfWeek(form.workDate)[0])} t/m vr{" "}
-                  {fmtShort(weekdaysOfWeek(form.workDate)[4])} (weekend telt niet mee).
-                </div>
-              )}
-            </>
-          )}
-        </div>
-      )}
     </div>
   );
 }

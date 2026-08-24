@@ -1524,6 +1524,28 @@ a:has(> .brandmark) {
 .hours-week-group {
   margin-bottom: 6px;
 }
+/* Ruime afstand tussen het toevoegformulier (bovenaan) en de lijst met
+   al geregistreerde uren eronder — zonder die ruimte lag de "snel
+   toevoegen"-knoppenrij te dicht op de weekkoppen/dagregels eronder,
+   met het risico dat je per ongeluk het verkeerde aantikt. */
+.hours-log-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-faint);
+}
+.hours-log-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
 .hours-week-header {
   display: flex;
   align-items: center;
