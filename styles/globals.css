@@ -159,13 +159,7 @@ textarea {
 .proj-card,
 .note-card,
 .chat-msg,
-.task-row,
-.work-row,
-.list-row,
-.drawing-card,
-.warranty-row,
 .access-block,
-.access-item,
 .add-form,
 .sig-modal,
 .login-card,
@@ -1308,16 +1302,24 @@ a:has(> .brandmark) {
 .task-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 .task-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
   padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.task-row:last-child {
+  border-bottom: none;
+}
+.task-row:hover {
+  background: var(--panel-2);
 }
 .task-row.done {
   opacity: 0.55;
@@ -1661,16 +1663,24 @@ a:has(> .brandmark) {
 .drawing-grid {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 .drawing-card {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
   padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+}
+.drawing-card:last-child {
+  border-bottom: none;
+}
+.drawing-card:hover {
+  background: var(--panel-2);
 }
 .drawing-icon {
   color: var(--brand);
@@ -1918,18 +1928,26 @@ a:has(> .brandmark) {
 .work-list {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 .work-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
   border-left: 3px solid var(--border);
   flex-wrap: wrap;
+}
+.work-row:last-child {
+  border-bottom: none;
+}
+.work-row:hover {
+  background: var(--panel-2);
 }
 .work-meerwerk {
   border-left-color: var(--success);
@@ -2495,17 +2513,20 @@ a:has(> .brandmark) {
 .access-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
 }
 .access-item {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 6px;
   padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+}
+.access-item:last-child {
+  border-bottom: none;
+}
+.access-item:hover {
+  background: var(--panel-2);
 }
 .access-item.client-row {
   flex-direction: column;
@@ -3135,11 +3156,15 @@ a.dash-panel-row:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
   padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+}
+.list-row:last-child {
+  border-bottom: none;
+}
+.list-row:hover {
+  background: var(--panel-2);
 }
 .list-row-body {
   flex: 1;
@@ -3256,17 +3281,25 @@ a.dash-panel-row:hover {
 .warranty-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
 }
 .warranty-row {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 10px;
   padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
   font-size: 12.5px;
+}
+.warranty-row:last-child {
+  border-bottom: none;
+}
+.warranty-row:hover {
+  background: var(--panel-2);
 }
 .warranty-row b {
   margin-left: auto;
