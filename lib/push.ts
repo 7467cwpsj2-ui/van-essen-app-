@@ -85,10 +85,24 @@ export async function getClientUserIds(clientId: string, excludeUserId?: string 
   return (data ?? []).map((p) => p.id as string).filter((id) => id !== excludeUserId);
 }
 
+// Een team_members-rij hoort meestal bij een eigen team/klant-profiel
+// (profiles.team_member_id) — maar bij de eigenaar zelf, die zich als
+// eigen personeel heeft toegevoegd (zie migratie 0061), loopt de
+// koppeling andersom via team_members.owner_profile_id, omdat een
+// eigenaar-profiel nooit een team_member_id mag hebben. Beide tellen
+// hier mee, zodat pushmeldingen/herinneringen die normaal naar een
+// teamlid gaan (bijv. "ingepland op deze klus") de eigenaar ook
+// gewoon bereiken als hij zichzelf heeft ingepland.
 export async function getTeamMemberUserIds(teamMemberId: string, excludeUserId?: string | null): Promise<string[]> {
   const admin = createAdminClient();
-  const { data } = await admin.from("profiles").select("id").eq("team_member_id", teamMemberId);
-  return (data ?? []).map((p) => p.id as string).filter((id) => id !== excludeUserId);
+  const [{ data: profiles }, { data: member }] = await Promise.all([
+    admin.from("profiles").select("id").eq("team_member_id", teamMemberId),
+    admin.from("team_members").select("owner_profile_id").eq("id", teamMemberId).maybeSingle(),
+  ]);
+  const ids = new Set((profiles ?? []).map((p) => p.id as string));
+  if (member?.owner_profile_id) ids.add(member.owner_profile_id as string);
+  if (excludeUserId) ids.delete(excludeUserId);
+  return Array.from(ids);
 }
 
 export async function getProjectClientUserIds(projectId: string, excludeUserId?: string | null): Promise<string[]> {

@@ -34,11 +34,13 @@ export function TeamMemberRow({
   projects,
   access,
   inviteStatus,
+  isSelf,
 }: {
   member: TeamMember;
   projects: { id: string; name: string }[];
   access: string[];
   inviteStatus?: InviteStatus;
+  isSelf?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const [name, setName] = useState(member.name);
@@ -101,6 +103,7 @@ export function TeamMemberRow({
             <span className={"member-type-pill" + (member.member_type === "personeel" ? " personeel" : "")}>
               {member.member_type === "personeel" ? "Eigen personeel" : "Onderaannemer"}
             </span>
+            {isSelf && <span className="member-type-pill personeel">Dit ben jij</span>}
           </span>
           <span className="access-summary-sub">
             {member.trade || "Overig"} ·{" "}
@@ -151,9 +154,12 @@ export function TeamMemberRow({
             <button
               type="button"
               className="icon-btn danger ghost"
-              title="Verwijderen"
+              title={isSelf ? "Jezelf als eigen personeel verwijderen" : "Verwijderen"}
               onClick={() => {
-                if (confirm(`${member.name} verwijderen? Diegene verliest direct alle toegang.`)) {
+                const message = isSelf
+                  ? "Jezelf als eigen personeel verwijderen? Je login en rechten als eigenaar blijven gewoon bestaan — je kunt jezelf dan alleen niet meer inplannen als personeel."
+                  : `${member.name} verwijderen? Diegene verliest direct alle toegang.`;
+                if (confirm(message)) {
                   run(() => removeTeamMember(member.id));
                 }
               }}

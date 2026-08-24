@@ -7,6 +7,13 @@ export interface CurrentUser {
   profile: Profile;
   teamMember: TeamMember | null;
   client: Client | null;
+  // Voor een eigenaar die zichzelf ook als eigen personeel heeft
+  // toegevoegd (zie migratie 0061) — de team_members-rij die hij
+  // gebruikt om zichzelf in te plannen, uren op te registreren en
+  // pushmeldingen te krijgen als personeel. Blijft null voor team/klant
+  // (die gebruiken teamMember/client hierboven) en voor een eigenaar die
+  // zichzelf nog niet heeft toegevoegd.
+  ownStaffMember: TeamMember | null;
 }
 
 // Haalt de ingelogde gebruiker + bijbehorend profiel op. RLS zorgt dat
@@ -33,7 +40,13 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
     client = data ?? null;
   }
 
-  return { id: user.id, profile, teamMember, client };
+  let ownStaffMember: TeamMember | null = null;
+  if (profile.role === "eigenaar") {
+    const { data } = await supabase.from("team_members").select("*").eq("owner_profile_id", user.id).maybeSingle();
+    ownStaffMember = data ?? null;
+  }
+
+  return { id: user.id, profile, teamMember, client, ownStaffMember };
 }
 
 export async function requireUser(): Promise<CurrentUser> {

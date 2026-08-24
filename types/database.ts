@@ -87,6 +87,7 @@ export interface TeamMember {
   hourly_rate: number | null;
   hourly_rate_vat_type: ExtraWorkVatType;
   color: string | null;
+  owner_profile_id: string | null;
   created_at: string;
 }
 

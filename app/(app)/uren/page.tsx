@@ -10,6 +10,10 @@ import type { HourEntry, Project, QuickJob, TeamMember } from "@/types/database"
 export default async function UrenTopLevelPage({ searchParams }: { searchParams: { project?: string; job?: string } }) {
   const current = await requireUser();
   if (!canSeeHours(current)) notFound();
+  // Voor team-rollen is dit het eigen profiel; een eigenaar die zichzelf
+  // als eigen personeel heeft toegevoegd (migratie 0061) gebruikt hier
+  // diezelfde staff-koppeling, zodat hij ook zelf snel uren kan loggen.
+  const myStaffId = current.profile.role === "team" ? current.profile.team_member_id : current.ownStaffMember?.id ?? null;
 
   const supabase = createClient();
   const [projects, { data: quickJobsData }] = await Promise.all([
@@ -46,7 +50,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
         target={{ projectId: selectedProject.id }}
         targetName={(project as Pick<Project, "name" | "delivery_signed_at"> | null)?.name ?? selectedProject.name}
         role={current.profile.role}
-        currentTeamMemberId={current.profile.team_member_id}
+        currentTeamMemberId={myStaffId}
         isLocked={!!(project as Pick<Project, "delivery_signed_at"> | null)?.delivery_signed_at}
         entries={(entries ?? []) as HourEntry[]}
         teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }))}
@@ -62,7 +66,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
         target={{ quickJobId: selectedJob.id }}
         targetName={selectedJob.title}
         role={current.profile.role}
-        currentTeamMemberId={current.profile.team_member_id}
+        currentTeamMemberId={myStaffId}
         isLocked={false}
         entries={(entries ?? []) as HourEntry[]}
         teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }))}
@@ -94,8 +98,8 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
             quickJobs={quickJobs.map((j) => ({ id: j.id, title: j.title, start_date: j.start_date, end_date: j.end_date, done: j.done }))}
             selectedProjectId={selectedProject?.id ?? null}
             selectedJobId={selectedJob?.id ?? null}
-            canQuickAdd={current.profile.role === "team"}
-            currentTeamMemberId={current.profile.team_member_id}
+            canQuickAdd={!!myStaffId}
+            currentTeamMemberId={myStaffId}
             todayIso={new Date().toISOString().slice(0, 10)}
           />
           {!selectedProject && !selectedJob && (

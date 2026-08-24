@@ -8,6 +8,30 @@ import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
 import { defaultPermissions, type ModuleKey, type TeamMemberType } from "@/types/database";
 
+// De eigenaar wil zichzelf ook kunnen inplannen als eigen personeel —
+// bijv. op de bouwplanning of een losse klus — en daarbij dezelfde
+// pushmeldingen en uren-registratie krijgen als echt personeel, zonder
+// een tweede account nodig te hebben. Dit maakt een gewone
+// team_members-rij aan die via owner_profile_id teruggekoppeld wordt
+// aan het bestaande eigenaar-profiel (zie migratie 0061) — geen nieuwe
+// login, geen wijziging aan de eigenaar-rechten zelf.
+export async function addSelfAsStaff() {
+  const current = await requireOwner();
+  const supabase = createClient();
+  const { data: existing } = await supabase.from("team_members").select("id").eq("owner_profile_id", current.id).maybeSingle();
+  if (existing) return;
+  const { error } = await supabase.from("team_members").insert({
+    name: current.profile.name,
+    member_type: "personeel",
+    sees_all_projects: true,
+    permissions: defaultPermissions(),
+    owner_profile_id: current.id,
+  });
+  if (error) throw new Error(error.message);
+  revalidatePath("/personeel");
+  revalidatePath("/dashboard");
+}
+
 export async function inviteTeamMember(formData: FormData) {
   await requireOwner();
   const name = String(formData.get("name") || "").trim();

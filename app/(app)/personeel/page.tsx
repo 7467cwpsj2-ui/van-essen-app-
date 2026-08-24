@@ -4,11 +4,12 @@ import { createClient } from "@/lib/supabase/server";
 import { getInviteStatuses } from "@/lib/inviteStatus";
 import { TeamMemberRow } from "@/components/TeamMemberRow";
 import { InviteTeamForm } from "@/components/InviteTeamForm";
+import { AddSelfAsStaffButton } from "@/components/AddSelfAsStaffButton";
 import type { InviteStatus } from "@/lib/inviteStatus";
 import type { Project, TeamMember } from "@/types/database";
 
 export default async function PersoneelPage() {
-  await requireOwner();
+  const current = await requireOwner();
   const supabase = createClient();
 
   const [{ data: members }, { data: projects }, { data: accessRows }, { data: profiles }] = await Promise.all([
@@ -52,6 +53,15 @@ export default async function PersoneelPage() {
 
       <div className="access-block">
         <div className="access-block-title">Van Essen Bouw & Onderhoud — eigen personeel</div>
+        {!current.ownStaffMember && (
+          <div className="hint-bar small">
+            Werk je zelf ook mee? Voeg jezelf toe als eigen personeel om ingepland te kunnen worden, uren te registreren en
+            dezelfde pushmeldingen te krijgen als je personeel — je rechten als eigenaar blijven ongewijzigd.
+            <div style={{ marginTop: 8 }}>
+              <AddSelfAsStaffButton />
+            </div>
+          </div>
+        )}
         {ownStaff.length === 0 && <div className="empty-hint">Nog geen eigen personeel toegevoegd.</div>}
         <div className="access-list">
           {ownStaff.map((m) => (
@@ -61,6 +71,7 @@ export default async function PersoneelPage() {
               projects={projectList}
               access={accessByMember[m.id] || []}
               inviteStatus={inviteStatusByMemberId[m.id]}
+              isSelf={m.owner_profile_id === current.id}
             />
           ))}
         </div>

@@ -38,12 +38,15 @@ export default async function DashboardPage({
   const current = await requireUser();
   const projects = await getProjectsWithProgress();
   const extras = await getDashboardExtras(projects);
-  const mySchedule =
-    current.profile.role === "team" && current.profile.team_member_id ? await getMySchedule(current.profile.team_member_id) : [];
+  // Voor team-rollen loopt dit via het gewone profiel; een eigenaar die
+  // zichzelf als eigen personeel heeft toegevoegd (zie migratie 0061)
+  // krijgt hier hetzelfde via ownStaffMember, zonder dat dit iets aan
+  // zijn rechten als eigenaar verandert.
+  const myStaffId = current.profile.role === "team" ? current.profile.team_member_id : current.ownStaffMember?.id ?? null;
+  const mySchedule = myStaffId ? await getMySchedule(myStaffId) : [];
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
-  const myHoursToday =
-    current.profile.role === "team" && current.profile.team_member_id ? await getMyHoursToday(current.profile.team_member_id) : null;
+  const myHoursToday = myStaffId ? await getMyHoursToday(myStaffId) : null;
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -177,7 +180,7 @@ export default async function DashboardPage({
           </div>
         )}
 
-        {current.profile.role === "team" && (
+        {myStaffId && (
           <div className="dash-panel">
             <div className="dash-panel-head">
               <span>Mijn planning</span>
