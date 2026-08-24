@@ -458,6 +458,7 @@ export function DossierPanel({
                           type="button"
                           className="icon-btn danger ghost no-print"
                           style={{ position: "absolute", top: -8, right: -8, background: "var(--panel)" }}
+                          title="Certificaat verwijderen"
                           onClick={() => removeCertificate(w.id)}
                         >
                           <X size={11} />
@@ -478,6 +479,7 @@ export function DossierPanel({
                   {role === "eigenaar" && !isLocked && (
                     <button
                       className="icon-btn danger ghost no-print"
+                      title="Garantie-item verwijderen"
                       onClick={() => startTransition(() => deleteWarrantyItem(projectId, w.id).catch((err) => alert(err.message)))}
                     >
                       <Trash2 size={12} />

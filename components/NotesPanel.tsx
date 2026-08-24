@@ -108,7 +108,7 @@ export function NotesPanel({
                   </button>
                 )}
                 {(role === "eigenaar" || n.author_id === currentUserId) && (
-                  <button className="icon-btn danger ghost note-del" onClick={() => run(() => deleteNote(projectId, n.id))}>
+                  <button className="icon-btn danger ghost note-del" title="Notitie verwijderen" onClick={() => run(() => deleteNote(projectId, n.id))}>
                     <Trash2 size={13} />
                   </button>
                 )}

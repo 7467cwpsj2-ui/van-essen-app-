@@ -411,11 +411,12 @@ export function TeamPlanningPanel({
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 4 }}>
-                    <button className="icon-btn ghost" onClick={() => startEditJob(j)}>
+                    <button className="icon-btn ghost" onClick={() => startEditJob(j)} title="Bewerken">
                       <Pencil size={14} />
                     </button>
                     <button
                       className="icon-btn danger ghost"
+                      title="Verwijderen"
                       onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
                     >
                       <Trash2 size={14} />

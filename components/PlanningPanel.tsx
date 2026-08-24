@@ -135,7 +135,7 @@ export function PlanningPanel({
                 </div>
               </div>
               {role === "eigenaar" && !isLocked && (
-                <button className="icon-btn danger ghost" onClick={() => startTransition(() => deleteTask(projectId, t.id).catch(() => {}))}>
+                <button className="icon-btn danger ghost" title="Taak verwijderen" onClick={() => startTransition(() => deleteTask(projectId, t.id).catch(() => {}))}>
                   <Trash2 size={14} />
                 </button>
               )}

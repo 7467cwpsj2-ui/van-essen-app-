@@ -179,10 +179,10 @@ export function SubsidyProductsPanel({ products }: { products: SubsidyProduct[] 
                       <button className="btn-ghost" onClick={() => run(() => toggleSubsidyProductActive(p.id, !p.active))}>
                         {p.active ? "Deactiveren" : "Activeren"}
                       </button>
-                      <button className="icon-btn ghost" onClick={() => startEdit(p)}>
+                      <button className="icon-btn ghost" onClick={() => startEdit(p)} title="Bewerken">
                         <Pencil size={14} />
                       </button>
-                      <button className="icon-btn danger ghost" onClick={() => remove(p.id)}>
+                      <button className="icon-btn danger ghost" onClick={() => remove(p.id)} title="Verwijderen">
                         <Trash2 size={14} />
                       </button>
                     </div>

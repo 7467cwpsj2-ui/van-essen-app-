@@ -338,7 +338,7 @@ export function ExtraWorkPanel({
                 <span className={"stamp stamp-" + w.status}>{STATUS_LABEL[w.status]}</span>
               )}
               {role === "eigenaar" && (
-                <button className="icon-btn danger ghost" onClick={() => removeItem(w.id)}>
+                <button className="icon-btn danger ghost" title="Verwijderen" onClick={() => removeItem(w.id)}>
                   <Trash2 size={14} />
                 </button>
               )}

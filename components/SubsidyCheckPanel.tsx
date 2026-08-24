@@ -195,6 +195,7 @@ export function SubsidyCheckPanel({
                               type="button"
                               className="icon-btn danger ghost"
                               style={{ position: "absolute", top: -8, right: -8, background: "var(--panel)" }}
+                              title="Foto verwijderen"
                               onClick={() => removePhoto(ph.id)}
                             >
                               <X size={11} />
@@ -211,6 +212,7 @@ export function SubsidyCheckPanel({
                               type="button"
                               className="icon-btn danger ghost"
                               style={{ position: "absolute", top: -6, right: -6, background: "var(--panel)" }}
+                              title="Foto verwijderen"
                               onClick={() => removePhoto(ph.id)}
                             >
                               <X size={11} />
@@ -232,10 +234,10 @@ export function SubsidyCheckPanel({
                 </div>
                 {!isLocked && (
                   <div style={{ display: "flex", gap: 4, flexWrap: "wrap", justifyContent: "flex-end" }}>
-                    <button className="icon-btn ghost" onClick={() => startEdit(it)}>
+                    <button className="icon-btn ghost" onClick={() => startEdit(it)} title="Bewerken">
                       <Pencil size={14} />
                     </button>
-                    <button className="icon-btn danger ghost" onClick={() => remove(it.id)}>
+                    <button className="icon-btn danger ghost" onClick={() => remove(it.id)} title="Verwijderen">
                       <Trash2 size={14} />
                     </button>
                   </div>

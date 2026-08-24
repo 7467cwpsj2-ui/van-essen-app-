@@ -212,6 +212,7 @@ export function BouwplanningPanel({
                         </button>
                         <button
                           className="icon-btn danger ghost"
+                          title="Fase verwijderen"
                           onClick={() => startTransition(() => deletePhase(projectId, i.id).catch(() => {}))}
                         >
                           <Trash2 size={12} />

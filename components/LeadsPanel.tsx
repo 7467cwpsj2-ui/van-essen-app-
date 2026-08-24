@@ -192,10 +192,10 @@ export function LeadsPanel({ leads, reminderDays }: { leads: Lead[]; reminderDay
                       <RotateCcw size={13} /> Heropenen
                     </button>
                   )}
-                  <button className="icon-btn ghost" onClick={() => startEdit(l)}>
+                  <button className="icon-btn ghost" onClick={() => startEdit(l)} title="Bewerken">
                     <Pencil size={14} />
                   </button>
-                  <button className="icon-btn danger ghost" onClick={() => remove(l.id)}>
+                  <button className="icon-btn danger ghost" onClick={() => remove(l.id)} title="Verwijderen">
                     <Trash2 size={14} />
                   </button>
                 </div>

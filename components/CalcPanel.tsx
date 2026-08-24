@@ -280,11 +280,12 @@ export function CalcPanel({
               </div>
               {!isLocked && (
                 <div style={{ display: "flex", gap: 4 }}>
-                  <button className="icon-btn ghost" onClick={() => startEdit(c)}>
+                  <button className="icon-btn ghost" onClick={() => startEdit(c)} title="Bewerken">
                     <Pencil size={14} />
                   </button>
                   <button
                     className="icon-btn danger ghost"
+                    title="Verwijderen"
                     onClick={() => startTransition(() => deleteCostItem(projectId, c.id).catch(() => {}))}
                   >
                     <Trash2 size={14} />

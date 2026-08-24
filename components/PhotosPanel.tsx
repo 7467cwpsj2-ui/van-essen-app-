@@ -121,6 +121,7 @@ export function PhotosPanel({
             {(role === "eigenaar" || ph.uploader_id === currentUserId) && (
               <button
                 className="icon-btn ghost photo-card-delete"
+                title="Foto verwijderen"
                 onClick={() => {
                   if (confirm("Deze foto verwijderen?")) deletePhoto(projectId, ph.id, ph.file_path).catch((e) => alert(e.message));
                 }}

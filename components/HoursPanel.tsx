@@ -184,7 +184,7 @@ export function HoursPanel({
                               {e.note && <div className="task-meta">{e.note}</div>}
                             </div>
                             {canDelete && (
-                              <button className="icon-btn danger ghost" onClick={() => remove(e.id)}>
+                              <button className="icon-btn danger ghost" title="Verwijderen" onClick={() => remove(e.id)}>
                                 <Trash2 size={14} />
                               </button>
                             )}

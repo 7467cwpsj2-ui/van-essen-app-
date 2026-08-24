@@ -206,7 +206,7 @@ export function CompletionPointsPanel({
                 </button>
               )}
               {role === "eigenaar" && !isLocked && (
-                <button className="icon-btn danger ghost" onClick={() => run(() => deleteCompletionPoint(projectId, p.id))}>
+                <button className="icon-btn danger ghost" title="Verwijderen" onClick={() => run(() => deleteCompletionPoint(projectId, p.id))}>
                   <Trash2 size={14} />
                 </button>
               )}

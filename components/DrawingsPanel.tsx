@@ -126,6 +126,7 @@ export function DrawingsPanel({
             {(role === "eigenaar" || d.uploader_id === currentUserId) && (
               <button
                 className="icon-btn danger ghost"
+                title="Verwijderen"
                 onClick={() => {
                   if (confirm("Deze tekening verwijderen?")) deleteDrawing(projectId, d.id, d.file_path).catch((e) => alert(e.message));
                 }}

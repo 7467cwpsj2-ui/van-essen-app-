@@ -23,7 +23,7 @@ export function FilePreview({
       ) : (
         <img src={previewUrl} alt="" className="file-preview-img" />
       )}
-      <button type="button" className="icon-btn danger ghost" onClick={onClear}>
+      <button type="button" className="icon-btn danger ghost" onClick={onClear} title="Verwijderen">
         <X size={13} />
       </button>
     </div>
