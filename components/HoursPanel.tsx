@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, ChevronDown, Download, Pencil, Plus, Trash2, X, Zap } from "lucide-react";
+import { Calendar, Check, ChevronDown, Download, Pencil, Plus, Trash2, X, Zap } from "lucide-react";
 import { createHourEntry, createWeekHourEntries, deleteHourEntry, updateHourEntry, type HoursTarget } from "@/lib/actions/hours";
 import { mondayOfWeek, weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
@@ -209,12 +209,17 @@ export function HoursPanel({
           </div>
 
           {!showDetail ? (
-            <button type="button" className="link-btn" onClick={() => setShowDetail(true)} style={{ alignSelf: "flex-start" }}>
-              Andere datum, aantal of opmerking invoeren
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setShowDetail(true)}
+              style={{ alignSelf: "flex-start", marginTop: 18 }}
+            >
+              <Calendar size={13} /> Andere datum, aantal of opmerking invoeren
             </button>
           ) : (
             <>
-              <div className="add-form-title" style={{ marginTop: 6 }}>
+              <div className="add-form-title" style={{ marginTop: 18 }}>
                 Andere datum / aantal / opmerking
               </div>
               <div className="mode-toggle">
