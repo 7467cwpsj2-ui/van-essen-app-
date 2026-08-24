@@ -76,7 +76,43 @@ export default async function PlanningOverzichtPage() {
       start_date: j.start_date,
       end_date: j.end_date,
     };
-    if (j.assignee_team_member_ids.length > 0) {
+    if (j.day_assignments && j.day_assignments.length > 0) {
+      // Bezetting kan per dag verschillen — per teamlid de aaneengesloten
+      // reeks dagen tot één balk samenvoegen i.p.v. de kalender te
+      // versnipperen in losse eendaagse balkjes.
+      const daysByMember = new Map<string, string[]>();
+      for (const d of j.day_assignments) {
+        for (const memberId of d.team_member_ids) {
+          if (!daysByMember.has(memberId)) daysByMember.set(memberId, []);
+          daysByMember.get(memberId)!.push(d.date);
+        }
+      }
+      for (const [memberId, dates] of daysByMember) {
+        const sorted = [...dates].sort();
+        let rangeStart = sorted[0];
+        let prev = sorted[0];
+        let idx = 0;
+        const flush = (end: string) => {
+          rows.push({
+            id: `qj:${j.id}:${memberId}:${idx++}`,
+            ...base,
+            start_date: rangeStart,
+            end_date: end,
+            assignee: nameById.get(memberId) ?? "Onbekend personeelslid",
+            memberType: memberTypeById.get(memberId) ?? "personeel",
+          });
+        };
+        for (let i = 1; i < sorted.length; i++) {
+          const gapDays = (new Date(sorted[i] + "T00:00:00Z").getTime() - new Date(prev + "T00:00:00Z").getTime()) / 86400000;
+          if (gapDays > 3) {
+            flush(prev);
+            rangeStart = sorted[i];
+          }
+          prev = sorted[i];
+        }
+        flush(prev);
+      }
+    } else if (j.assignee_team_member_ids.length > 0) {
       for (const memberId of j.assignee_team_member_ids) {
         rows.push({
           id: `qj:${j.id}:${memberId}`,

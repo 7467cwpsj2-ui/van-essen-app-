@@ -152,6 +152,11 @@ export interface SchedulePhase {
   created_at: string;
 }
 
+export interface QuickJobDayAssignment {
+  date: string;
+  team_member_ids: string[];
+}
+
 export interface QuickJob {
   id: string;
   title: string;
@@ -160,6 +165,7 @@ export interface QuickJob {
   start_date: string;
   end_date: string;
   done: boolean;
+  day_assignments: QuickJobDayAssignment[] | null;
   created_at: string;
 }
 

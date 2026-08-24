@@ -42,3 +42,18 @@ export function endDateForWorkingDays(startIso: string, days: number): string {
   }
   return d.toISOString().slice(0, 10);
 }
+
+// De losse werkdagen tussen `startIso` en `endIso` (beide inclusief),
+// weekenden overgeslagen — gebruikt om per dag een eigen bezetting te
+// kunnen instellen bij een kleine klus van een paar dagen.
+export function workingDaysBetween(startIso: string, endIso: string): string[] {
+  if (!startIso || !endIso) return [];
+  const days: string[] = [];
+  let d = new Date(startIso + "T00:00:00Z");
+  const end = new Date(endIso + "T00:00:00Z");
+  while (d.getTime() <= end.getTime()) {
+    if (!isWeekendDate(d)) days.push(d.toISOString().slice(0, 10));
+    d = new Date(d.getTime() + 86400000);
+  }
+  return days;
+}

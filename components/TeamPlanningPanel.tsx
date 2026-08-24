@@ -8,11 +8,52 @@ import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInp
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
 import { createQuickJob, deleteQuickJob, toggleQuickJobDone, updateQuickJob } from "@/lib/actions/quickJobs";
 import { colorForProject } from "@/lib/projectColor";
-import { endDateForWorkingDays, isoWeekNumber } from "@/lib/workingDays";
-import type { QuickJob, TeamMemberType } from "@/types/database";
+import { endDateForWorkingDays, isoWeekNumber, workingDaysBetween } from "@/lib/workingDays";
+import type { QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
+
+// Bezetting per dag instellen (bijv. dag 1 twee man, dag 2 maar één) —
+// hergebruikt door zowel het toevoeg- als het bewerk-formulier hieronder.
+function DayAssignmentPicker({
+  days,
+  value,
+  onChange,
+  teamMembers,
+}: {
+  days: string[];
+  value: Record<string, string[]>;
+  onChange: (next: Record<string, string[]>) => void;
+  teamMembers: AssigneeTeamMember[];
+}) {
+  const toggle = (date: string, memberId: string) => {
+    const current = value[date] || [];
+    const next = current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId];
+    onChange({ ...value, [date]: next });
+  };
+  return (
+    <div className="day-assign-list">
+      {days.map((date) => (
+        <div key={date} className="day-assign-day">
+          <div className="day-assign-date">{fmtShort(date)}</div>
+          {teamMembers.length === 0 ? (
+            <div className="empty-hint small">Nog geen teamleden toegevoegd.</div>
+          ) : (
+            <div className="assignee-staff-list">
+              {teamMembers.map((m) => (
+                <label key={m.id} className="checkbox-label">
+                  <input type="checkbox" checked={(value[date] || []).includes(m.id)} onChange={() => toggle(date, m.id)} />
+                  {m.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
 
 export interface PlanningRow {
   id: string;
@@ -58,12 +99,26 @@ export function TeamPlanningPanel({
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [editJobForm, setEditJobForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
   const [showDoneJobs, setShowDoneJobs] = useState(false);
+  const [perDay, setPerDay] = useState(false);
+  const [dayAssignments, setDayAssignments] = useState<Record<string, string[]>>({});
+  const [editPerDay, setEditPerDay] = useState(false);
+  const [editDayAssignments, setEditDayAssignments] = useState<Record<string, string[]>>({});
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
-  const quickJobAssigneeLabel = (j: QuickJob) =>
-    j.assignee_team_member_ids.length > 0 ? j.assignee_team_member_ids.map(teamMemberName).join(", ") : j.assignee || "Niet toegewezen";
+  const quickJobAssigneeLabel = (j: QuickJob) => {
+    if (j.day_assignments && j.day_assignments.length > 0) {
+      return j.day_assignments.map((d) => `${d.team_member_ids.map(teamMemberName).join(" + ") || "niemand"} (${fmtShort(d.date)})`).join(", ");
+    }
+    return j.assignee_team_member_ids.length > 0 ? j.assignee_team_member_ids.map(teamMemberName).join(", ") : j.assignee || "Niet toegewezen";
+  };
 
   const computedEnd = form.start && Number(form.days) >= 1 ? endDateForWorkingDays(form.start, Number(form.days)) : "";
+  const workDays = form.start && computedEnd ? workingDaysBetween(form.start, computedEnd) : [];
+
+  const buildDayAssignments = (days: string[], map: Record<string, string[]>): QuickJobDayAssignment[] | null => {
+    const list = days.map((date) => ({ date, team_member_ids: map[date] || [] })).filter((d) => d.team_member_ids.length > 0);
+    return list.length > 0 ? list : null;
+  };
 
   const addQuickJob = () => {
     if (!form.title.trim() || !form.start || !computedEnd) return;
@@ -74,9 +129,12 @@ export function TeamPlanningPanel({
         assigneeTeamMemberIds: form.assigneeTeamMemberIds,
         start: form.start,
         end: computedEnd,
+        dayAssignments: perDay ? buildDayAssignments(workDays, dayAssignments) : null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
     setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
+    setPerDay(false);
+    setDayAssignments({});
   };
 
   const startEditJob = (j: QuickJob) => {
@@ -93,12 +151,22 @@ export function TeamPlanningPanel({
       start: j.start_date,
       days: String(count || 1),
     });
+    if (j.day_assignments && j.day_assignments.length > 0) {
+      setEditPerDay(true);
+      const map: Record<string, string[]> = {};
+      for (const d of j.day_assignments) map[d.date] = d.team_member_ids;
+      setEditDayAssignments(map);
+    } else {
+      setEditPerDay(false);
+      setEditDayAssignments({});
+    }
   };
 
   const cancelEditJob = () => setEditingJobId(null);
 
   const editJobComputedEnd =
     editJobForm.start && Number(editJobForm.days) >= 1 ? endDateForWorkingDays(editJobForm.start, Number(editJobForm.days)) : "";
+  const editWorkDays = editJobForm.start && editJobComputedEnd ? workingDaysBetween(editJobForm.start, editJobComputedEnd) : [];
 
   const saveEditJob = (id: string) => {
     if (!editJobForm.title.trim() || !editJobForm.start || !editJobComputedEnd) return;
@@ -109,6 +177,7 @@ export function TeamPlanningPanel({
         assigneeTeamMemberIds: editJobForm.assigneeTeamMemberIds,
         start: editJobForm.start,
         end: editJobComputedEnd,
+        dayAssignments: editPerDay ? buildDayAssignments(editWorkDays, editDayAssignments) : null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
     });
     setEditingJobId(null);
@@ -336,13 +405,23 @@ export function TeamPlanningPanel({
             <Plus size={14} /> Toevoegen
           </button>
         </div>
-        <AssigneeInput
-          assignee={form.assignee}
-          assigneeTeamMemberIds={form.assigneeTeamMemberIds}
-          onChangeAssignee={(v) => setForm({ ...form, assignee: v })}
-          onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
-          teamMembers={teamMembers}
-        />
+        {workDays.length > 1 && (
+          <label className="checkbox-label">
+            <input type="checkbox" checked={perDay} onChange={(e) => setPerDay(e.target.checked)} />
+            Per dag andere mensen inplannen (bijv. dag 1 twee man, dag 2 maar één)
+          </label>
+        )}
+        {perDay && workDays.length > 1 ? (
+          <DayAssignmentPicker days={workDays} value={dayAssignments} onChange={setDayAssignments} teamMembers={teamMembers} />
+        ) : (
+          <AssigneeInput
+            assignee={form.assignee}
+            assigneeTeamMemberIds={form.assigneeTeamMemberIds}
+            onChangeAssignee={(v) => setForm({ ...form, assignee: v })}
+            onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
+            teamMembers={teamMembers}
+          />
+        )}
         {computedEnd && (
           <div className="hint-bar small">
             Deze klus loopt van {fmtShort(form.start)} t/m {fmtShort(computedEnd)} (weekenden tellen niet mee).
@@ -380,13 +459,28 @@ export function TeamPlanningPanel({
                       onChange={(e) => setEditJobForm({ ...editJobForm, days: e.target.value })}
                     />
                   </div>
-                  <AssigneeInput
-                    assignee={editJobForm.assignee}
-                    assigneeTeamMemberIds={editJobForm.assigneeTeamMemberIds}
-                    onChangeAssignee={(v) => setEditJobForm({ ...editJobForm, assignee: v })}
-                    onChangeTeamMemberIds={(ids) => setEditJobForm({ ...editJobForm, assigneeTeamMemberIds: ids })}
-                    teamMembers={teamMembers}
-                  />
+                  {editWorkDays.length > 1 && (
+                    <label className="checkbox-label">
+                      <input type="checkbox" checked={editPerDay} onChange={(e) => setEditPerDay(e.target.checked)} />
+                      Per dag andere mensen inplannen (bijv. dag 1 twee man, dag 2 maar één)
+                    </label>
+                  )}
+                  {editPerDay && editWorkDays.length > 1 ? (
+                    <DayAssignmentPicker
+                      days={editWorkDays}
+                      value={editDayAssignments}
+                      onChange={setEditDayAssignments}
+                      teamMembers={teamMembers}
+                    />
+                  ) : (
+                    <AssigneeInput
+                      assignee={editJobForm.assignee}
+                      assigneeTeamMemberIds={editJobForm.assigneeTeamMemberIds}
+                      onChangeAssignee={(v) => setEditJobForm({ ...editJobForm, assignee: v })}
+                      onChangeTeamMemberIds={(ids) => setEditJobForm({ ...editJobForm, assigneeTeamMemberIds: ids })}
+                      teamMembers={teamMembers}
+                    />
+                  )}
                   {editJobComputedEnd && (
                     <div className="hint-bar small">
                       Deze klus loopt dan van {fmtShort(editJobForm.start)} t/m {fmtShort(editJobComputedEnd)}.
@@ -412,13 +506,13 @@ export function TeamPlanningPanel({
                       </span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 4 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
                     <button
-                      className="icon-btn ghost"
-                      title="Gereed melden"
+                      type="button"
+                      className="btn-success"
                       onClick={() => startTransition(() => toggleQuickJobDone(j.id, true).catch(() => {}))}
                     >
-                      <CheckCircle2 size={14} />
+                      <CheckCircle2 size={15} /> Gereed
                     </button>
                     <button className="icon-btn ghost" onClick={() => startEditJob(j)} title="Bewerken">
                       <Pencil size={14} />
