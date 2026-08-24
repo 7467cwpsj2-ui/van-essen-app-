@@ -1548,15 +1548,27 @@ a:has(> .brandmark) {
 .checkbox-label {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  padding: 4px 6px;
+  margin: 0 -6px;
+  border-radius: var(--radius-xs);
   font-size: 12px;
   color: var(--text-dim);
+  transition: background-color 0.15s ease;
+}
+.checkbox-label:hover {
+  background: var(--panel-2);
 }
 .checkbox-label input {
   width: auto;
+  accent-color: var(--brand);
 }
 .checkbox-label.disabled {
   opacity: 0.5;
+  cursor: default;
+}
+.checkbox-label.disabled:hover {
+  background: none;
 }
 .radio-row {
   display: flex;
@@ -1986,6 +1998,8 @@ a.link-btn:hover {
 .checkbox-label.small {
   font-size: 11px;
   gap: 4px;
+  padding: 2px 4px;
+  margin: 0;
 }
 .vis-pill {
   display: inline-flex;
@@ -2722,7 +2736,8 @@ a.link-btn:hover {
   width: auto;
 }
 .edit-right {
-  padding: 2px;
+  padding: 4px 6px;
+  margin: 0;
 }
 .project-access {
   display: flex;
