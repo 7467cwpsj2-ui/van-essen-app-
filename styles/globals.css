@@ -3281,9 +3281,14 @@ a.dash-panel-row:hover {
   font-weight: 700;
   font-size: 14px;
 }
+/* De marge is het eindantwoord van de hele nacalculatie (winst of
+   verlies) — die verdient meer gewicht dan de tussentotalen erboven. */
 .calc-line-marge {
-  font-weight: 700;
-  font-size: 14px;
+  font-weight: 800;
+  font-size: 18px;
+  padding-top: var(--space-4);
+  margin-top: 2px;
+  border-top: 1px solid var(--border-strong);
 }
 .calc-line-marge.pos {
   color: var(--success);
