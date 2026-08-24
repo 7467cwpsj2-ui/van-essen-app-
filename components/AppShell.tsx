@@ -82,7 +82,7 @@ export function AppShell({
   return (
     <div className="app-shell">
       <div className="mobile-bar">
-        <button type="button" onClick={() => setSidebarOpen((v) => !v)}>
+        <button type="button" className="mobile-menu-btn" onClick={() => setSidebarOpen((v) => !v)}>
           {sidebarOpen ? <X size={18} /> : <Menu size={18} />} Menu
         </button>
         <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>

@@ -289,6 +289,9 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid transparent;
+  border-image: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 12%, transparent)) 1;
 }
 .brandmark {
   display: flex;
@@ -2744,6 +2747,7 @@ a.link-btn:hover {
   gap: 10px;
 }
 .dash-card {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -2755,6 +2759,24 @@ a.link-btn:hover {
   text-decoration: none;
   color: inherit;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+/* Tegels die om aandacht vragen (openstaand meerwerk, te late offertes)
+   moeten er ook zo uitzien — een gekleurde balk + gewassen achtergrond
+   i.p.v. alleen een ander getal, zodat je in één oogopslag ziet waar iets
+   moet gebeuren en waar het rustig is. */
+.dash-card.accent {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--warning) 7%, var(--panel)), var(--panel) 65%);
+  border-color: color-mix(in srgb, var(--warning) 30%, var(--border));
+}
+.dash-card.accent::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--warning);
 }
 .dash-card-icon {
   width: 34px;
@@ -3407,7 +3429,10 @@ a.dash-panel-row:hover {
     align-items: center;
     justify-content: space-between;
     background: var(--panel);
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid transparent;
+    /* Een dunne merklijn i.p.v. een vlakke grijze rand — dit is de balk
+       die op elke pagina, altijd, als eerste in beeld komt. */
+    border-image: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 12%, transparent)) 1;
     padding: 8px 14px;
     position: sticky;
     top: 0;
@@ -3425,6 +3450,16 @@ a.dash-panel-row:hover {
     border: none;
     color: var(--text);
     font-size: 12.5px;
+  }
+  .mobile-menu-btn {
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+    margin: -6px -8px;
+    transition: background-color 0.15s ease;
+  }
+  .mobile-menu-btn:hover,
+  .mobile-menu-btn:active {
+    background: var(--panel-2);
   }
   .mobile-bar .brandmark-name {
     font-size: 15px;
