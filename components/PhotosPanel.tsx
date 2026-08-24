@@ -51,6 +51,13 @@ export function PhotosPanel({
   const [pending, setPending] = useState<PendingFile[]>([]);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const closeAdd = () => {
+    setShowAdd(false);
+    setForm({ title: "", category: "tijdens", note: "", shareWithClient: false });
+    setPending([]);
+  };
 
   const handlePicked = async (file: File) => {
     setBusy(true);
@@ -92,8 +99,7 @@ export function PhotosPanel({
           });
         })
       );
-      setForm({ title: "", category: "tijdens", note: "", shareWithClient: false });
-      setPending([]);
+      closeAdd();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Uploaden mislukt.");
     } finally {
@@ -105,6 +111,9 @@ export function PhotosPanel({
     <div className="panel">
       <Lightbox src={preview} onClose={() => setPreview(null)} />
       {role !== "eigenaar" && <div className="hint-bar">Wat jij hier toevoegt, deelt de eigenaar pas verder nadat het is bekeken.</div>}
+      <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> Foto&apos;s toevoegen
+      </button>
       {photos.length === 0 && <div className="empty-hint">Nog geen foto&apos;s.</div>}
       <div className="photo-grid">
         {photos.map((ph) => (
@@ -147,54 +156,68 @@ export function PhotosPanel({
           </div>
         ))}
       </div>
-      <div className="add-form">
-        <div className="add-form-title">Foto&apos;s toevoegen</div>
-        <FileCaptureButtons accept="image/*" onPicked={handlePicked} busy={busy} multiple />
-        {pending.length > 0 && (
-          <div className="pending-file-grid">
-            {pending.map((p) => (
-              <FilePreview
-                key={p.id}
-                previewUrl={p.previewUrl}
-                fileType={p.fileType}
-                fileName={p.fileName}
-                onClear={() => removePending(p.id)}
-              />
-            ))}
-          </div>
-        )}
-        <div className="add-form-grid">
-          <input
-            placeholder={pending.length > 1 ? "Titel-voorvoegsel (optioneel)" : "Titel / omschrijving"}
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as PhotoCategory })}>
-            {Object.entries(CATS).map(([k, v]) => (
-              <option key={k} value={k}>
-                {v}
-              </option>
-            ))}
-          </select>
-          <input placeholder="Opmerking" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-          {role === "eigenaar" && (
-            <label className="checkbox-label">
+      {showAdd && (
+        <div className="sig-overlay" onClick={() => !busy && closeAdd()}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Foto&apos;s toevoegen</div>
+            <FileCaptureButtons accept="image/*" onPicked={handlePicked} busy={busy} multiple />
+            {pending.length > 0 && (
+              <div className="pending-file-grid">
+                {pending.map((p) => (
+                  <FilePreview
+                    key={p.id}
+                    previewUrl={p.previewUrl}
+                    fileType={p.fileType}
+                    fileName={p.fileName}
+                    onClear={() => removePending(p.id)}
+                  />
+                ))}
+              </div>
+            )}
+            <div className="add-form-grid">
               <input
-                type="checkbox"
-                checked={form.shareWithClient}
-                onChange={(e) => setForm({ ...form, shareWithClient: e.target.checked })}
+                placeholder={pending.length > 1 ? "Titel-voorvoegsel (optioneel)" : "Titel / omschrijving"}
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
-              Ook zichtbaar voor klant
-            </label>
-          )}
-          <button className="btn-primary" onClick={addPhotos} disabled={busy || pending.length === 0 || (pending.length === 1 && !form.title.trim())}>
-            <Plus size={14} /> {pending.length > 1 ? `${pending.length} foto's toevoegen` : "Toevoegen"}
-          </button>
+              <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as PhotoCategory })}>
+                {Object.entries(CATS).map(([k, v]) => (
+                  <option key={k} value={k}>
+                    {v}
+                  </option>
+                ))}
+              </select>
+              <input placeholder="Opmerking" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              {role === "eigenaar" && (
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={form.shareWithClient}
+                    onChange={(e) => setForm({ ...form, shareWithClient: e.target.checked })}
+                  />
+                  Ook zichtbaar voor klant
+                </label>
+              )}
+            </div>
+            {pending.length > 1 && (
+              <div className="hint-bar small">Elke foto krijgt zijn eigen titel op basis van de bestandsnaam{form.title ? ", met jouw tekst ervoor" : ""}.</div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd} disabled={busy}>
+                Annuleren
+              </button>
+              <button
+                type="button"
+                className="btn-primary"
+                onClick={addPhotos}
+                disabled={busy || pending.length === 0 || (pending.length === 1 && !form.title.trim())}
+              >
+                <Plus size={14} /> {pending.length > 1 ? `${pending.length} foto's toevoegen` : "Toevoegen"}
+              </button>
+            </div>
+          </div>
         </div>
-        {pending.length > 1 && (
-          <div className="hint-bar small">Elke foto krijgt zijn eigen titel op basis van de bestandsnaam{form.title ? ", met jouw tekst ervoor" : ""}.</div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

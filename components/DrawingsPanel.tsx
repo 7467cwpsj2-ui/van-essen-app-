@@ -31,6 +31,13 @@ export function DrawingsPanel({
   const [pending, setPending] = useState<{ blob: Blob; fileType: "image" | "pdf"; fileName: string; previewUrl: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+
+  const closeAdd = () => {
+    setShowAdd(false);
+    setForm({ title: "", note: "", shareWithClient: false });
+    setPending(null);
+  };
 
   const handlePicked = async (file: File) => {
     setBusy(true);
@@ -63,8 +70,7 @@ export function DrawingsPanel({
         fileType: pending.fileType,
         shareWithClient: form.shareWithClient,
       });
-      setForm({ title: "", note: "", shareWithClient: false });
-      setPending(null);
+      closeAdd();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Uploaden mislukt.");
     } finally {
@@ -76,6 +82,9 @@ export function DrawingsPanel({
     <div className="panel">
       <Lightbox src={preview} onClose={() => setPreview(null)} />
       {role !== "eigenaar" && <div className="hint-bar">Wat jij hier toevoegt, deelt de eigenaar pas verder nadat het is bekeken.</div>}
+      <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> Tekening toevoegen
+      </button>
       {drawings.length === 0 && <div className="empty-hint">Nog geen tekeningen.</div>}
       <div className="drawing-grid">
         {drawings.map((d) => (
@@ -137,33 +146,42 @@ export function DrawingsPanel({
           </div>
         ))}
       </div>
-      <div className="add-form">
-        <div className="add-form-title">Tekening toevoegen</div>
-        <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
-        <FilePreview
-          previewUrl={pending?.previewUrl ?? null}
-          fileType={pending?.fileType ?? null}
-          fileName={pending?.fileName ?? null}
-          onClear={() => setPending(null)}
-        />
-        <div className="add-form-grid">
-          <input placeholder="Titel" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          <input placeholder="Toelichting" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
-          {role === "eigenaar" && (
-            <label className="checkbox-label">
-              <input
-                type="checkbox"
-                checked={form.shareWithClient}
-                onChange={(e) => setForm({ ...form, shareWithClient: e.target.checked })}
-              />
-              Ook zichtbaar voor klant
-            </label>
-          )}
-          <button className="btn-primary" onClick={addDrawing} disabled={busy || !pending}>
-            <Plus size={14} /> Toevoegen
-          </button>
+      {showAdd && (
+        <div className="sig-overlay" onClick={() => !busy && closeAdd()}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Tekening toevoegen</div>
+            <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
+            <FilePreview
+              previewUrl={pending?.previewUrl ?? null}
+              fileType={pending?.fileType ?? null}
+              fileName={pending?.fileName ?? null}
+              onClear={() => setPending(null)}
+            />
+            <div className="add-form-grid">
+              <input placeholder="Titel" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <input placeholder="Toelichting" value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />
+              {role === "eigenaar" && (
+                <label className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={form.shareWithClient}
+                    onChange={(e) => setForm({ ...form, shareWithClient: e.target.checked })}
+                  />
+                  Ook zichtbaar voor klant
+                </label>
+              )}
+            </div>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd} disabled={busy}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addDrawing} disabled={busy || !pending}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
