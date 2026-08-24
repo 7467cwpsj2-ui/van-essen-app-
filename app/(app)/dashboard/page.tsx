@@ -5,6 +5,7 @@ import { ProjectThumb } from "@/components/ProjectThumb";
 import {
   getDashboardExtras,
   getLeadsSummary,
+  getMyHoursToday,
   getMySchedule,
   getProjectsWithProgress,
   getTodayStaffSchedule,
@@ -41,6 +42,8 @@ export default async function DashboardPage({
     current.profile.role === "team" && current.profile.team_member_id ? await getMySchedule(current.profile.team_member_id) : [];
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
+  const myHoursToday =
+    current.profile.role === "team" && current.profile.team_member_id ? await getMyHoursToday(current.profile.team_member_id) : null;
 
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
@@ -79,6 +82,15 @@ export default async function DashboardPage({
           <div className="dash-card-value">{extras.todayTasks.length}</div>
           <div className="dash-card-title">Te doen vandaag</div>
         </Link>
+        {myHoursToday !== null && (
+          <Link href="/uren" className={"dash-card" + (myHoursToday === 0 ? " accent" : "")}>
+            <div className={"dash-card-icon" + (myHoursToday === 0 ? " warning" : "")}>
+              <Clock size={16} />
+            </div>
+            <div className="dash-card-value">{myHoursToday}</div>
+            <div className="dash-card-title">Mijn uren vandaag{myHoursToday === 0 ? " — nog invullen" : ""}</div>
+          </Link>
+        )}
         {current.profile.role === "eigenaar" && (
           <Link href="/offertes" className={"dash-card" + (leadsSummary.overdueCount > 0 ? " accent" : "")}>
             <div className={"dash-card-icon" + (leadsSummary.overdueCount > 0 ? " warning" : "")}>

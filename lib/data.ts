@@ -62,6 +62,15 @@ export interface MyScheduleItem {
   end_date: string;
 }
 
+// Hoeveel uur dit teamlid vandaag al geregistreerd heeft — voor het
+// dashboard-tegeltje dat rechtstreeks naar /uren linkt.
+export async function getMyHoursToday(teamMemberId: string): Promise<number> {
+  const supabase = createClient();
+  const todayIso = new Date().toISOString().slice(0, 10);
+  const { data } = await supabase.from("hours").select("hours").eq("team_member_id", teamMemberId).eq("work_date", todayIso);
+  return (data ?? []).reduce((s, r) => s + Number(r.hours), 0);
+}
+
 // Bouwplanningfases + losse klussen waar dit teamlid zelf op ingepland
 // staat — voor "Mijn planning" op het dashboard. RLS zorgt dat een
 // teamlid alleen fases uit projecten met toegang, en alleen losse
