@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Calendar, Check, ChevronDown, Hammer, Search, X } from "lucide-react";
+import { Check, ChevronDown, Hammer, Search, X } from "lucide-react";
 import { createHourEntry } from "@/lib/actions/hours";
 import { ProjectThumb } from "@/components/ProjectThumb";
 
@@ -68,10 +68,10 @@ export function UrenPicker({
   const matches = (text: string) => text.toLowerCase().includes(q);
   const searching = q.length > 0;
 
-  const quickAdd = (target: { projectId: string } | { quickJobId: string }, rowKey: string, hours: number, workDate: string = todayIso) => {
+  const quickAdd = (target: { projectId: string } | { quickJobId: string }, rowKey: string, hours: number) => {
     if (!currentTeamMemberId) return;
     startTransition(() => {
-      createHourEntry(target, { teamMemberId: currentTeamMemberId, workDate, hours, note: null })
+      createHourEntry(target, { teamMemberId: currentTeamMemberId, workDate: todayIso, hours, note: null })
         .then(() => {
           setJustAdded(rowKey);
           setTimeout(() => setJustAdded((v) => (v === rowKey ? null : v)), 2500);
@@ -90,14 +90,9 @@ export function UrenPicker({
         icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
         title={p.name}
         sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
-        quickAdd={
-          canQuickAdd && withQuickAdd
-            ? { rowKey: `p:${p.id}`, onAdd: (h, d) => quickAdd({ projectId: p.id }, `p:${p.id}`, h, d) }
-            : undefined
-        }
+        quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `p:${p.id}`, onAdd: (h) => quickAdd({ projectId: p.id }, `p:${p.id}`, h) } : undefined}
         justAdded={justAdded}
         pending={pending}
-        todayIso={todayIso}
       />
     );
   };
@@ -112,14 +107,9 @@ export function UrenPicker({
         icon={<Hammer size={14} />}
         title={j.title}
         sub={`Losse klus · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
-        quickAdd={
-          canQuickAdd && withQuickAdd
-            ? { rowKey: `j:${j.id}`, onAdd: (h, d) => quickAdd({ quickJobId: j.id }, `j:${j.id}`, h, d) }
-            : undefined
-        }
+        quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `j:${j.id}`, onAdd: (h) => quickAdd({ quickJobId: j.id }, `j:${j.id}`, h) } : undefined}
         justAdded={justAdded}
         pending={pending}
-        todayIso={todayIso}
       />
     );
   };
@@ -156,9 +146,8 @@ export function UrenPicker({
       </div>
       {(todayProjects.length > 0 || todayJobs.length > 0) && canQuickAdd && (
         <div className="hint-bar small">
-          De knoppen 4u/6u/8u zetten uren op <b>vandaag</b>. Was het een andere dag, of een ander aantal uur? Kies dan &quot;Andere
-          dag / aantal&quot;. Verkeerd getikt? Tik op de naam voor het volledige overzicht — daar kun je elke registratie nog
-          aanpassen of verwijderen.
+          Niet 4, 6 of 8 uur? Kies &quot;Anders…&quot; voor een ander aantal. Verkeerd getikt? Tik op de naam voor het volledige
+          overzicht — daar kun je elke registratie nog aanpassen of verwijderen.
         </div>
       )}
       {todayProjects.length === 0 && todayJobs.length === 0 ? (
@@ -198,31 +187,23 @@ function UrenRow({
   quickAdd,
   justAdded,
   pending,
-  todayIso,
 }: {
   active: boolean;
   href: string;
   icon: React.ReactNode;
   title: string;
   sub: string;
-  quickAdd?: { rowKey: string; onAdd: (hours: number, workDate?: string) => void };
+  quickAdd?: { rowKey: string; onAdd: (hours: number) => void };
   justAdded: string | null;
   pending: boolean;
-  todayIso: string;
 }) {
   const [customOpen, setCustomOpen] = useState(false);
   const [customValue, setCustomValue] = useState("");
-  const [customDate, setCustomDate] = useState(todayIso);
-
-  const openCustom = () => {
-    setCustomDate(todayIso);
-    setCustomOpen(true);
-  };
 
   const submitCustom = () => {
     const h = Number(customValue);
-    if (!(h > 0) || !customDate || !quickAdd) return;
-    quickAdd.onAdd(h, customDate);
+    if (!(h > 0) || !quickAdd) return;
+    quickAdd.onAdd(h);
     setCustomOpen(false);
     setCustomValue("");
   };
@@ -250,16 +231,10 @@ function UrenRow({
           ) : customOpen ? (
             <>
               <input
-                type="date"
-                autoFocus
-                value={customDate}
-                onChange={(e) => setCustomDate(e.target.value)}
-                className="uren-row-quick-date"
-              />
-              <input
                 type="number"
                 min="0"
                 step="0.5"
+                autoFocus
                 placeholder="Uren"
                 value={customValue}
                 onChange={(e) => setCustomValue(e.target.value)}
@@ -280,8 +255,8 @@ function UrenRow({
                   {h}u
                 </button>
               ))}
-              <button type="button" className="chip-btn ghost highlight" disabled={pending} onClick={openCustom}>
-                <Calendar size={12} /> Andere dag / aantal
+              <button type="button" className="chip-btn ghost" disabled={pending} onClick={() => setCustomOpen(true)}>
+                Anders…
               </button>
             </>
           )}
