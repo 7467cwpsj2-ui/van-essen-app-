@@ -124,6 +124,15 @@ a {
   color: inherit;
 }
 
+/* Consistente, merkkleurige focusring voor toetsenbordnavigatie —
+   :focus-visible i.p.v. :focus zodat een muisklik geen ring toont,
+   alleen tabben. Verliest het altijd van een specifiekere eigen
+   focusstijl (bijv. de box-shadow-ring op invoervelden). */
+:focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+}
+
 button,
 input,
 select,
