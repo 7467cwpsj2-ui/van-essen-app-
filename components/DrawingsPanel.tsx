@@ -79,7 +79,7 @@ export function DrawingsPanel({
       {drawings.length === 0 && <div className="empty-hint">Nog geen tekeningen.</div>}
       <div className="drawing-grid">
         {drawings.map((d) => (
-          <div key={d.id} className="drawing-card">
+          <div key={d.id} className={"drawing-card" + (role === "eigenaar" && !d.reviewed ? " needs-review" : "")}>
             {d.file_type === "pdf" ? (
               d.signedUrl ? (
                 <a href={d.signedUrl} target="_blank" rel="noreferrer" className="thumb-btn drawing-pdf-link" title="Tekening openen">

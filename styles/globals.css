@@ -1731,6 +1731,11 @@ a.link-btn:hover {
   gap: 10px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+  border-left: 3px solid transparent;
+}
+.drawing-card.needs-review {
+  border-left-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 5%, transparent);
 }
 .drawing-card:last-child {
   border-bottom: none;
@@ -1778,6 +1783,18 @@ a.link-btn:hover {
 .photo-card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-elevated);
+}
+.photo-card.needs-review {
+  border-color: color-mix(in srgb, var(--warning) 35%, var(--border));
+}
+.photo-card.needs-review::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--warning);
 }
 .photo-card-thumb {
   aspect-ratio: 1;

@@ -108,7 +108,7 @@ export function PhotosPanel({
       {photos.length === 0 && <div className="empty-hint">Nog geen foto&apos;s.</div>}
       <div className="photo-grid">
         {photos.map((ph) => (
-          <div key={ph.id} className="photo-card">
+          <div key={ph.id} className={"photo-card" + (role === "eigenaar" && !ph.reviewed ? " needs-review" : "")}>
             {ph.signedUrl ? (
               <button type="button" className="photo-card-thumb" onClick={() => setPreview(ph.signedUrl)}>
                 <img src={ph.signedUrl} alt="" />
