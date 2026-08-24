@@ -6,7 +6,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
-import { defaultPermissions, type ModuleKey, type TeamMemberType } from "@/types/database";
+import { defaultPermissions, type ModuleKey, type QuickJobDayAssignment, type TeamMemberType } from "@/types/database";
 
 // De eigenaar wil zichzelf ook kunnen inplannen als eigen personeel —
 // bijv. op de bouwplanning of een losse klus — en daarbij dezelfde
@@ -179,10 +179,56 @@ export async function toggleTeamProjectAccess(teamMemberId: string, projectId: s
   revalidatePath("/personeel");
 }
 
+// assignee_team_member_ids is een uuid[] op fases/taken/losse klussen —
+// Postgres kent geen foreign-key-afdwinging op losse array-elementen,
+// dus zonder deze opschoning blijft een verwijderd teamlid daar als
+// "verweesd" id staan en toont de planning "Onbekend personeelslid"/"?"
+// in plaats van gewoon te verdwijnen uit de toewijzing.
+async function removeTeamMemberReferences(supabase: ReturnType<typeof createClient>, id: string) {
+  const [{ data: phases }, { data: tasks }, { data: jobs }] = await Promise.all([
+    supabase.from("schedule_phases").select("id,assignee_team_member_ids").contains("assignee_team_member_ids", [id]),
+    supabase.from("tasks").select("id,assignee_team_member_ids").contains("assignee_team_member_ids", [id]),
+    supabase.from("quick_jobs").select("id,assignee_team_member_ids,day_assignments").contains("assignee_team_member_ids", [id]),
+  ]);
+
+  await Promise.all(
+    (phases ?? []).map((p) =>
+      supabase
+        .from("schedule_phases")
+        .update({ assignee_team_member_ids: (p.assignee_team_member_ids as string[]).filter((x) => x !== id) })
+        .eq("id", p.id)
+    )
+  );
+  await Promise.all(
+    (tasks ?? []).map((t) =>
+      supabase
+        .from("tasks")
+        .update({ assignee_team_member_ids: (t.assignee_team_member_ids as string[]).filter((x) => x !== id) })
+        .eq("id", t.id)
+    )
+  );
+  await Promise.all(
+    (jobs ?? []).map((j) => {
+      const dayAssignments = j.day_assignments as QuickJobDayAssignment[] | null;
+      return supabase
+        .from("quick_jobs")
+        .update({
+          assignee_team_member_ids: (j.assignee_team_member_ids as string[]).filter((x) => x !== id),
+          day_assignments: dayAssignments
+            ? dayAssignments.map((d) => ({ ...d, team_member_ids: d.team_member_ids.filter((x) => x !== id) }))
+            : null,
+        })
+        .eq("id", j.id);
+    })
+  );
+}
+
 export async function removeTeamMember(id: string) {
   await requireOwner();
   const supabase = createClient();
   const admin = createAdminClient();
+
+  await removeTeamMemberReferences(supabase, id);
 
   const { data: profiles } = await supabase.from("profiles").select("id").eq("team_member_id", id);
   for (const p of profiles ?? []) {
@@ -192,4 +238,7 @@ export async function removeTeamMember(id: string) {
   const { error } = await supabase.from("team_members").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/personeel");
+  revalidatePath("/planning-overzicht");
+  revalidatePath("/dashboard");
+  revalidatePath("/projects", "layout");
 }
