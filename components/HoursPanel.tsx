@@ -76,13 +76,18 @@ export function HoursPanel({
     setOpenWeeks((prev) => ({ ...prev, [key]: !(prev[key] ?? defaultOpen) }));
   };
 
+  // Gebruikt bewust form.workDate (staat standaard op vandaag) i.p.v.
+  // altijd todayIso — anders zou deze knop stilzwijgend op "vandaag"
+  // blijven loggen zelfs nadat iemand hieronder al een andere datum had
+  // ingevuld, wat verwarrend bleek. Nu volgt de knop gewoon de datum die
+  // op dat moment ingevuld staat, en de knoptekst laat dat ook zien.
   const quickAdd = (hours: number) => {
     if (role === "eigenaar" && !form.teamMemberId) {
       alert("Kies hieronder eerst een teamlid.");
       return;
     }
     startTransition(() => {
-      createHourEntry(target, { teamMemberId: form.teamMemberId, workDate: todayIso, hours, note: null }).catch((err) =>
+      createHourEntry(target, { teamMemberId: form.teamMemberId, workDate: form.workDate, hours, note: null }).catch((err) =>
         alert(err instanceof Error ? err.message : "Toevoegen mislukt.")
       );
     });
@@ -267,7 +272,9 @@ export function HoursPanel({
 
       {!isLocked && (
         <div className="add-form">
-          <div className="add-form-title">Snel vandaag toevoegen</div>
+          <div className="add-form-title">
+            {form.workDate === todayIso ? "Snel vandaag toevoegen" : `Snel toevoegen — ${fmtDay(form.workDate)}`}
+          </div>
           {role === "eigenaar" && (
             <select value={form.teamMemberId} onChange={(e) => setForm({ ...form, teamMemberId: e.target.value })}>
               <option value="">Kies teamlid</option>
@@ -277,6 +284,12 @@ export function HoursPanel({
                 </option>
               ))}
             </select>
+          )}
+          {form.workDate !== todayIso && (
+            <div className="hint-bar small">
+              Let op: deze knoppen zetten uren op <b>{fmtDay(form.workDate)}</b>, niet vandaag — dat is de datum die hieronder is
+              ingevuld. Wil je toch vandaag? Zet de datum hieronder terug op vandaag.
+            </div>
           )}
           <div className="quick-hours-row">
             {[4, 6, 8].map((h) => (
@@ -305,7 +318,14 @@ export function HoursPanel({
               </div>
               <div className="add-form-grid">
                 <label className="field-with-label">
-                  <span className="field-label">{mode === "week" ? "Een dag in die week" : "Datum"}</span>
+                  <span className="field-label">
+                    {mode === "week" ? "Een dag in die week" : "Datum"}
+                    {form.workDate !== todayIso && (
+                      <button type="button" className="link-btn" style={{ marginLeft: 8 }} onClick={() => setForm({ ...form, workDate: todayIso })}>
+                        Terug naar vandaag
+                      </button>
+                    )}
+                  </span>
                   <input type="date" value={form.workDate} onChange={(e) => setForm({ ...form, workDate: e.target.value })} />
                 </label>
                 <input
