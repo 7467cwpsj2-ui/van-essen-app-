@@ -3190,9 +3190,17 @@ a.dash-panel-row:hover {
   padding: 11px 13px;
   font-size: 13px;
 }
+/* Zelfde opbouw als .hint-bar, maar dan in de foutkleur — een kaal rood
+   tekstregeltje viel te makkelijk weg tussen de rest van een formulier
+   (login, wachtwoord-reset, uitnodigingen, facturen-upload). */
 .login-error {
   color: var(--danger);
   font-size: 12px;
+  background: rgba(200, 68, 58, 0.1);
+  border-left: 3px solid var(--danger);
+  border-radius: var(--radius-xs);
+  padding: 9px 12px;
+  line-height: 1.5;
 }
 .login-hint {
   color: var(--text-faint);
