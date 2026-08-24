@@ -170,7 +170,7 @@ export function BouwplanningPanel({
                       ) : (
                         <span className="gantt-row-swatch" style={{ background: phaseColor }} />
                       )}
-                      {i.title}
+                      <span className="gantt-row-title-text">{i.title}</span>
                       {i.fixed_date && (
                         <span className="gantt-fixed-icon" title="Deze fase schuift niet automatisch mee met andere wijzigingen.">
                           <Lock size={11} />

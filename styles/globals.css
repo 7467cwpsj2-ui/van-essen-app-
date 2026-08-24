@@ -2455,13 +2455,21 @@ a.link-btn:hover {
   font-size: 12px;
   font-weight: 600;
   color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   gap: 6px;
+}
+/* text-overflow:ellipsis op de flex-container hierboven werkt niet
+   betrouwbaar zolang er naast de tekst ook nog het kleurbolletje en
+   eventuele waarschuwingsicoontjes in staan — browsers knippen dan
+   hard af zonder de "…" te tonen. min-width:0 laat dit specifieke
+   tekstdeel wél echt krimpen binnen de flex-rij. */
+.gantt-row-title-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 .gantt-row-swatch {
   display: inline-block;
