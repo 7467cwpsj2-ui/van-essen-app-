@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, Copy, RefreshCw, Trash2 } from "lucide-react";
 import { PermGrid } from "@/components/PermGrid";
+import { colorForKey, readableTextColor } from "@/lib/projectColor";
 import {
   removeTeamMember,
   resendTeamInvite,
@@ -51,6 +52,7 @@ export function TeamMemberRow({
   const [copied, setCopied] = useState(false);
 
   const projectCount = member.sees_all_projects ? projects.length : access.length;
+  const avatarColor = colorForKey(member.name);
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
@@ -90,7 +92,9 @@ export function TeamMemberRow({
   return (
     <div className={"access-item team-row" + (expanded ? " expanded" : "")}>
       <button type="button" className="access-summary" onClick={() => setExpanded((v) => !v)}>
-        <span className="access-avatar">{(member.name || "?").slice(0, 1).toUpperCase()}</span>
+        <span className="access-avatar" style={{ background: avatarColor, color: readableTextColor(avatarColor) }}>
+          {(member.name || "?").slice(0, 1).toUpperCase()}
+        </span>
         <span className="access-summary-main">
           <span className="access-summary-name">
             {member.name}

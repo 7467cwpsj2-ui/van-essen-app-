@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, Copy, RefreshCw, Trash2 } from "lucide-react";
 import { PermGrid } from "@/components/PermGrid";
+import { colorForKey, readableTextColor } from "@/lib/projectColor";
 import {
   removeClient,
   resendClientInvite,
@@ -32,6 +33,7 @@ export function ClientRow({
   const [copied, setCopied] = useState(false);
   const permCount = MODULE_KEYS.filter((k) => client.permissions[k]).length;
   const linkedProjects = projects.filter((p) => p.clientIds.includes(client.id));
+  const avatarColor = colorForKey(client.name);
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
@@ -66,7 +68,9 @@ export function ClientRow({
   return (
     <div className={"access-item client-row" + (expanded ? " expanded" : "")}>
       <button type="button" className="access-summary" onClick={() => setExpanded((v) => !v)}>
-        <span className="access-avatar">{(client.name || "?").slice(0, 1).toUpperCase()}</span>
+        <span className="access-avatar" style={{ background: avatarColor, color: readableTextColor(avatarColor) }}>
+          {(client.name || "?").slice(0, 1).toUpperCase()}
+        </span>
         <span className="access-summary-main">
           <span className="access-summary-name">{client.name}</span>
           <span className="access-summary-sub">
