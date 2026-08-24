@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, Hammer, Search } from "lucide-react";
+import { Check, ChevronDown, Hammer, Search, X } from "lucide-react";
 import { createHourEntry } from "@/lib/actions/hours";
 import { ProjectThumb } from "@/components/ProjectThumb";
 
@@ -138,6 +138,12 @@ export function UrenPicker({
       <div className="dash-section-title" style={{ marginTop: 0 }}>
         Vandaag
       </div>
+      {(todayProjects.length > 0 || todayJobs.length > 0) && canQuickAdd && (
+        <div className="hint-bar small">
+          Niet 4, 6 of 8 uur? Kies &quot;Anders…&quot; voor een ander aantal. Verkeerd getikt? Tik op de naam voor het volledige
+          overzicht — daar kun je elke registratie nog aanpassen of verwijderen.
+        </div>
+      )}
       {todayProjects.length === 0 && todayJobs.length === 0 ? (
         <div className="empty-hint small">Niets van jou gepland voor vandaag — zoek hierboven of kies iets uit &quot;overige&quot;.</div>
       ) : (
@@ -185,6 +191,17 @@ function UrenRow({
   justAdded: string | null;
   pending: boolean;
 }) {
+  const [customOpen, setCustomOpen] = useState(false);
+  const [customValue, setCustomValue] = useState("");
+
+  const submitCustom = () => {
+    const h = Number(customValue);
+    if (!(h > 0) || !quickAdd) return;
+    quickAdd.onAdd(h);
+    setCustomOpen(false);
+    setCustomValue("");
+  };
+
   return (
     <div className={"uren-row" + (active ? " active" : "")}>
       <Link href={href} className="uren-row-main">
@@ -200,12 +217,37 @@ function UrenRow({
             <span className="uren-row-quick-ok">
               <Check size={12} /> Toegevoegd
             </span>
-          ) : (
-            [4, 6, 8].map((h) => (
-              <button key={h} type="button" className="chip-btn" disabled={pending} onClick={() => quickAdd.onAdd(h)}>
-                {h}u
+          ) : customOpen ? (
+            <>
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                autoFocus
+                placeholder="Uren"
+                value={customValue}
+                onChange={(e) => setCustomValue(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && submitCustom()}
+                className="uren-row-quick-input"
+              />
+              <button type="button" className="chip-btn" disabled={pending || !customValue} onClick={submitCustom}>
+                <Check size={12} /> OK
               </button>
-            ))
+              <button type="button" className="chip-btn ghost" title="Annuleren" onClick={() => setCustomOpen(false)}>
+                <X size={12} />
+              </button>
+            </>
+          ) : (
+            <>
+              {[4, 6, 8].map((h) => (
+                <button key={h} type="button" className="chip-btn" disabled={pending} onClick={() => quickAdd.onAdd(h)}>
+                  {h}u
+                </button>
+              ))}
+              <button type="button" className="chip-btn ghost" disabled={pending} onClick={() => setCustomOpen(true)}>
+                Anders…
+              </button>
+            </>
           )}
         </div>
       )}

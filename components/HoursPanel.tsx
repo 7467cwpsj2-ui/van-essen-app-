@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { ChevronDown, Download, Plus, Trash2, Zap } from "lucide-react";
-import { createHourEntry, createWeekHourEntries, deleteHourEntry, type HoursTarget } from "@/lib/actions/hours";
+import { Check, ChevronDown, Download, Pencil, Plus, Trash2, X, Zap } from "lucide-react";
+import { createHourEntry, createWeekHourEntries, deleteHourEntry, updateHourEntry, type HoursTarget } from "@/lib/actions/hours";
 import { mondayOfWeek, weekdaysOfWeek } from "@/lib/workingDays";
 import type { HourEntry, Role } from "@/types/database";
 
@@ -59,6 +59,8 @@ export function HoursPanel({
   const [form, setForm] = useState({ teamMemberId: currentTeamMemberId || "", workDate: todayIso, hours: "", note: "" });
   const [showDetail, setShowDetail] = useState(false);
   const [openWeeks, setOpenWeeks] = useState<Record<string, boolean>>({});
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState({ workDate: "", hours: "", note: "" });
   const [, startTransition] = useTransition();
 
   const nameFor = (id: string) => teamMembers.find((m) => m.id === id)?.name || "—";
@@ -105,6 +107,25 @@ export function HoursPanel({
     startTransition(() => {
       deleteHourEntry(target, id).catch((err) => alert(err instanceof Error ? err.message : "Verwijderen mislukt."));
     });
+  };
+
+  const startEdit = (e: HourEntry) => {
+    setEditingId(e.id);
+    setEditDraft({ workDate: e.work_date, hours: String(e.hours), note: e.note || "" });
+  };
+
+  const cancelEdit = () => setEditingId(null);
+
+  const saveEdit = (id: string) => {
+    if (!editDraft.workDate || !Number(editDraft.hours)) return;
+    startTransition(() => {
+      updateHourEntry(target, id, {
+        workDate: editDraft.workDate,
+        hours: Number(editDraft.hours),
+        note: editDraft.note || null,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+    });
+    setEditingId(null);
   };
 
   const exportCsv = () => {
@@ -174,8 +195,40 @@ export function HoursPanel({
                   {open && (
                     <div className="task-list">
                       {wg.rows.map((e) => {
-                        const canDelete = !isLocked && (role === "eigenaar" || e.team_member_id === currentTeamMemberId);
-                        return (
+                        const canEdit = !isLocked && (role === "eigenaar" || e.team_member_id === currentTeamMemberId);
+                        return editingId === e.id ? (
+                          <div key={e.id} className="add-form">
+                            <div className="add-form-grid">
+                              <input
+                                type="date"
+                                value={editDraft.workDate}
+                                onChange={(ev) => setEditDraft({ ...editDraft, workDate: ev.target.value })}
+                              />
+                              <input
+                                type="number"
+                                step="0.5"
+                                min="0"
+                                max="24"
+                                placeholder="Uren"
+                                value={editDraft.hours}
+                                onChange={(ev) => setEditDraft({ ...editDraft, hours: ev.target.value })}
+                              />
+                              <input
+                                placeholder="Opmerking (optioneel)"
+                                value={editDraft.note}
+                                onChange={(ev) => setEditDraft({ ...editDraft, note: ev.target.value })}
+                              />
+                            </div>
+                            <div className="dossier-status-actions">
+                              <button className="btn-primary" onClick={() => saveEdit(e.id)}>
+                                <Check size={14} /> Opslaan
+                              </button>
+                              <button className="btn-ghost" onClick={cancelEdit}>
+                                <X size={14} /> Annuleren
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
                           <div key={e.id} className="task-row">
                             <div className="task-body">
                               <div className="task-title mono">
@@ -183,10 +236,15 @@ export function HoursPanel({
                               </div>
                               {e.note && <div className="task-meta">{e.note}</div>}
                             </div>
-                            {canDelete && (
-                              <button className="icon-btn danger ghost" title="Verwijderen" onClick={() => remove(e.id)}>
-                                <Trash2 size={14} />
-                              </button>
+                            {canEdit && (
+                              <div style={{ display: "flex", gap: 4 }}>
+                                <button className="icon-btn ghost" title="Aanpassen" onClick={() => startEdit(e)}>
+                                  <Pencil size={14} />
+                                </button>
+                                <button className="icon-btn danger ghost" title="Verwijderen" onClick={() => remove(e.id)}>
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
                             )}
                           </div>
                         );

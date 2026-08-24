@@ -57,6 +57,22 @@ export async function createWeekHourEntries(
   revalidateTarget(target);
 }
 
+export async function updateHourEntry(
+  target: HoursTarget,
+  id: string,
+  data: { workDate: string; hours: number; note: string | null }
+) {
+  await requireUser();
+  if (!data.workDate || !(data.hours > 0)) throw new Error("Datum en uren zijn verplicht.");
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("hours")
+    .update({ work_date: data.workDate, hours: data.hours, note: data.note || null })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidateTarget(target);
+}
+
 export async function deleteHourEntry(target: HoursTarget, id: string) {
   await requireUser();
   const supabase = createClient();
