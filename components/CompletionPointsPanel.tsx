@@ -58,9 +58,16 @@ export function CompletionPointsPanel({
   const [busy, setBusy] = useState(false);
   const [preview, setPreview] = useState<string | null>(null);
   const [reviewDrafts, setReviewDrafts] = useState<Record<string, { responsibleTeamMemberId: string; deadline: string }>>({});
+  const [showAdd, setShowAdd] = useState(false);
   const [, startTransition] = useTransition();
 
   useRealtimeRefresh("completion_points", projectId);
+
+  const closeAdd = () => {
+    setShowAdd(false);
+    setForm({ description: "", note: "", responsibleTeamMemberId: "", deadline: "" });
+    setPending(null);
+  };
 
   const handlePicked = async (file: File) => {
     setBusy(true);
@@ -99,8 +106,7 @@ export function CompletionPointsPanel({
         filePath,
         fileType,
       });
-      setForm({ description: "", note: "", responsibleTeamMemberId: "", deadline: "" });
-      setPending(null);
+      closeAdd();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
     } finally {
@@ -124,6 +130,11 @@ export function CompletionPointsPanel({
           Zodra een punt &ldquo;gereed gemeld&rdquo; is, kun jij het hier goedkeuren. Meld je zelf een nieuw punt, dan controleert de
           eigenaar dat eerst voordat er iemand aan gekoppeld wordt.
         </div>
+      )}
+      {canCreate && (
+        <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Opleverpunt toevoegen
+        </button>
       )}
       {points.length === 0 && <div className="empty-hint">Nog geen opleverpunten.</div>}
       <div className="work-list">
@@ -214,52 +225,59 @@ export function CompletionPointsPanel({
           );
         })}
       </div>
-      {canCreate && (
-        <div className="add-form">
-          <div className="add-form-title">Opleverpunt toevoegen</div>
-          <div className="hint-bar small">
-            <ImagePlus size={13} style={{ display: "inline", marginRight: 4, verticalAlign: -2 }} />
-            Voeg een foto of bestand toe om nog duidelijker te maken wat er moet gebeuren.
-          </div>
-          <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
-          <FilePreview
-            previewUrl={pending?.previewUrl ?? null}
-            fileType={pending?.fileType ?? null}
-            fileName={pending?.fileName ?? null}
-            onClear={() => setPending(null)}
-          />
-          <div className="add-form-grid">
-            <input
-              placeholder="Omschrijving"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
+      {canCreate && showAdd && (
+        <div className="sig-overlay" onClick={() => !busy && closeAdd()}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Opleverpunt toevoegen</div>
+            <div className="hint-bar small">
+              <ImagePlus size={13} style={{ display: "inline", marginRight: 4, verticalAlign: -2 }} />
+              Voeg een foto of bestand toe om nog duidelijker te maken wat er moet gebeuren.
+            </div>
+            <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
+            <FilePreview
+              previewUrl={pending?.previewUrl ?? null}
+              fileType={pending?.fileType ?? null}
+              fileName={pending?.fileName ?? null}
+              onClear={() => setPending(null)}
             />
-            <textarea
-              rows={2}
-              placeholder="Opmerking (optioneel)"
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
-            />
-            {role === "eigenaar" && (
-              <>
-                <select value={form.responsibleTeamMemberId} onChange={(e) => setForm({ ...form, responsibleTeamMemberId: e.target.value })}>
-                  <option value="">Verantwoordelijke kiezen</option>
-                  {teamMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-                <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
-              </>
+            <div className="add-form-grid">
+              <input
+                placeholder="Omschrijving"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+              <textarea
+                rows={2}
+                placeholder="Opmerking (optioneel)"
+                value={form.note}
+                onChange={(e) => setForm({ ...form, note: e.target.value })}
+              />
+              {role === "eigenaar" && (
+                <>
+                  <select value={form.responsibleTeamMemberId} onChange={(e) => setForm({ ...form, responsibleTeamMemberId: e.target.value })}>
+                    <option value="">Verantwoordelijke kiezen</option>
+                    {teamMembers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                  <input type="date" value={form.deadline} onChange={(e) => setForm({ ...form, deadline: e.target.value })} />
+                </>
+              )}
+            </div>
+            {role === "klant" && (
+              <div className="hint-bar small">De eigenaar controleert dit punt en wijst er iemand aan toe voordat het wordt opgepakt.</div>
             )}
-            <button className="btn-primary" onClick={add} disabled={busy}>
-              <Plus size={14} /> Toevoegen
-            </button>
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd} disabled={busy}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={add} disabled={busy}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
           </div>
-          {role === "klant" && (
-            <div className="hint-bar small">De eigenaar controleert dit punt en wijst er iemand aan toe voordat het wordt opgepakt.</div>
-          )}
         </div>
       )}
     </div>
