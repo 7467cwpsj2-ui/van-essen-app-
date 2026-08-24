@@ -3657,3 +3657,20 @@ a.dash-panel-row:hover {
     font-size: 9.5px;
   }
 }
+
+/* ---------- prefers-reduced-motion ---------- */
+
+/* Wie in het besturingssysteem animaties heeft uitgezet, krijgt ook
+   hier geen zwevende kaarten, shimmer-skeletons of inglij-animaties —
+   alles blijft functioneel (knoppen werken nog, spinners draaien nog
+   even), maar zonder de beweging zelf. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

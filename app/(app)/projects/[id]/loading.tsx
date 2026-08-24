@@ -3,7 +3,7 @@ export default function ProjectLoading() {
     <div>
       <div className="project-header" style={{ boxShadow: "none" }}>
         <div className="skeleton" style={{ width: 90, height: 10 }} />
-        <div className="skeleton" style={{ width: 240, height: 22, marginTop: 8 }} />
+        <div className="skeleton" style={{ width: 240, height: 26, marginTop: 8 }} />
         <div className="skeleton" style={{ width: 140, height: 11, marginTop: 8 }} />
       </div>
       <div style={{ display: "flex", gap: 8, marginBottom: 14, flexWrap: "wrap" }}>
