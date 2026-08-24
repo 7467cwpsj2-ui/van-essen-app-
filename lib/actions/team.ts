@@ -75,7 +75,13 @@ export async function resendTeamInvite(teamMemberId: string): Promise<string> {
 
 export async function updateTeamMemberDetails(
   id: string,
-  patch: { name?: string; trade?: string | null; hourly_rate?: number | null; hourly_rate_vat_type?: "excl" | "incl" }
+  patch: {
+    name?: string;
+    trade?: string | null;
+    hourly_rate?: number | null;
+    hourly_rate_vat_type?: "excl" | "incl";
+    color?: string | null;
+  }
 ) {
   await requireOwner();
   const supabase = createClient();

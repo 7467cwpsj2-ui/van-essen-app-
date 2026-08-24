@@ -72,7 +72,7 @@ export async function resendClientInvite(clientId: string): Promise<string> {
   return link.properties.action_link;
 }
 
-export async function updateClientDetails(id: string, patch: { name?: string }) {
+export async function updateClientDetails(id: string, patch: { name?: string; color?: string | null }) {
   await requireOwner();
   const supabase = createClient();
   const { error } = await supabase.from("clients").update(patch).eq("id", id);

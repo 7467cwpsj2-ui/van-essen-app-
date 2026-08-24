@@ -86,6 +86,7 @@ export interface TeamMember {
   member_type: TeamMemberType;
   hourly_rate: number | null;
   hourly_rate_vat_type: ExtraWorkVatType;
+  color: string | null;
   created_at: string;
 }
 
@@ -105,6 +106,7 @@ export interface Client {
   name: string;
   permissions: Permissions;
   can_edit_schedule: boolean;
+  color: string | null;
   created_at: string;
 }
 

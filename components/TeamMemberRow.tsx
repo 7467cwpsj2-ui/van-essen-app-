@@ -52,7 +52,7 @@ export function TeamMemberRow({
   const [copied, setCopied] = useState(false);
 
   const projectCount = member.sees_all_projects ? projects.length : access.length;
-  const avatarColor = colorForKey(member.name);
+  const avatarColor = member.color || colorForKey(member.name);
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
@@ -113,6 +113,13 @@ export function TeamMemberRow({
       {expanded && (
         <div className="access-details">
           <div className="client-row-top">
+            <input
+              type="color"
+              value={avatarColor}
+              onChange={(e) => run(() => updateTeamMemberDetails(member.id, { color: e.target.value }))}
+              className="planning-legend-swatch"
+              title="Avatarkleur aanpassen"
+            />
             <input
               className="access-name-input"
               value={name}

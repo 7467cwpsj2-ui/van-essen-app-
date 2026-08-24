@@ -33,7 +33,7 @@ export function ClientRow({
   const [copied, setCopied] = useState(false);
   const permCount = MODULE_KEYS.filter((k) => client.permissions[k]).length;
   const linkedProjects = projects.filter((p) => p.clientIds.includes(client.id));
-  const avatarColor = colorForKey(client.name);
+  const avatarColor = client.color || colorForKey(client.name);
 
   const run = (fn: () => Promise<void>) => {
     startTransition(() => {
@@ -84,6 +84,13 @@ export function ClientRow({
       {expanded && (
         <div className="access-details">
           <div className="client-row-top">
+            <input
+              type="color"
+              value={avatarColor}
+              onChange={(e) => run(() => updateClientDetails(client.id, { color: e.target.value }))}
+              className="planning-legend-swatch"
+              title="Avatarkleur aanpassen"
+            />
             <input
               className="access-name-input"
               value={name}
