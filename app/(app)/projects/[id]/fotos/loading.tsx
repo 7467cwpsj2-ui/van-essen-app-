@@ -1,5 +1,5 @@
-import { SkeletonPanel } from "@/components/skeletons/SkeletonPanel";
+import { SkeletonPhotoGrid } from "@/components/skeletons/SkeletonPhotoGrid";
 
 export default function FotosLoading() {
-  return <SkeletonPanel rows={4} />;
+  return <SkeletonPhotoGrid tiles={6} />;
 }

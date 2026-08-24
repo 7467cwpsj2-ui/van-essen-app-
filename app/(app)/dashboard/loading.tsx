@@ -1,13 +1,14 @@
 export default function DashboardLoading() {
   return (
     <div className="dashboard">
-      <div className="skeleton" style={{ width: 160, height: 12 }} />
-      <div className="skeleton" style={{ width: 220, height: 24, marginTop: 6 }} />
+      <div className="skeleton" style={{ width: 90, height: 11 }} />
+      <div className="skeleton" style={{ width: 240, height: 27, marginTop: 4 }} />
+      <div className="skeleton" style={{ width: 150, height: 12, marginTop: 2 }} />
 
       <div className="dash-cards">
         {Array.from({ length: 5 }).map((_, i) => (
           <div key={i} className="dash-card" style={{ boxShadow: "none" }}>
-            <div className="skeleton" style={{ width: 30, height: 30, borderRadius: 9 }} />
+            <div className="skeleton" style={{ width: 34, height: 34, borderRadius: 10 }} />
             <div className="skeleton" style={{ width: "60%", height: 22, marginTop: 6 }} />
             <div className="skeleton" style={{ width: "80%", height: 11 }} />
           </div>
@@ -37,7 +38,7 @@ export default function DashboardLoading() {
       <div className="proj-card-grid">
         {Array.from({ length: 4 }).map((_, i) => (
           <div key={i} className="proj-card" style={{ boxShadow: "none", cursor: "default" }}>
-            <div className="skeleton" style={{ height: 100, borderRadius: 0 }} />
+            <div className="skeleton" style={{ height: 128, borderRadius: 0 }} />
             <div className="proj-card-body">
               <div className="skeleton" style={{ width: "70%", height: 13 }} />
               <div className="skeleton" style={{ width: "40%", height: 11 }} />
