@@ -223,16 +223,16 @@ export function DossierPanel({
     photos.length > 0 && (
       <div key={title}>
         <div className="dash-section-title">{title}</div>
-        <div className="drawing-grid">
+        <div className="photo-grid">
           {photos.map((ph) => (
-            <div key={ph.id} className="drawing-card">
+            <div key={ph.id} className="photo-card">
               {ph.url && (
-                <button type="button" className="thumb-btn" onClick={() => setPreview(ph.url)}>
-                  <img src={ph.url} alt="" className="drawing-thumb" />
+                <button type="button" className="photo-card-thumb" onClick={() => setPreview(ph.url)}>
+                  <img src={ph.url} alt="" />
                 </button>
               )}
-              <div className="drawing-body">
-                <div className="drawing-title">{ph.title}</div>
+              <div className="photo-card-body">
+                <div className="photo-card-title">{ph.title}</div>
               </div>
             </div>
           ))}

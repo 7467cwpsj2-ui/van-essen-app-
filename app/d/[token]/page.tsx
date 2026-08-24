@@ -35,16 +35,16 @@ export default async function PublicDossierPage({ params }: { params: { token: s
     photos.length > 0 && (
       <div key={title}>
         <div className="dash-section-title">{title}</div>
-        <div className="drawing-grid">
+        <div className="photo-grid">
           {photos.map((ph) => (
-            <div key={ph.id} className="drawing-card">
+            <div key={ph.id} className="photo-card">
               {ph.url && (
-                <a href={ph.url} target="_blank" rel="noreferrer" className="thumb-btn">
-                  <img src={ph.url} alt="" className="drawing-thumb" />
+                <a href={ph.url} target="_blank" rel="noreferrer" className="photo-card-thumb">
+                  <img src={ph.url} alt="" />
                 </a>
               )}
-              <div className="drawing-body">
-                <div className="drawing-title">{ph.title}</div>
+              <div className="photo-card-body">
+                <div className="photo-card-title">{ph.title}</div>
               </div>
             </div>
           ))}
