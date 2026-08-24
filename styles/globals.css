@@ -3166,14 +3166,20 @@ a.dash-panel-row:hover {
 .note-card {
   background: var(--panel);
   border: 1px solid var(--border);
+  border-left: 3px solid transparent;
   border-radius: var(--radius-md);
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
+/* Zelfde actie-taal als de rest van de app: een notitie die nog
+   beoordeeld moet worden krijgt de gekleurde balk, niet alleen een
+   ietwat andere randkleur die je makkelijk over het hoofd ziet. */
 .note-card-pending {
-  border-color: var(--brand);
+  border-color: color-mix(in srgb, var(--warning) 30%, var(--border));
+  border-left-color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 5%, var(--panel));
 }
 .note-top {
   display: flex;
