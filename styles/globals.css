@@ -3186,6 +3186,96 @@ a.dash-panel-row:hover {
   flex-shrink: 0;
 }
 
+/* ---------- uren: kiezer met zoeken + snel-toevoegen ---------- */
+
+.uren-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.uren-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--panel);
+  color: var(--text-faint);
+}
+.uren-search input {
+  border: none !important;
+  background: transparent !important;
+  padding: 10px 0 !important;
+  flex: 1;
+}
+.uren-search input:focus {
+  box-shadow: none !important;
+}
+.uren-row {
+  border-radius: 10px;
+  padding: 2px 6px 6px;
+}
+.uren-row.active {
+  background: var(--brand-soft);
+}
+.uren-row.active .dash-panel-row-title {
+  color: var(--brand-dim);
+}
+.uren-row-main {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  text-decoration: none;
+  color: inherit;
+}
+.uren-row-quick {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-left: 36px;
+}
+.uren-row-quick-label {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+}
+.uren-row-quick-ok {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--success);
+}
+.chip-btn {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, transform 0.15s var(--ease-premium);
+}
+.chip-btn:hover:not(:disabled) {
+  background: var(--border);
+  border-color: var(--border-strong);
+}
+.chip-btn:active:not(:disabled) {
+  transform: scale(0.95);
+}
+.chip-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
 /* ---------- login ---------- */
 
 .login-shell {

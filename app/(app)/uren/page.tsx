@@ -1,18 +1,11 @@
-import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { Clock, Hammer } from "lucide-react";
+import { Clock } from "lucide-react";
 import { canSeeHours, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { getProjectsWithProgress } from "@/lib/data";
-import { ProjectThumb } from "@/components/ProjectThumb";
 import { HoursPanel } from "@/components/HoursPanel";
+import { UrenPicker } from "@/components/UrenPicker";
 import type { HourEntry, Project, QuickJob, TeamMember } from "@/types/database";
-
-const STATUS_LABEL: Record<string, string> = {
-  gepland: "Gepland",
-  lopend: "Lopend",
-  afgerond: "Afgerond",
-};
 
 export default async function UrenTopLevelPage({ searchParams }: { searchParams: { project?: string; job?: string } }) {
   const current = await requireUser();
@@ -30,8 +23,12 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
   // exact één lopend project en zijn er geen losse klussen om uit te
   // kiezen, dan gaat dat ene project automatisch open.
   const lopend = projects.filter((p) => p.status === "lopend");
-  if (!searchParams.project && !searchParams.job && lopend.length === 1 && quickJobs.length === 0) {
+  const openJobs = quickJobs.filter((j) => !j.done);
+  if (!searchParams.project && !searchParams.job && lopend.length === 1 && openJobs.length === 0) {
     redirect(`/uren?project=${lopend[0].id}`);
+  }
+  if (!searchParams.project && !searchParams.job && lopend.length === 0 && openJobs.length === 1) {
+    redirect(`/uren?job=${openJobs[0].id}`);
   }
 
   const selectedProject = searchParams.project ? projects.find((p) => p.id === searchParams.project) : null;
@@ -73,8 +70,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
     );
   }
 
-  const orderedProjects = [...lopend, ...projects.filter((p) => p.status !== "lopend")];
-  const nothingToPick = orderedProjects.length === 0 && quickJobs.length === 0;
+  const nothingToPick = projects.length === 0 && quickJobs.length === 0;
 
   return (
     <div>
@@ -86,45 +82,28 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
         <div className="empty-hint">Nog geen projecten of klussen om uren op te registreren.</div>
       ) : (
         <>
-          <div className="dash-panel-list" style={{ marginBottom: 16 }}>
-            {orderedProjects.map((p) => (
-              <Link
-                key={p.id}
-                href={`/uren?project=${p.id}`}
-                className={"dash-panel-row" + (selectedProject?.id === p.id ? " active" : "")}
-              >
-                <div className="dash-panel-row-icon">
-                  <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planning_color} />
-                </div>
-                <div className="dash-panel-row-body">
-                  <div className="dash-panel-row-title">{p.name}</div>
-                  <div className="dash-panel-row-sub">
-                    {STATUS_LABEL[p.status]}
-                    {p.clientName ? ` · ${p.clientName}` : ""}
-                  </div>
-                </div>
-              </Link>
-            ))}
-            {quickJobs.map((j) => (
-              <Link key={j.id} href={`/uren?job=${j.id}`} className={"dash-panel-row" + (selectedJob?.id === j.id ? " active" : "")}>
-                <div className="dash-panel-row-icon">
-                  <Hammer size={14} />
-                </div>
-                <div className="dash-panel-row-body">
-                  <div className="dash-panel-row-title">{j.title}</div>
-                  <div className="dash-panel-row-sub">
-                    Losse klus · {j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
+          <UrenPicker
+            projects={projects.map((p) => ({
+              id: p.id,
+              name: p.name,
+              status: p.status,
+              clientName: p.clientName,
+              coverPhotoUrl: p.coverPhotoUrl,
+              planningColor: p.planning_color,
+            }))}
+            quickJobs={quickJobs.map((j) => ({ id: j.id, title: j.title, start_date: j.start_date, end_date: j.end_date, done: j.done }))}
+            selectedProjectId={selectedProject?.id ?? null}
+            selectedJobId={selectedJob?.id ?? null}
+            canQuickAdd={current.profile.role === "team"}
+            currentTeamMemberId={current.profile.team_member_id}
+            todayIso={new Date().toISOString().slice(0, 10)}
+          />
           {!selectedProject && !selectedJob && (
-            <div className="empty-hint empty-hint-row">
+            <div className="empty-hint empty-hint-row" style={{ marginTop: 12 }}>
               <span className="empty-hint-icon-chip">
                 <Clock size={13} />
               </span>
-              Kies hierboven eerst een project of klus.
+              Kies hierboven eerst een project of klus, of registreer direct uren voor vandaag.
             </div>
           )}
           {panel}
