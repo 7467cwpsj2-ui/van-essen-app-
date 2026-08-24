@@ -42,6 +42,8 @@ export interface TodayTask {
   projectId: string;
   projectName: string;
   assigneeType: "eigenaar" | "team" | "klant";
+  dueDate: string;
+  overdue: boolean;
 }
 
 export interface ActivityItem {
@@ -251,8 +253,9 @@ export async function getDashboardExtras(projects: ProjectWithProgress[]): Promi
         .from("tasks")
         .select("id,project_id,title,assignee_type,due_date,done")
         .in("project_id", projectIds)
-        .eq("due_date", today)
-        .eq("done", false),
+        .lte("due_date", today)
+        .eq("done", false)
+        .order("due_date", { ascending: true }),
       supabase.from("extra_work").select("id,amount,status").in("project_id", projectIds).eq("status", "open"),
       supabase.from("completion_points").select("id,status").in("project_id", projectIds).neq("status", "goedgekeurd"),
       supabase
@@ -275,6 +278,8 @@ export async function getDashboardExtras(projects: ProjectWithProgress[]): Promi
     projectId: t.project_id as string,
     projectName: projectNameMap[t.project_id as string] ?? "",
     assigneeType: t.assignee_type as TodayTask["assigneeType"],
+    dueDate: t.due_date as string,
+    overdue: (t.due_date as string) < today,
   }));
 
   const openMeerwerk = {

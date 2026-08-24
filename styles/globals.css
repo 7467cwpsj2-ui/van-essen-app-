@@ -3146,6 +3146,11 @@ a.dash-panel-row:hover {
 .dash-panel-row.active .dash-panel-row-title {
   color: var(--brand-dim);
 }
+.dash-panel-row.overdue {
+  border-left: 3px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, transparent);
+  padding-left: 3px;
+}
 .dash-panel-row-icon {
   width: 26px;
   height: 26px;

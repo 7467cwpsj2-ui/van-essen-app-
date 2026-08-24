@@ -48,6 +48,8 @@ export default async function DashboardPage({
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
   const myHoursToday = myStaffId ? await getMyHoursToday(myStaffId) : null;
 
+  const hasOverdueTasks = extras.todayTasks.some((t) => t.overdue);
+
   const counts = {
     gepland: projects.filter((p) => p.status === "gepland").length,
     lopend: projects.filter((p) => p.status === "lopend").length,
@@ -84,12 +86,12 @@ export default async function DashboardPage({
           <div className="dash-card-value">{counts.lopend}</div>
           <div className="dash-card-title">Lopende projecten</div>
         </a>
-        <Link href="/te-doen" className="dash-card">
-          <div className="dash-card-icon">
+        <Link href="/te-doen" className={"dash-card" + (hasOverdueTasks ? " accent" : "")}>
+          <div className={"dash-card-icon" + (hasOverdueTasks ? " warning" : "")}>
             <Clock size={16} />
           </div>
           <div className="dash-card-value">{extras.todayTasks.length}</div>
-          <div className="dash-card-title">Te doen vandaag</div>
+          <div className="dash-card-title">Te doen{hasOverdueTasks ? " — ook achterstallig" : " vandaag"}</div>
         </Link>
         {myHoursToday !== null && (
           <Link href="/uren" className={"dash-card" + (myHoursToday === 0 ? " accent" : "")}>
@@ -261,7 +263,7 @@ export default async function DashboardPage({
 
         <div className="dash-panel">
           <div className="dash-panel-head">
-            <span>Te doen vandaag</span>
+            <span>Te doen</span>
             <Link href="/te-doen" className="link-btn">
               Bekijk alle
             </Link>
@@ -276,7 +278,11 @@ export default async function DashboardPage({
           ) : (
             <div className="dash-panel-list">
               {extras.todayTasks.map((t) => (
-                <Link key={t.id} href={`/projects/${t.projectId}/planning`} className="dash-panel-row">
+                <Link
+                  key={t.id}
+                  href={`/projects/${t.projectId}/planning`}
+                  className={"dash-panel-row" + (t.overdue ? " overdue" : "")}
+                >
                   <div className="dash-panel-row-icon">
                     <Clock size={14} />
                   </div>
@@ -284,6 +290,7 @@ export default async function DashboardPage({
                     <div className="dash-panel-row-title">{t.title}</div>
                     <div className="dash-panel-row-sub">
                       {t.projectName} · {TASK_ASSIGNEE_LABEL[t.assigneeType]}
+                      {t.overdue && <span className="task-overdue"> · achterstallig sinds {fmtShort(t.dueDate)}</span>}
                     </div>
                   </div>
                 </Link>
