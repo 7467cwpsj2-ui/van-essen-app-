@@ -341,7 +341,11 @@ export default async function DashboardPage({
       ) : (
         <div className="proj-card-grid">
           {visibleProjects.map((p) => (
-            <Link key={p.id} href={`/projects/${p.id}/planning`} className="proj-card">
+            <Link
+              key={p.id}
+              href={`/projects/${p.id}/planning`}
+              className={"proj-card" + (p.status === "afgerond" ? " is-done" : "")}
+            >
               <div className="proj-card-thumb">
                 <ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planning_color} />
               </div>

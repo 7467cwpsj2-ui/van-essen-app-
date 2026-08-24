@@ -204,7 +204,8 @@ textarea {
    pagina-inhoud glijdt zacht in bij het laden van elke pagina. */
 .dash-card,
 .proj-card {
-  transition: transform 0.25s var(--ease-premium), box-shadow 0.25s var(--ease-premium), border-color 0.25s var(--ease-premium);
+  transition: transform 0.25s var(--ease-premium), box-shadow 0.25s var(--ease-premium), border-color 0.25s var(--ease-premium),
+    opacity 0.25s var(--ease-premium);
 }
 .dash-card:hover,
 .proj-card:hover {
@@ -2667,6 +2668,14 @@ a.link-btn:hover {
 }
 .proj-card:hover {
   border-color: var(--brand);
+}
+/* Afgeronde projecten mogen visueel naar de achtergrond zakken — het
+   oog moet eerst naar de projecten gaan waar nog iets moet gebeuren. */
+.proj-card.is-done {
+  opacity: 0.7;
+}
+.proj-card.is-done:hover {
+  opacity: 1;
 }
 .proj-card-thumb {
   height: 128px;
