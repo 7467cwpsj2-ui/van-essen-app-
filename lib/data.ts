@@ -57,6 +57,7 @@ export interface MyScheduleItem {
   id: string;
   title: string;
   projectId: string | null;
+  quickJobId: string | null;
   projectName: string;
   start_date: string;
   end_date: string;
@@ -107,13 +108,22 @@ export async function getMySchedule(teamMemberId: string): Promise<MyScheduleIte
       id: p.id,
       title: p.title,
       projectId: p.project_id,
+      quickJobId: null,
       projectName: p.projects?.name ?? "project",
       start_date: p.start_date,
       end_date: p.end_date,
     });
   }
   for (const j of (jobs ?? []) as { id: string; title: string; start_date: string; end_date: string }[]) {
-    items.push({ id: `qj:${j.id}`, title: j.title, projectId: null, projectName: "Losse klus", start_date: j.start_date, end_date: j.end_date });
+    items.push({
+      id: `qj:${j.id}`,
+      title: j.title,
+      projectId: null,
+      quickJobId: j.id,
+      projectName: "Losse klus",
+      start_date: j.start_date,
+      end_date: j.end_date,
+    });
   }
   items.sort((a, b) => a.start_date.localeCompare(b.start_date));
   return items.slice(0, 8);

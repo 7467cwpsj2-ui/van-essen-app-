@@ -63,6 +63,7 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0054_direct_messages.sql`, `0055_drop_direct_messages.sql`,
 `0056_hours_on_quick_jobs.sql`, `0057_team_member_client_color.sql`,
 `0058_quick_job_done.sql`, `0059_quick_job_day_assignments.sql`,
+`0060_quick_job_address_description.sql`,
 en klik telkens Run), of met de
 Supabase CLI:
 

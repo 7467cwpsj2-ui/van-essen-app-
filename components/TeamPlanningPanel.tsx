@@ -112,11 +112,28 @@ export function TeamPlanningPanel({
 }) {
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
   const [, startTransition] = useTransition();
-  const [form, setForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [form, setForm] = useState({
+    title: "",
+    assignee: "",
+    assigneeTeamMemberIds: [] as string[],
+    start: "",
+    days: "",
+    address: "",
+    description: "",
+  });
   const [filter, setFilter] = useState<"alle" | "personeel" | "onderaannemer">("alle");
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
-  const [editJobForm, setEditJobForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [editJobForm, setEditJobForm] = useState({
+    title: "",
+    assignee: "",
+    assigneeTeamMemberIds: [] as string[],
+    start: "",
+    days: "",
+    address: "",
+    description: "",
+  });
   const [showDoneJobs, setShowDoneJobs] = useState(false);
+  const [showAddJob, setShowAddJob] = useState(false);
   const [perDay, setPerDay] = useState(false);
   const [dayAssignments, setDayAssignments] = useState<Record<string, string[]>>({});
   const [editPerDay, setEditPerDay] = useState(false);
@@ -138,6 +155,13 @@ export function TeamPlanningPanel({
     return list.length > 0 ? list : null;
   };
 
+  const closeAddJob = () => {
+    setShowAddJob(false);
+    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "", address: "", description: "" });
+    setPerDay(false);
+    setDayAssignments({});
+  };
+
   const addQuickJob = () => {
     if (!form.title.trim() || !form.start || !computedEnd) return;
     startTransition(() => {
@@ -147,12 +171,12 @@ export function TeamPlanningPanel({
         assigneeTeamMemberIds: form.assigneeTeamMemberIds,
         start: form.start,
         end: computedEnd,
+        address: form.address,
+        description: form.description,
         dayAssignments: perDay ? buildDayAssignments(workDays, dayAssignments) : null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
-    setForm({ title: "", assignee: "", assigneeTeamMemberIds: [], start: "", days: "" });
-    setPerDay(false);
-    setDayAssignments({});
+    closeAddJob();
   };
 
   const startEditJob = (j: QuickJob) => {
@@ -168,6 +192,8 @@ export function TeamPlanningPanel({
       assigneeTeamMemberIds: j.assignee_team_member_ids,
       start: j.start_date,
       days: String(count || 1),
+      address: j.address ?? "",
+      description: j.description ?? "",
     });
     if (j.day_assignments && j.day_assignments.length > 0) {
       setEditPerDay(true);
@@ -195,6 +221,8 @@ export function TeamPlanningPanel({
         assigneeTeamMemberIds: editJobForm.assigneeTeamMemberIds,
         start: editJobForm.start,
         end: editJobComputedEnd,
+        address: editJobForm.address,
+        description: editJobForm.description,
         dayAssignments: editPerDay ? buildDayAssignments(editWorkDays, editDayAssignments) : null,
       }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
     });
@@ -402,50 +430,74 @@ export function TeamPlanningPanel({
         </ScrollToToday>
       )}
 
-      <div className="add-form">
-        <div className="add-form-title">Kleine klus toevoegen (1-3 dagen, geen project of klant nodig)</div>
-        <div className="add-form-grid">
-          <input
-            placeholder="Wat moet er gebeuren?"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} title="Startdatum" />
-          <input
-            type="number"
-            min="1"
-            max="3"
-            placeholder="Aantal dagen"
-            value={form.days}
-            onChange={(e) => setForm({ ...form, days: e.target.value })}
-          />
-          <button className="btn-primary" onClick={addQuickJob}>
-            <Plus size={14} /> Toevoegen
-          </button>
-        </div>
-        {workDays.length > 1 && (
-          <label className="checkbox-label">
-            <input type="checkbox" checked={perDay} onChange={(e) => setPerDay(e.target.checked)} />
-            Per dag andere mensen inplannen (bijv. dag 1 twee man, dag 2 maar één)
-          </label>
-        )}
-        {perDay && workDays.length > 1 ? (
-          <DayAssignmentPicker days={workDays} value={dayAssignments} onChange={setDayAssignments} teamMembers={teamMembers} />
-        ) : (
-          <AssigneeInput
-            assignee={form.assignee}
-            assigneeTeamMemberIds={form.assigneeTeamMemberIds}
-            onChangeAssignee={(v) => setForm({ ...form, assignee: v })}
-            onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
-            teamMembers={teamMembers}
-          />
-        )}
-        {computedEnd && (
-          <div className="hint-bar small">
-            Deze klus loopt van {fmtShort(form.start)} t/m {fmtShort(computedEnd)} (weekenden tellen niet mee).
+      <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
+        <Plus size={14} /> Kleine klus toevoegen
+      </button>
+
+      {showAddJob && (
+        <div className="sig-overlay" onClick={closeAddJob}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Kleine klus toevoegen</div>
+            <div className="hint-bar small">1-3 dagen, geen project of klant nodig.</div>
+            <div className="add-form-grid">
+              <input
+                placeholder="Wat moet er gebeuren?"
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+              />
+              <input placeholder="Adres (optioneel)" value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              <input type="date" value={form.start} onChange={(e) => setForm({ ...form, start: e.target.value })} title="Startdatum" />
+              <input
+                type="number"
+                min="1"
+                max="3"
+                placeholder="Aantal dagen"
+                value={form.days}
+                onChange={(e) => setForm({ ...form, days: e.target.value })}
+              />
+            </div>
+            <label className="field-with-label">
+              <span className="field-label">Omschrijving van de werkzaamheden (optioneel)</span>
+              <textarea
+                rows={3}
+                placeholder="Wat moet er precies gebeuren?"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+              />
+            </label>
+            {workDays.length > 1 && (
+              <label className="checkbox-label">
+                <input type="checkbox" checked={perDay} onChange={(e) => setPerDay(e.target.checked)} />
+                Per dag andere mensen inplannen (bijv. dag 1 twee man, dag 2 maar één)
+              </label>
+            )}
+            {perDay && workDays.length > 1 ? (
+              <DayAssignmentPicker days={workDays} value={dayAssignments} onChange={setDayAssignments} teamMembers={teamMembers} />
+            ) : (
+              <AssigneeInput
+                assignee={form.assignee}
+                assigneeTeamMemberIds={form.assigneeTeamMemberIds}
+                onChangeAssignee={(v) => setForm({ ...form, assignee: v })}
+                onChangeTeamMemberIds={(ids) => setForm({ ...form, assigneeTeamMemberIds: ids })}
+                teamMembers={teamMembers}
+              />
+            )}
+            {computedEnd && (
+              <div className="hint-bar small">
+                Deze klus loopt van {fmtShort(form.start)} t/m {fmtShort(computedEnd)} (weekenden tellen niet mee).
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAddJob}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addQuickJob}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {filteredQuickJobs.length > 0 && (
         <>
@@ -463,6 +515,11 @@ export function TeamPlanningPanel({
                       onChange={(e) => setEditJobForm({ ...editJobForm, title: e.target.value })}
                     />
                     <input
+                      placeholder="Adres (optioneel)"
+                      value={editJobForm.address}
+                      onChange={(e) => setEditJobForm({ ...editJobForm, address: e.target.value })}
+                    />
+                    <input
                       type="date"
                       value={editJobForm.start}
                       onChange={(e) => setEditJobForm({ ...editJobForm, start: e.target.value })}
@@ -477,6 +534,15 @@ export function TeamPlanningPanel({
                       onChange={(e) => setEditJobForm({ ...editJobForm, days: e.target.value })}
                     />
                   </div>
+                  <label className="field-with-label">
+                    <span className="field-label">Omschrijving van de werkzaamheden (optioneel)</span>
+                    <textarea
+                      rows={3}
+                      placeholder="Wat moet er precies gebeuren?"
+                      value={editJobForm.description}
+                      onChange={(e) => setEditJobForm({ ...editJobForm, description: e.target.value })}
+                    />
+                  </label>
                   {editWorkDays.length > 1 && (
                     <label className="checkbox-label">
                       <input type="checkbox" checked={editPerDay} onChange={(e) => setEditPerDay(e.target.checked)} />
@@ -516,7 +582,9 @@ export function TeamPlanningPanel({
               ) : (
                 <div key={j.id} className="task-row">
                   <div className="task-body">
-                    <div className="task-title">{j.title}</div>
+                    <Link href={`/klussen/${j.id}`} className="task-title">
+                      {j.title}
+                    </Link>
                     <div className="task-meta">
                       <span>{quickJobAssigneeLabel(j)}</span>
                       <span className="mono">
@@ -562,7 +630,9 @@ export function TeamPlanningPanel({
               {doneQuickJobs.map((j) => (
                 <div key={j.id} className="task-row done">
                   <div className="task-body">
-                    <div className="task-title">{j.title}</div>
+                    <Link href={`/klussen/${j.id}`} className="task-title">
+                      {j.title}
+                    </Link>
                     <div className="task-meta">
                       <span>{quickJobAssigneeLabel(j)}</span>
                       <span className="mono">

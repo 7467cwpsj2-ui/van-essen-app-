@@ -23,6 +23,8 @@ export async function createQuickJob(data: {
   assigneeTeamMemberIds: string[];
   start: string;
   end: string;
+  address?: string | null;
+  description?: string | null;
   dayAssignments?: QuickJobDayAssignment[] | null;
 }) {
   await requireOwner();
@@ -37,9 +39,12 @@ export async function createQuickJob(data: {
     start_date: data.start,
     end_date: data.end,
     day_assignments: dayAssignments,
+    address: data.address?.trim() || null,
+    description: data.description?.trim() || null,
   });
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
+  revalidatePath("/dashboard");
 }
 
 export async function updateQuickJob(
@@ -50,6 +55,8 @@ export async function updateQuickJob(
     assigneeTeamMemberIds: string[];
     start: string;
     end: string;
+    address?: string | null;
+    description?: string | null;
     dayAssignments?: QuickJobDayAssignment[] | null;
   }
 ) {
@@ -67,10 +74,14 @@ export async function updateQuickJob(
       start_date: data.start,
       end_date: data.end,
       day_assignments: dayAssignments,
+      address: data.address?.trim() || null,
+      description: data.description?.trim() || null,
     })
     .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
+  revalidatePath("/dashboard");
+  revalidatePath(`/klussen/${id}`);
 }
 
 export async function toggleQuickJobDone(id: string, done: boolean) {
@@ -79,6 +90,7 @@ export async function toggleQuickJobDone(id: string, done: boolean) {
   const { error } = await supabase.from("quick_jobs").update({ done }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
+  revalidatePath(`/klussen/${id}`);
 }
 
 export async function deleteQuickJob(id: string) {
@@ -87,4 +99,5 @@ export async function deleteQuickJob(id: string) {
   const { error } = await supabase.from("quick_jobs").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
+  revalidatePath("/dashboard");
 }

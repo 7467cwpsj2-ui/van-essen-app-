@@ -209,6 +209,10 @@ export default async function DashboardPage({
                     <Link key={s.id} href={`/projects/${s.projectId}/bouwplanning`} className="dash-panel-row">
                       {row}
                     </Link>
+                  ) : s.quickJobId ? (
+                    <Link key={s.id} href={`/klussen/${s.quickJobId}`} className="dash-panel-row">
+                      {row}
+                    </Link>
                   ) : (
                     <div key={s.id} className="dash-panel-row static">
                       {row}

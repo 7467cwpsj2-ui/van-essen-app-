@@ -166,6 +166,8 @@ export interface QuickJob {
   end_date: string;
   done: boolean;
   day_assignments: QuickJobDayAssignment[] | null;
+  address: string | null;
+  description: string | null;
   created_at: string;
 }
 
