@@ -2267,11 +2267,19 @@ a.link-btn:hover {
   align-items: flex-start;
   justify-content: center;
   gap: 2px;
-  padding: 4px 10px;
+  padding: 4px 10px 4px 7px;
+  border-left: 3px solid transparent;
   overflow: hidden;
 }
 .gantt-row-label-actions {
-  padding-right: 56px;
+  padding-right: 60px;
+}
+/* Zelfde taal als de rest van de app: een dubbele boeking is iets dat
+   opgelost moet worden, dus een gekleurde balk i.p.v. alleen een klein
+   driehoekje dat je makkelijk mist tussen de titel. */
+.gantt-row-label.has-conflict {
+  border-left-color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 6%, var(--panel));
 }
 .gantt-row-title {
   font-size: 12px;
@@ -2342,8 +2350,10 @@ a.link-btn:hover {
   top: 50%;
   transform: translateY(-50%);
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
+/* Iets meer ademruimte tussen de drie knopjes — vlak naast elkaar tik
+   je op een bouwplaats (met handschoenen aan) al snel het verkeerde. */
 .gantt-daycell.weekend {
   background: var(--panel-2);
 }

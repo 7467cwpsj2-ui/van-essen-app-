@@ -150,7 +150,13 @@ export function BouwplanningPanel({
               const phaseColor = i.color || colorForKey(phaseAssigneeLabel(i) || i.title);
               return (
                 <Fragment key={i.id}>
-                  <div className={"gantt-cell gantt-row-label" + (canEdit ? " gantt-row-label-actions" : "")}>
+                  <div
+                    className={
+                      "gantt-cell gantt-row-label" +
+                      (canEdit ? " gantt-row-label-actions" : "") +
+                      (conflicts[i.id] ? " has-conflict" : "")
+                    }
+                  >
                     <div className="gantt-row-title">
                       {canEdit ? (
                         <input
