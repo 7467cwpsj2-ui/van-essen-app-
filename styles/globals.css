@@ -1372,6 +1372,13 @@ a:has(> .brandmark) {
 .task-row.done {
   opacity: 0.55;
 }
+/* Zelfde signaal als de dashboardtegels/meerwerkregels: te laat = een
+   gekleurde balk aan de linkerkant, niet alleen een rood datumlabel dat
+   je makkelijk mist tussen de rest van de tekst. */
+.task-row.overdue {
+  border-left: 3px solid var(--danger);
+  background: color-mix(in srgb, var(--danger) 5%, transparent);
+}
 .task-row.done .task-title {
   text-decoration: line-through;
 }

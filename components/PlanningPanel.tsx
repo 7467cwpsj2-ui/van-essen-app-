@@ -110,7 +110,10 @@ export function PlanningPanel({
         {sorted.map((t) => {
           const toggleable = canToggle(t);
           return (
-            <div key={t.id} className={"task-row" + (t.done ? " done" : "")}>
+            <div
+              key={t.id}
+              className={"task-row" + (t.done ? " done" : "") + (!t.done && t.due_date && t.due_date < todayIso ? " overdue" : "")}
+            >
               <button
                 className="task-check"
                 onClick={() => toggleable && startTransition(() => toggleTask(projectId, t.id, !t.done).catch(() => {}))}
