@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Save } from "lucide-react";
+import { Check, Save } from "lucide-react";
 import { saveSubsidyApplication } from "@/lib/actions/subsidies";
 import { SUBSIDY_APPLICATION_STATUS_LABEL, SUBSIDY_APPLICATION_STATUS_ORDER } from "@/types/database";
 import type { SubsidyApplication, SubsidyApplicationStatus } from "@/types/database";
@@ -96,7 +96,11 @@ export function SubsidyApplicationCard({ projectId, application }: { projectId: 
       <button className="btn-primary" onClick={save} disabled={pending} style={{ alignSelf: "flex-start" }}>
         <Save size={14} /> {pending ? "Bezig…" : "Opslaan"}
       </button>
-      {saved && <div className="hint-bar small">Opgeslagen.</div>}
+      {saved && (
+        <div className="hint-bar small success">
+          <Check size={12} style={{ display: "inline", marginRight: 5, verticalAlign: -1 }} /> Opgeslagen.
+        </div>
+      )}
     </div>
   );
 }

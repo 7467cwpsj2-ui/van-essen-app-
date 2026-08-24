@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Save } from "lucide-react";
+import { Check, Save } from "lucide-react";
 import { updateCompanyDetails, updateGoogleReviewUrl, updateLeadReminderDays } from "@/lib/actions/settings";
 
 export function SettingsForm({
@@ -91,7 +91,11 @@ export function SettingsForm({
         <button className="btn-primary" onClick={save} disabled={pending} style={{ alignSelf: "flex-start" }}>
           <Save size={14} /> {pending ? "Bezig…" : "Opslaan"}
         </button>
-        {saved && <div className="hint-bar small">Opgeslagen.</div>}
+        {saved && (
+          <div className="hint-bar small success">
+            <Check size={12} style={{ display: "inline", marginRight: 5, verticalAlign: -1 }} /> Opgeslagen.
+          </div>
+        )}
       </div>
 
       <div className="add-form">
@@ -115,7 +119,11 @@ export function SettingsForm({
         <button className="btn-primary" onClick={saveDays} disabled={daysPending} style={{ alignSelf: "flex-start" }}>
           <Save size={14} /> {daysPending ? "Bezig…" : "Opslaan"}
         </button>
-        {daysSaved && <div className="hint-bar small">Opgeslagen.</div>}
+        {daysSaved && (
+          <div className="hint-bar small success">
+            <Check size={12} style={{ display: "inline", marginRight: 5, verticalAlign: -1 }} /> Opgeslagen.
+          </div>
+        )}
       </div>
 
       <div className="add-form">
@@ -176,7 +184,11 @@ export function SettingsForm({
         <button className="btn-primary" onClick={saveCompany} disabled={companyPending} style={{ alignSelf: "flex-start" }}>
           <Save size={14} /> {companyPending ? "Bezig…" : "Opslaan"}
         </button>
-        {companySaved && <div className="hint-bar small">Opgeslagen.</div>}
+        {companySaved && (
+          <div className="hint-bar small success">
+            <Check size={12} style={{ display: "inline", marginRight: 5, verticalAlign: -1 }} /> Opgeslagen.
+          </div>
+        )}
       </div>
     </>
   );

@@ -1311,6 +1311,15 @@ a:has(> .brandmark) {
 .hint-bar.small {
   font-size: 11px;
 }
+/* Een opslaan-bevestiging is geen neutrale hint maar een succesmelding —
+   verdient een eigen kleur, niet dezelfde blauwe balk als alle andere
+   uitleg-tekst op de pagina. */
+.hint-bar.success {
+  color: var(--success);
+  background: rgba(35, 147, 95, 0.1);
+  border-left-color: var(--success);
+  animation: fadeInUp 0.3s var(--ease-premium);
+}
 .hint-private {
   background: var(--brand-soft);
   color: var(--brand-dim);
