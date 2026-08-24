@@ -7,7 +7,11 @@ import { HoursPanel } from "@/components/HoursPanel";
 import { UrenPicker } from "@/components/UrenPicker";
 import type { HourEntry, Project, QuickJob, TeamMember } from "@/types/database";
 
-export default async function UrenTopLevelPage({ searchParams }: { searchParams: { project?: string; job?: string } }) {
+export default async function UrenTopLevelPage({
+  searchParams,
+}: {
+  searchParams: { project?: string; job?: string; open?: string };
+}) {
   const current = await requireUser();
   if (!canSeeHours(current)) notFound();
   // Voor team-rollen is dit het eigen profiel; een eigenaar die zichzelf
@@ -47,6 +51,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
     ]);
     panel = (
       <HoursPanel
+        key={selectedProject.id}
         target={{ projectId: selectedProject.id }}
         targetName={(project as Pick<Project, "name" | "delivery_signed_at"> | null)?.name ?? selectedProject.name}
         role={current.profile.role}
@@ -54,6 +59,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
         isLocked={!!(project as Pick<Project, "delivery_signed_at"> | null)?.delivery_signed_at}
         entries={(entries ?? []) as HourEntry[]}
         teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }))}
+        autoOpenDetail={searchParams.open === "1"}
       />
     );
   } else if (selectedJob) {
@@ -63,6 +69,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
     ]);
     panel = (
       <HoursPanel
+        key={selectedJob.id}
         target={{ quickJobId: selectedJob.id }}
         targetName={selectedJob.title}
         role={current.profile.role}
@@ -70,6 +77,7 @@ export default async function UrenTopLevelPage({ searchParams }: { searchParams:
         isLocked={false}
         entries={(entries ?? []) as HourEntry[]}
         teamMembers={((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }))}
+        autoOpenDetail={searchParams.open === "1"}
       />
     );
   }

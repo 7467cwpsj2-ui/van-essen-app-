@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import { Calendar, Check, ChevronDown, Download, Pencil, Plus, Trash2, X, Zap } from "lucide-react";
 import { createHourEntry, createWeekHourEntries, deleteHourEntry, updateHourEntry, type HoursTarget } from "@/lib/actions/hours";
 import { mondayOfWeek, weekdaysOfWeek } from "@/lib/workingDays";
@@ -51,6 +51,7 @@ export function HoursPanel({
   isLocked,
   entries,
   teamMembers,
+  autoOpenDetail,
 }: {
   target: HoursTarget;
   targetName: string;
@@ -59,12 +60,22 @@ export function HoursPanel({
   isLocked: boolean;
   entries: HourEntry[];
   teamMembers: { id: string; name: string }[];
+  autoOpenDetail?: boolean;
 }) {
   const todayIso = new Date().toISOString().slice(0, 10);
   const currentWeekMonday = mondayOfWeek(todayIso);
   const [mode, setMode] = useState<"dag" | "week">("dag");
   const [form, setForm] = useState({ teamMemberId: currentTeamMemberId || "", workDate: todayIso, hours: "", note: "" });
-  const [showDetail, setShowDetail] = useState(false);
+  const [showDetail, setShowDetail] = useState(!!autoOpenDetail);
+
+  // De uren-picker (UrenPicker) kan hierheen linken met ?open=1, bijv.
+  // vanuit de "Anders…"-knop — omdat dit dezelfde paginacomponent kan
+  // blijven (alleen de zoekparameter wijzigt), volstaat de useState-
+  // initiële waarde hierboven niet altijd; dit vangt ook die her-render
+  // op zonder volledige remount.
+  useEffect(() => {
+    if (autoOpenDetail) setShowDetail(true);
+  }, [autoOpenDetail]);
   const [openWeeks, setOpenWeeks] = useState<Record<string, boolean>>({});
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState({ workDate: "", hours: "", note: "" });

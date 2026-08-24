@@ -82,11 +82,13 @@ export function UrenPicker({
 
   const projectRow = (p: PickerProject, withQuickAdd: boolean) => {
     const active = selectedProjectId === p.id;
+    const targetHref = `/uren?project=${p.id}`;
     return (
       <UrenRow
         key={p.id}
         active={active}
-        href={active ? "/uren" : `/uren?project=${p.id}`}
+        href={active ? "/uren" : targetHref}
+        detailHref={`${targetHref}&open=1`}
         icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
         title={p.name}
         sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
@@ -99,11 +101,13 @@ export function UrenPicker({
 
   const jobRow = (j: PickerJob, withQuickAdd: boolean) => {
     const active = selectedJobId === j.id;
+    const targetHref = `/uren?job=${j.id}`;
     return (
       <UrenRow
         key={j.id}
         active={active}
-        href={active ? "/uren" : `/uren?job=${j.id}`}
+        href={active ? "/uren" : targetHref}
+        detailHref={`${targetHref}&open=1`}
         icon={<Hammer size={14} />}
         title={j.title}
         sub={`Losse klus · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
@@ -146,8 +150,8 @@ export function UrenPicker({
       </div>
       {(todayProjects.length > 0 || todayJobs.length > 0) && canQuickAdd && (
         <div className="hint-bar small">
-          Niet 4, 6 of 8 uur? Kies &quot;Anders…&quot; voor een ander aantal. Verkeerd getikt? Tik op de naam voor het volledige
-          overzicht — daar kun je elke registratie nog aanpassen of verwijderen.
+          De knoppen 4u/6u/8u zetten uren op <b>vandaag</b>. Andere datum of ander aantal? Kies &quot;Anders…&quot; — dat opent het
+          volledige overzicht, waar je ook elke registratie nog kunt aanpassen of verwijderen.
         </div>
       )}
       {todayProjects.length === 0 && todayJobs.length === 0 ? (
@@ -181,6 +185,7 @@ export function UrenPicker({
 function UrenRow({
   active,
   href,
+  detailHref,
   icon,
   title,
   sub,
@@ -190,6 +195,7 @@ function UrenRow({
 }: {
   active: boolean;
   href: string;
+  detailHref: string;
   icon: React.ReactNode;
   title: string;
   sub: string;
@@ -197,17 +203,6 @@ function UrenRow({
   justAdded: string | null;
   pending: boolean;
 }) {
-  const [customOpen, setCustomOpen] = useState(false);
-  const [customValue, setCustomValue] = useState("");
-
-  const submitCustom = () => {
-    const h = Number(customValue);
-    if (!(h > 0) || !quickAdd) return;
-    quickAdd.onAdd(h);
-    setCustomOpen(false);
-    setCustomValue("");
-  };
-
   return (
     <div className={"uren-row" + (active ? " active" : "")}>
       <Link href={href} className="uren-row-main" title={active ? "Sluiten" : undefined}>
@@ -228,26 +223,6 @@ function UrenRow({
             <span className="uren-row-quick-ok">
               <Check size={12} /> Toegevoegd
             </span>
-          ) : customOpen ? (
-            <>
-              <input
-                type="number"
-                min="0"
-                step="0.5"
-                autoFocus
-                placeholder="Uren"
-                value={customValue}
-                onChange={(e) => setCustomValue(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitCustom()}
-                className="uren-row-quick-input"
-              />
-              <button type="button" className="chip-btn" disabled={pending || !customValue} onClick={submitCustom}>
-                <Check size={12} /> OK
-              </button>
-              <button type="button" className="chip-btn ghost" title="Annuleren" onClick={() => setCustomOpen(false)}>
-                <X size={12} />
-              </button>
-            </>
           ) : (
             <>
               {[4, 6, 8].map((h) => (
@@ -255,9 +230,9 @@ function UrenRow({
                   {h}u
                 </button>
               ))}
-              <button type="button" className="chip-btn ghost" disabled={pending} onClick={() => setCustomOpen(true)}>
+              <Link href={detailHref} className="chip-btn ghost">
                 Anders…
-              </button>
+              </Link>
             </>
           )}
         </div>
