@@ -131,6 +131,34 @@ textarea {
   font-family: inherit;
 }
 
+/* Eén basis-Input i.p.v. negen keer los gekopieerde border/radius/padding
+   per formulier (add-form, login, chat, nacalculatie, toegangsbeheer, …) —
+   die waren stilletjes uit elkaar gegroeid (radius liep uiteen van 4px tot
+   10px). Een input die ergens per ongeluk buiten die negen containers
+   staat, valt nu ook niet meer terug op de kale browserstijl. */
+input:where(:not([type="checkbox"], [type="radio"], [type="color"], [type="range"], [type="file"])),
+select,
+textarea {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 9px 11px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+}
+input:where(:not([type="checkbox"], [type="radio"], [type="color"], [type="range"], [type="file"])):focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+input:disabled,
+select:disabled,
+textarea:disabled {
+  opacity: 0.6;
+}
+
 button,
 a,
 input,
@@ -1504,23 +1532,7 @@ a:has(> .brandmark) {
 .add-form textarea,
 .new-project-form input,
 .new-project-form select {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 9px 11px;
-  border-radius: 9px;
-  font-size: 12.5px;
-  font-family: var(--font-body);
   width: 100%;
-}
-.add-form input:focus,
-.add-form select:focus,
-.add-form textarea:focus,
-.new-project-form input:focus,
-.new-project-form select:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(58, 169, 219, 0.18);
 }
 .add-form textarea {
   resize: vertical;
@@ -2422,15 +2434,6 @@ a.link-btn:hover {
   display: flex;
   gap: 8px;
 }
-.access-search-row input,
-.access-search-row select {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 5px;
-  font-size: 12.5px;
-}
 .access-search-row input {
   flex: 1;
 }
@@ -2544,12 +2547,6 @@ a.link-btn:hover {
 }
 .access-row input {
   flex: 1;
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 8px 10px;
-  border-radius: 5px;
-  font-size: 12.5px;
 }
 .access-list {
   display: flex;
@@ -2581,30 +2578,10 @@ a.link-btn:hover {
   flex-wrap: wrap;
 }
 .access-name-input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12.5px;
   flex: 1;
   min-width: 120px;
 }
-.team-row select {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12px;
-}
 .trade-custom-input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 6px 8px;
-  border-radius: 4px;
-  font-size: 12px;
   width: 110px;
 }
 .copied-tag {
@@ -3026,17 +3003,8 @@ a.dash-panel-row:hover {
   margin-top: 6px;
 }
 .login-form input {
-  background: var(--bg);
-  border: 1px solid var(--border);
-  color: var(--text);
   padding: 11px 13px;
-  border-radius: 10px;
   font-size: 13px;
-}
-.login-form input:focus {
-  outline: none;
-  border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgba(58, 169, 219, 0.18);
 }
 .login-error {
   color: var(--danger);
@@ -3195,11 +3163,7 @@ a.dash-panel-row:hover {
 .chat-input-row input,
 .chat-input-row textarea {
   flex: 1;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
   padding: 9px 12px;
-  border-radius: 6px;
   font-size: 13px;
 }
 .chat-input-row textarea {
@@ -3294,11 +3258,6 @@ a.dash-panel-row:hover {
 .calc-field input,
 .calc-field select,
 .calc-field textarea {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--text);
-  padding: 9px 10px;
-  border-radius: 6px;
   font-size: 14px;
   font-family: var(--font-mono);
 }
@@ -3339,10 +3298,6 @@ a.dash-panel-row:hover {
 .calc-line-marge.neg {
   color: var(--danger);
 }
-.calc-field input:disabled {
-  opacity: 0.6;
-}
-
 .warranty-list {
   display: flex;
   flex-direction: column;
