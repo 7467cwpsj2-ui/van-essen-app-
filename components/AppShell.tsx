@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   CalendarRange,
   ClipboardList,
+  Clock,
   FileText,
   LayoutDashboard,
   Leaf,
@@ -110,6 +111,15 @@ export function AppShell({
         >
           <LayoutDashboard size={14} /> Dashboard
         </Link>
+        {(role === "eigenaar" || role === "team") && (
+          <Link
+            href="/uren"
+            className={"toegang-toggle" + (pathname.startsWith("/uren") ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Clock size={14} /> Uren registreren
+          </Link>
+        )}
         {role === "eigenaar" && (
           <>
             <Link href="/projects/new" className="new-project-toggle" onClick={() => setSidebarOpen(false)}>

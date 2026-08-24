@@ -2740,6 +2740,12 @@ a.dash-panel-row:hover {
 .dash-panel-row.static {
   cursor: default;
 }
+.dash-panel-row.active {
+  background: var(--brand-soft);
+}
+.dash-panel-row.active .dash-panel-row-title {
+  color: var(--brand-dim);
+}
 .dash-panel-row-icon {
   width: 26px;
   height: 26px;

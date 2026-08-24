@@ -21,6 +21,7 @@ export async function createHourEntry(
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/uren`);
+  revalidatePath("/uren");
 }
 
 export async function createWeekHourEntries(
@@ -40,6 +41,7 @@ export async function createWeekHourEntries(
   const { error } = await supabase.from("hours").insert(rows);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/uren`);
+  revalidatePath("/uren");
 }
 
 export async function deleteHourEntry(projectId: string, id: string) {
@@ -48,4 +50,5 @@ export async function deleteHourEntry(projectId: string, id: string) {
   const { error } = await supabase.from("hours").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/uren`);
+  revalidatePath("/uren");
 }

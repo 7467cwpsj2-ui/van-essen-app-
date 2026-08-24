@@ -53,7 +53,7 @@ export async function GET(request: Request) {
       await sendPushToUsers(recipients, {
         title: "Uren van vandaag al ingevuld?",
         body: "Vergeet niet je uren van vandaag te registreren.",
-        url: "/dashboard",
+        url: "/uren",
       });
       notified++;
     }
