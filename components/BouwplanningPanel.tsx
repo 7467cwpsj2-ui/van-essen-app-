@@ -105,7 +105,7 @@ export function BouwplanningPanel({
   const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
 
   return (
-    <div className="panel">
+    <div className="panel panel-wide">
       <div className="hint-bar">
         Bouwplanning — het grote geheel per fase. De taken in &quot;Planning&quot; zijn hieraan gekoppeld en tellen automatisch mee als
         voortgang.

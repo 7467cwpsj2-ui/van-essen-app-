@@ -159,7 +159,7 @@ export function TeamPlanningPanel({
   );
 
   return (
-    <div className="panel">
+    <div className="panel panel-wide">
       <div className="header-eyebrow">Overzicht</div>
       <h1 className="page-title">Algemene planning</h1>
       <div className="hint-bar">

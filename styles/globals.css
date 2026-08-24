@@ -1203,10 +1203,20 @@ a:has(> .brandmark) {
   margin-left: 2px;
 }
 
+/* Zonder grens rekt elk formulier/elke lijst zich op een breed
+   bureaubladscherm uit tot een ongemakkelijk lange regel — .access-panel
+   deed dit al goed, hier hetzelfde toegepast op elk ander .panel-scherm
+   (chat, notities, taken, meerwerk, dossier, ...). */
 .panel {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  max-width: 760px;
+}
+/* Uitzondering voor de bouwplanning-Gantt's — die hebben juist bréedte
+   nodig om meer dagen tegelijk te tonen, minder horizontaal scrollen. */
+.panel.panel-wide {
+  max-width: none;
 }
 
 .install-card {
