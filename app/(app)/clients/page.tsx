@@ -38,6 +38,8 @@ export default async function ClientsPage() {
 
   return (
     <div className="panel access-panel">
+      <div className="header-eyebrow">Beheer</div>
+      <h1 className="page-title">Klanten</h1>
       <div className="hint-bar">
         <ShieldCheck size={14} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
         Klanten loggen in met hun eigen e-mailadres en zien alleen hun eigen gekoppelde project(en).

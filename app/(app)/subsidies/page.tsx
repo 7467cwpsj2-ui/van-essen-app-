@@ -11,6 +11,8 @@ export default async function SubsidiesPage() {
 
   return (
     <div>
+      <div className="header-eyebrow">Beheer</div>
+      <h1 className="page-title">Subsidies</h1>
       <div className="hint-bar" style={{ marginBottom: 16 }}>
         <Leaf size={14} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
         Beheer hier de RVO-meldcodes en subsidiebedragen voor de ISDE-regeling. Dit is een indicatie op basis van de gegevens die je

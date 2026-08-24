@@ -11,5 +11,11 @@ export default async function OffertesPage() {
     supabase.from("app_settings").select("lead_reminder_days").eq("id", true).single(),
   ]);
 
-  return <LeadsPanel leads={(leads ?? []) as Lead[]} reminderDays={settings?.lead_reminder_days ?? 3} />;
+  return (
+    <div>
+      <div className="header-eyebrow">Beheer</div>
+      <h1 className="page-title">Offertes</h1>
+      <LeadsPanel leads={(leads ?? []) as Lead[]} reminderDays={settings?.lead_reminder_days ?? 3} />
+    </div>
+  );
 }

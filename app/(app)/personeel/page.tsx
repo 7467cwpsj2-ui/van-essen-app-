@@ -42,6 +42,8 @@ export default async function PersoneelPage() {
 
   return (
     <div className="panel access-panel">
+      <div className="header-eyebrow">Beheer</div>
+      <h1 className="page-title">Personeel</h1>
       <div className="hint-bar">
         <ShieldCheck size={14} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
         Iedereen logt in met zijn eigen e-mailadres en ziet alleen de onderdelen en projecten die je hier vrijgeeft. Kies bij het

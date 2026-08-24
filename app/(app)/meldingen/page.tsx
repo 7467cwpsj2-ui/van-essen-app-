@@ -14,6 +14,8 @@ export default async function MeldingenPage() {
 
   return (
     <div className="panel">
+      <div className="header-eyebrow">Overzicht</div>
+      <h1 className="page-title">Meldingen</h1>
       <div className="hint-bar" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
         <span>Alle meldingen die je hebt ontvangen, ook als een pushmelding een keer niet aankwam.</span>
         {hasUnread && (

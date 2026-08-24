@@ -13,6 +13,8 @@ export default async function InstellingenPage() {
 
   return (
     <div className="panel">
+      <div className="header-eyebrow">Beheer</div>
+      <h1 className="page-title">Instellingen</h1>
       <div className="hint-bar">Algemene instellingen voor de app.</div>
       <SettingsForm
         googleReviewUrl={data?.google_review_url ?? ""}
