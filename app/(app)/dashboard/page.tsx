@@ -57,15 +57,21 @@ export default async function DashboardPage({
 
   const statusFilter = searchParams.status === "gepland" || searchParams.status === "lopend" || searchParams.status === "afgerond" ? searchParams.status : null;
   const visibleProjects = statusFilter ? projects.filter((p) => p.status === statusFilter) : projects;
+  const firstName = current.profile.name.split(" ")[0];
+  const todayLong = new Intl.DateTimeFormat("nl-NL", {
+    timeZone: "Europe/Amsterdam",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  }).format(new Date());
 
   return (
     <div className="dashboard">
-      <div className="header-eyebrow">
-        {timeAwareGreeting()}, {current.profile.name}
-      </div>
-      <h1 className="page-title">
-        Dashboard
+      <div className="header-eyebrow">Dashboard</div>
+      <h1 className="dash-greeting">
+        {timeAwareGreeting()}, {firstName}
       </h1>
+      <div className="dash-greeting-date">{todayLong}</div>
 
       <div className="dash-cards">
         <a href="/dashboard?status=lopend#alle-projecten" className="dash-card">

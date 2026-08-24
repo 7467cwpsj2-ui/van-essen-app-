@@ -693,6 +693,22 @@ a:has(> .brandmark) {
   margin: 0 0 var(--space-4);
   text-transform: uppercase;
 }
+/* Persoonlijke begroeting op het dashboard — geen paginalabel maar een
+   naam, dus bewust géén hoofdletters (dat zou schreeuwerig aanvoelen). */
+.dash-greeting {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 27px;
+  letter-spacing: -0.01em;
+  margin: 0 0 2px;
+  color: var(--text);
+}
+.dash-greeting-date {
+  font-size: var(--text-secondary-size);
+  color: var(--text-tertiary);
+  margin: 0;
+  text-transform: capitalize;
+}
 .project-header h1 {
   font-family: var(--font-display);
   font-weight: 800;
@@ -1551,9 +1567,14 @@ a:has(> .brandmark) {
   border: none;
   color: var(--brand);
   font-size: 11px;
+  font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
   padding: 0;
+  text-decoration: none;
+}
+a.link-btn:hover {
+  text-decoration: underline;
 }
 
 .btn-primary {
