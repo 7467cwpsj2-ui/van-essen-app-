@@ -2,11 +2,11 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { AlertTriangle, Check, Pencil, Plus, Trash2, X } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, ChevronDown, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
-import { createQuickJob, deleteQuickJob, updateQuickJob } from "@/lib/actions/quickJobs";
+import { createQuickJob, deleteQuickJob, toggleQuickJobDone, updateQuickJob } from "@/lib/actions/quickJobs";
 import { colorForProject } from "@/lib/projectColor";
 import { endDateForWorkingDays, isoWeekNumber } from "@/lib/workingDays";
 import type { QuickJob, TeamMemberType } from "@/types/database";
@@ -57,6 +57,7 @@ export function TeamPlanningPanel({
   const [filter, setFilter] = useState<"alle" | "personeel" | "onderaannemer">("alle");
   const [editingJobId, setEditingJobId] = useState<string | null>(null);
   const [editJobForm, setEditJobForm] = useState({ title: "", assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
+  const [showDoneJobs, setShowDoneJobs] = useState(false);
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
   const quickJobAssigneeLabel = (j: QuickJob) =>
@@ -144,7 +145,8 @@ export function TeamPlanningPanel({
     }
     return null;
   };
-  const filteredQuickJobs = quickJobs.filter((j) => filter === "alle" || jobMemberType(j) === filter);
+  const filteredQuickJobs = quickJobs.filter((j) => !j.done && (filter === "alle" || jobMemberType(j) === filter));
+  const doneQuickJobs = quickJobs.filter((j) => j.done && (filter === "alle" || jobMemberType(j) === filter));
 
   const days: Date[] = [];
   if (assigned.length) {
@@ -411,6 +413,13 @@ export function TeamPlanningPanel({
                     </div>
                   </div>
                   <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      className="icon-btn ghost"
+                      title="Gereed melden"
+                      onClick={() => startTransition(() => toggleQuickJobDone(j.id, true).catch(() => {}))}
+                    >
+                      <CheckCircle2 size={14} />
+                    </button>
                     <button className="icon-btn ghost" onClick={() => startEditJob(j)} title="Bewerken">
                       <Pencil size={14} />
                     </button>
@@ -427,6 +436,49 @@ export function TeamPlanningPanel({
             )}
           </div>
         </>
+      )}
+
+      {doneQuickJobs.length > 0 && (
+        <div>
+          <button type="button" className="project-group-header" onClick={() => setShowDoneJobs((v) => !v)}>
+            <ChevronDown size={13} className={"access-chevron" + (showDoneJobs ? " open" : "")} />
+            <span>Afgeronde losse klussen</span>
+            <span className="count-badge">{doneQuickJobs.length}</span>
+          </button>
+          {showDoneJobs && (
+            <div className="task-list">
+              {doneQuickJobs.map((j) => (
+                <div key={j.id} className="task-row done">
+                  <div className="task-body">
+                    <div className="task-title">{j.title}</div>
+                    <div className="task-meta">
+                      <span>{quickJobAssigneeLabel(j)}</span>
+                      <span className="mono">
+                        {fmtShort(j.start_date)} – {fmtShort(j.end_date)}
+                      </span>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", gap: 4 }}>
+                    <button
+                      className="icon-btn ghost"
+                      title="Heropenen"
+                      onClick={() => startTransition(() => toggleQuickJobDone(j.id, false).catch(() => {}))}
+                    >
+                      <RotateCcw size={14} />
+                    </button>
+                    <button
+                      className="icon-btn danger ghost"
+                      title="Verwijderen"
+                      onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

@@ -159,6 +159,7 @@ export interface QuickJob {
   assignee_team_member_ids: string[];
   start_date: string;
   end_date: string;
+  done: boolean;
   created_at: string;
 }
 

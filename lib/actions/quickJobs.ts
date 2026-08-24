@@ -46,6 +46,14 @@ export async function updateQuickJob(
   revalidatePath("/planning-overzicht");
 }
 
+export async function toggleQuickJobDone(id: string, done: boolean) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from("quick_jobs").update({ done }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/planning-overzicht");
+}
+
 export async function deleteQuickJob(id: string) {
   await requireOwner();
   const supabase = createClient();

@@ -65,6 +65,7 @@ export default async function PlanningOverzichtPage() {
 
   const jobs = (quickJobs ?? []) as QuickJob[];
   for (const j of jobs) {
+    if (j.done) continue;
     const base = {
       title: "Losse klus",
       projectId: `qj:${j.id}`,
