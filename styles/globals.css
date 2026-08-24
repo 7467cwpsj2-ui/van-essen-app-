@@ -14,6 +14,12 @@
   --danger: #d64b3f;
   --warning: var(--danger);
   --warning-soft: color-mix(in srgb, var(--danger) 13%, transparent);
+  /* Los van --warning (die = --danger, voor echt urgente/te-late dingen):
+     amber voor "wacht op jouw beoordeling/keuze" — geen probleem, gewoon
+     iets dat aandacht vraagt. Zonder dit onderscheid zou een te laat
+     opgeleverd project er hetzelfde uitzien als een foto die simpelweg
+     nog goedgekeurd moet worden. */
+  --attention: #b45309;
   --text: #111111;
   --text-dim: #5b5f66;
   --text-faint: #8a8e96;
@@ -80,6 +86,7 @@
     --brand-soft: rgba(51, 168, 232, 0.16);
     --success: #34c98d;
     --danger: #ef6b5e;
+    --attention: #f0b429;
     --text: #f2f4f7;
     --text-dim: #aab0ba;
     --text-faint: #767c87;
@@ -98,6 +105,7 @@
   --brand-soft: rgba(51, 168, 232, 0.16);
   --success: #34c98d;
   --danger: #ef6b5e;
+  --attention: #f0b429;
   --text: #f2f4f7;
   --text-dim: #aab0ba;
   --text-faint: #767c87;
@@ -1784,8 +1792,8 @@ a.link-btn:hover {
   border-left: 3px solid transparent;
 }
 .drawing-card.needs-review {
-  border-left-color: var(--warning);
-  background: color-mix(in srgb, var(--warning) 5%, transparent);
+  border-left-color: var(--attention);
+  background: color-mix(in srgb, var(--attention) 5%, transparent);
 }
 .drawing-card:last-child {
   border-bottom: none;
@@ -1835,7 +1843,7 @@ a.link-btn:hover {
   box-shadow: var(--shadow-elevated);
 }
 .photo-card.needs-review {
-  border-color: color-mix(in srgb, var(--warning) 35%, var(--border));
+  border-color: color-mix(in srgb, var(--attention) 35%, var(--border));
 }
 .photo-card.needs-review::after {
   content: "";
@@ -1844,7 +1852,7 @@ a.link-btn:hover {
   left: 0;
   right: 0;
   height: 3px;
-  background: var(--warning);
+  background: var(--attention);
 }
 .photo-card-thumb {
   aspect-ratio: 1;
@@ -3257,9 +3265,9 @@ a.dash-panel-row:hover {
    beoordeeld moet worden krijgt de gekleurde balk, niet alleen een
    ietwat andere randkleur die je makkelijk over het hoofd ziet. */
 .note-card-pending {
-  border-color: color-mix(in srgb, var(--warning) 30%, var(--border));
-  border-left-color: var(--warning);
-  background: color-mix(in srgb, var(--warning) 5%, var(--panel));
+  border-color: color-mix(in srgb, var(--attention) 30%, var(--border));
+  border-left-color: var(--attention);
+  background: color-mix(in srgb, var(--attention) 5%, var(--panel));
 }
 .note-top {
   display: flex;
@@ -3420,8 +3428,8 @@ a.dash-panel-row:hover {
    (goedkeuren, kiezen) krijgt een gekleurde balk, afgehandelde punten
    zakken rustig naar de achtergrond. */
 .list-row.needs-action {
-  border-left: 3px solid var(--warning);
-  background: color-mix(in srgb, var(--warning) 6%, transparent);
+  border-left: 3px solid var(--attention);
+  background: color-mix(in srgb, var(--attention) 6%, transparent);
 }
 .list-row.is-approved {
   opacity: 0.65;
