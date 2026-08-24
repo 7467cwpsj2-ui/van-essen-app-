@@ -43,7 +43,10 @@ export function ClientChoicesPanel({
       {choices.length === 0 && <div className="empty-hint">Nog geen klantkeuzes.</div>}
       <div className="work-list">
         {choices.map((c) => (
-          <div key={c.id} className="list-row">
+          <div
+            key={c.id}
+            className={"list-row" + (role === "klant" && c.status === "open" ? " needs-action" : "") + (c.status !== "open" ? " is-approved" : "")}
+          >
             <div className="list-row-body">
               <div className="list-row-title">{c.category}</div>
               {c.description && <div className="list-row-sub">{c.description}</div>}

@@ -3199,12 +3199,26 @@ a.dash-panel-row:hover {
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+  transition: opacity 0.2s var(--ease-premium), background-color 0.15s ease;
 }
 .list-row:last-child {
   border-bottom: none;
 }
 .list-row:hover {
   background: var(--panel-2);
+}
+/* Zelfde taal als overal elders: iets waar jij nu iets mee moet
+   (goedkeuren, kiezen) krijgt een gekleurde balk, afgehandelde punten
+   zakken rustig naar de achtergrond. */
+.list-row.needs-action {
+  border-left: 3px solid var(--warning);
+  background: color-mix(in srgb, var(--warning) 6%, transparent);
+}
+.list-row.is-approved {
+  opacity: 0.65;
+}
+.list-row.is-approved:hover {
+  opacity: 1;
 }
 .list-row-body {
   flex: 1;

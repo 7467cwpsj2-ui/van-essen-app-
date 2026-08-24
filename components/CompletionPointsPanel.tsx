@@ -133,8 +133,12 @@ export function CompletionPointsPanel({
           const canApprove = !isLocked && p.status === "gereed" && (role === "eigenaar" || role === "klant");
           const canReview = !isLocked && p.status === "nieuw" && role === "eigenaar";
           const draft = draftFor(p.id);
+          const needsAction = canReview || canApprove;
           return (
-            <div key={p.id} className="list-row">
+            <div
+              key={p.id}
+              className={"list-row" + (needsAction ? " needs-action" : "") + (p.status === "goedgekeurd" ? " is-approved" : "")}
+            >
               {p.photoUrl && p.file_type === "pdf" ? (
                 <a href={p.photoUrl} target="_blank" rel="noreferrer" className="cp-thumb-btn cp-thumb-pdf" title="Bestand openen">
                   <FileText size={20} />
