@@ -1744,6 +1744,87 @@ a.link-btn:hover {
   cursor: pointer;
   line-height: 0;
 }
+/* Foto's verdienen een echt fotorooster i.p.v. de documentenlijst — een
+   44px-thumbnail in een rij is voor een bouwplaatsfoto vrijwel niet te
+   beoordelen. */
+.photo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 10px;
+}
+.photo-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  transition: transform 0.2s var(--ease-premium), box-shadow 0.2s var(--ease-premium);
+}
+.photo-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+}
+.photo-card-thumb {
+  aspect-ratio: 1;
+  width: 100%;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+  display: block;
+  background: var(--panel-2);
+}
+.photo-card-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.photo-card-icon {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--brand);
+  background: var(--panel-2);
+}
+.photo-card-delete {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: color-mix(in srgb, var(--panel) 82%, transparent);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border-radius: var(--radius-xs);
+  color: var(--text-dim);
+}
+.photo-card-delete:hover {
+  color: var(--danger);
+  background: var(--panel);
+}
+.photo-card-body {
+  padding: 8px 10px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.photo-card-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.photo-card-note {
+  font-size: 11px;
+  color: var(--text-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .cp-thumb-btn {
   flex-shrink: 0;
   border-radius: var(--radius-sm);

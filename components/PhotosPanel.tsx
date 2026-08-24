@@ -106,24 +106,33 @@ export function PhotosPanel({
       <Lightbox src={preview} onClose={() => setPreview(null)} />
       {role !== "eigenaar" && <div className="hint-bar">Wat jij hier toevoegt, deelt de eigenaar pas verder nadat het is bekeken.</div>}
       {photos.length === 0 && <div className="empty-hint">Nog geen foto&apos;s.</div>}
-      <div className="drawing-grid">
+      <div className="photo-grid">
         {photos.map((ph) => (
-          <div key={ph.id} className="drawing-card">
+          <div key={ph.id} className="photo-card">
             {ph.signedUrl ? (
-              <button type="button" className="thumb-btn" onClick={() => setPreview(ph.signedUrl)}>
-                <img src={ph.signedUrl} alt="" className="drawing-thumb" />
+              <button type="button" className="photo-card-thumb" onClick={() => setPreview(ph.signedUrl)}>
+                <img src={ph.signedUrl} alt="" />
               </button>
             ) : (
-              <div className="drawing-icon">
-                <Camera size={20} />
+              <div className="photo-card-icon">
+                <Camera size={22} />
               </div>
             )}
-            <div className="drawing-body">
-              <div className="drawing-title">
-                {ph.title} <span className="vis-pill vis-public">{CATS[ph.category]}</span>
-              </div>
-              {ph.note && <div className="drawing-note">{ph.note}</div>}
-              <div className="drawing-note mono">
+            {(role === "eigenaar" || ph.uploader_id === currentUserId) && (
+              <button
+                className="icon-btn ghost photo-card-delete"
+                onClick={() => {
+                  if (confirm("Deze foto verwijderen?")) deletePhoto(projectId, ph.id, ph.file_path).catch((e) => alert(e.message));
+                }}
+              >
+                <Trash2 size={13} />
+              </button>
+            )}
+            <div className="photo-card-body">
+              <span className="vis-pill vis-public">{CATS[ph.category]}</span>
+              <div className="photo-card-title">{ph.title}</div>
+              {ph.note && <div className="photo-card-note">{ph.note}</div>}
+              <div className="photo-card-note mono">
                 {ph.uploaded_by} · {new Date(ph.created_at).toLocaleDateString("nl-NL")}
               </div>
               <VisibilityReview
@@ -134,16 +143,6 @@ export function PhotosPanel({
                 onSet={(patch) => setPhotoVisibility(projectId, ph.id, patch).catch((e) => alert(e.message))}
               />
             </div>
-            {(role === "eigenaar" || ph.uploader_id === currentUserId) && (
-              <button
-                className="icon-btn danger ghost"
-                onClick={() => {
-                  if (confirm("Deze foto verwijderen?")) deletePhoto(projectId, ph.id, ph.file_path).catch((e) => alert(e.message));
-                }}
-              >
-                <Trash2 size={14} />
-              </button>
-            )}
           </div>
         ))}
       </div>
