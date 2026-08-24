@@ -2690,18 +2690,35 @@ a.link-btn:hover {
 .perm-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px 16px;
+  gap: 6px;
   padding: 4px 2px 0;
   align-items: center;
 }
+/* Een muur van kale checkboxjes+tekst wordt een rij aan-/uit-pilletjes —
+   groter tikoppervlak (fijn met werkhandschoenen) en je ziet in één
+   oogopslag welke onderdelen aanstaan, niet pas na het lezen van elk
+   vinkje. */
 .perm-checkbox {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
+  padding: 6px 12px 6px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
   font-size: 11.5px;
   color: var(--text-dim);
+  cursor: pointer;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.perm-checkbox:has(input:checked) {
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+  color: var(--brand-dim);
+  font-weight: 600;
 }
 .perm-checkbox input {
+  accent-color: var(--brand);
   width: auto;
 }
 .edit-right {
