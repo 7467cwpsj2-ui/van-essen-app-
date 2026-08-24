@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { FileText, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
+import { FileText, Plus, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
 import { FileCaptureButtons } from "@/components/FileCaptureButtons";
@@ -56,8 +56,15 @@ export function ExtraWorkPanel({
   const [signingId, setSigningId] = useState<string | null>(null);
   const [sigPreview, setSigPreview] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
 
   useRealtimeRefresh("extra_work", projectId);
+
+  const closeAdd = () => {
+    setShowAdd(false);
+    setForm({ type: "meerwerk", description: "", amount: "", vatType: "excl", extraDays: "", phaseId: "", explanation: "" });
+    setPending(null);
+  };
 
   const handlePicked = async (file: File) => {
     setBusy(true);
@@ -104,8 +111,7 @@ export function ExtraWorkPanel({
         extraDays: days || null,
         phaseId: days > 0 ? form.phaseId : null,
       });
-      setForm({ type: "meerwerk", description: "", amount: "", vatType: "excl", extraDays: "", phaseId: "", explanation: "" });
-      setPending(null);
+      closeAdd();
     } catch (err) {
       alert(err instanceof Error ? err.message : "Toevoegen mislukt.");
     } finally {
@@ -242,6 +248,11 @@ export function ExtraWorkPanel({
           aanpassen.
         </div>
       )}
+      {role !== "klant" && !hideAddForm && (
+        <button type="button" className="btn-primary" onClick={() => setShowAdd(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Meer- of minderwerk toevoegen
+        </button>
+      )}
       {items.length === 0 && <div className="empty-hint">Nog geen meer- of minderwerk geregistreerd.</div>}
       <div className="work-list">
         {items.map((w) => {
@@ -346,71 +357,78 @@ export function ExtraWorkPanel({
           );
         })}
       </div>
-      {role !== "klant" && !hideAddForm && (
-        <div className="add-form">
-          <div className="add-form-title">Meer- of minderwerk toevoegen</div>
-          <div className="add-form-grid">
-            <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as ExtraWorkType })}>
-              <option value="meerwerk">Meerwerk</option>
-              <option value="minderwerk">Minderwerk</option>
-            </select>
-            <input placeholder="Omschrijving" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-            <input type="number" placeholder="Bedrag €" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
-            <select value={form.vatType} onChange={(e) => setForm({ ...form, vatType: e.target.value as ExtraWorkVatType })}>
-              <option value="excl">Excl. btw</option>
-              <option value="incl">Incl. btw</option>
-            </select>
-            <label className="field-with-label">
-              <span className="field-label">Uitgebreide beschrijving (optioneel — klant kan dit inzien)</span>
-              <textarea
-                rows={3}
-                placeholder="Leg hier uit wat er precies gebeurt en waarom, zodat de klant het goed kan beoordelen…"
-                value={form.explanation}
-                onChange={(e) => setForm({ ...form, explanation: e.target.value })}
-              />
-            </label>
-            {phases.length > 0 && (
-              <>
-                <input
-                  type="number"
-                  min="0"
-                  placeholder={form.type === "meerwerk" ? "Extra werkdagen (optioneel)" : "Werkdagen korter (optioneel)"}
-                  value={form.extraDays}
-                  onChange={(e) => setForm({ ...form, extraDays: e.target.value })}
+      {role !== "klant" && !hideAddForm && showAdd && (
+        <div className="sig-overlay" onClick={() => !busy && closeAdd()}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+            <div className="modal-title">Meer- of minderwerk toevoegen</div>
+            <div className="add-form-grid">
+              <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as ExtraWorkType })}>
+                <option value="meerwerk">Meerwerk</option>
+                <option value="minderwerk">Minderwerk</option>
+              </select>
+              <input placeholder="Omschrijving" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <input type="number" placeholder="Bedrag €" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} />
+              <select value={form.vatType} onChange={(e) => setForm({ ...form, vatType: e.target.value as ExtraWorkVatType })}>
+                <option value="excl">Excl. btw</option>
+                <option value="incl">Incl. btw</option>
+              </select>
+              <label className="field-with-label">
+                <span className="field-label">Uitgebreide beschrijving (optioneel — klant kan dit inzien)</span>
+                <textarea
+                  rows={3}
+                  placeholder="Leg hier uit wat er precies gebeurt en waarom, zodat de klant het goed kan beoordelen…"
+                  value={form.explanation}
+                  onChange={(e) => setForm({ ...form, explanation: e.target.value })}
                 />
-                {Number(form.extraDays) > 0 && (
-                  <select value={form.phaseId} onChange={(e) => setForm({ ...form, phaseId: e.target.value })}>
-                    <option value="">Bij welke fase?</option>
-                    {phases.map((ph) => (
-                      <option key={ph.id} value={ph.id}>
-                        {ph.title}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </>
-            )}
-            <button className="btn-primary" onClick={addItem} disabled={busy}>
-              Toevoegen
-            </button>
-          </div>
-          <div className="field-with-label">
-            <span className="field-label">Foto of bestand (optioneel — klant kan dit inzien)</span>
-            <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
-            <FilePreview
-              previewUrl={pending?.previewUrl ?? null}
-              fileType={pending?.fileType ?? null}
-              fileName={pending?.fileName ?? null}
-              onClear={() => setPending(null)}
-            />
-          </div>
-          {phases.length > 0 && Number(form.extraDays) > 0 && (
-            <div className="hint-bar small">
-              Zodra de klant akkoord geeft, wordt de gekozen fase met {form.extraDays} werkdagen {form.type === "meerwerk" ? "verlengd" : "verkort"}{" "}
-              (weekenden tellen niet mee) en schuiven latere fases automatisch mee. Wijst de klant af, dan verandert er niets aan de
-              planning.
+              </label>
+              {phases.length > 0 && (
+                <>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder={form.type === "meerwerk" ? "Extra werkdagen (optioneel)" : "Werkdagen korter (optioneel)"}
+                    value={form.extraDays}
+                    onChange={(e) => setForm({ ...form, extraDays: e.target.value })}
+                  />
+                  {Number(form.extraDays) > 0 && (
+                    <select value={form.phaseId} onChange={(e) => setForm({ ...form, phaseId: e.target.value })}>
+                      <option value="">Bij welke fase?</option>
+                      {phases.map((ph) => (
+                        <option key={ph.id} value={ph.id}>
+                          {ph.title}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </>
+              )}
             </div>
-          )}
+            <div className="field-with-label">
+              <span className="field-label">Foto of bestand (optioneel — klant kan dit inzien)</span>
+              <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
+              <FilePreview
+                previewUrl={pending?.previewUrl ?? null}
+                fileType={pending?.fileType ?? null}
+                fileName={pending?.fileName ?? null}
+                onClear={() => setPending(null)}
+              />
+            </div>
+            {phases.length > 0 && Number(form.extraDays) > 0 && (
+              <div className="hint-bar small">
+                Zodra de klant akkoord geeft, wordt de gekozen fase met {form.extraDays} werkdagen {form.type === "meerwerk" ? "verlengd" : "verkort"}{" "}
+                (weekenden tellen niet mee) en schuiven latere fases automatisch mee. Wijst de klant af, dan verandert er niets aan de
+                planning.
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAdd} disabled={busy}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addItem} disabled={busy}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
