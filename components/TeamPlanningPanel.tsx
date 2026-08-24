@@ -27,11 +27,33 @@ function DayAssignmentPicker({
   onChange: (next: Record<string, string[]>) => void;
   teamMembers: AssigneeTeamMember[];
 }) {
+  const ownStaff = teamMembers.filter((m) => m.member_type === "personeel");
+  const contractors = teamMembers.filter((m) => m.member_type !== "personeel");
+
   const toggle = (date: string, memberId: string) => {
     const current = value[date] || [];
     const next = current.includes(memberId) ? current.filter((id) => id !== memberId) : [...current, memberId];
     onChange({ ...value, [date]: next });
   };
+
+  const group = (date: string, label: string, members: AssigneeTeamMember[]) =>
+    members.length > 0 && (
+      <div key={label}>
+        <div className="field-label" style={{ margin: "6px 0 4px" }}>
+          {label}
+        </div>
+        <div className="assignee-staff-list">
+          {members.map((m) => (
+            <label key={m.id} className="checkbox-label">
+              <input type="checkbox" checked={(value[date] || []).includes(m.id)} onChange={() => toggle(date, m.id)} />
+              {m.name}
+              {m.trade ? ` — ${m.trade}` : ""}
+            </label>
+          ))}
+        </div>
+      </div>
+    );
+
   return (
     <div className="day-assign-list">
       {days.map((date) => (
@@ -40,14 +62,10 @@ function DayAssignmentPicker({
           {teamMembers.length === 0 ? (
             <div className="empty-hint small">Nog geen teamleden toegevoegd.</div>
           ) : (
-            <div className="assignee-staff-list">
-              {teamMembers.map((m) => (
-                <label key={m.id} className="checkbox-label">
-                  <input type="checkbox" checked={(value[date] || []).includes(m.id)} onChange={() => toggle(date, m.id)} />
-                  {m.name}
-                </label>
-              ))}
-            </div>
+            <>
+              {group(date, "Eigen personeel", ownStaff)}
+              {group(date, "Onderaannemers", contractors)}
+            </>
           )}
         </div>
       ))}
