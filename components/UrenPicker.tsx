@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import Link from "next/link";
 import { Check, ChevronDown, Hammer, Search } from "lucide-react";
 import { createHourEntry } from "@/lib/actions/hours";
@@ -47,25 +47,26 @@ export function UrenPicker({
   todayIso: string;
 }) {
   const [query, setQuery] = useState("");
-  const [showOverig, setShowOverig] = useState(false);
+  const [showOther, setShowOther] = useState(false);
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  const activeProjects = projects.filter((p) => p.status === "lopend");
-  const overigProjects = projects.filter((p) => p.status !== "lopend");
-  const activeJobs = quickJobs.filter((j) => !j.done);
-  const doneJobs = quickJobs.filter((j) => j.done);
+  // Alleen een klus die vandaag daadwerkelijk loopt (en een lopend
+  // project, dat heeft geen dag-precisie) is relevant voor "snel uren
+  // van vandaag toevoegen" — alle andere (toekomstige, afgeronde,
+  // geplande) klussen/projecten zouden hier alleen maar drie knopjes
+  // per regel aan afleiding toevoegen zonder ooit bruikbaar te zijn.
+  const isJobToday = (j: PickerJob) => !j.done && j.start_date <= todayIso && j.end_date >= todayIso;
+
+  const todayProjects = projects.filter((p) => p.status === "lopend");
+  const todayJobs = quickJobs.filter(isJobToday);
+  const otherProjects = projects.filter((p) => p.status !== "lopend");
+  const otherJobs = quickJobs.filter((j) => !isJobToday(j));
+  const otherCount = otherProjects.length + otherJobs.length;
 
   const q = query.trim().toLowerCase();
   const matches = (text: string) => text.toLowerCase().includes(q);
-
   const searching = q.length > 0;
-  const filteredActiveProjects = searching
-    ? projects.filter((p) => matches(p.name) || (p.clientName && matches(p.clientName)))
-    : activeProjects;
-  const filteredActiveJobs = searching ? quickJobs.filter((j) => matches(j.title)) : activeJobs;
-  const filteredOverigProjects = searching ? [] : overigProjects;
-  const filteredOverigJobs = searching ? [] : doneJobs;
 
   const quickAdd = (target: { projectId: string } | { quickJobId: string }, rowKey: string, hours: number) => {
     if (!currentTeamMemberId) return;
@@ -79,93 +80,84 @@ export function UrenPicker({
     });
   };
 
-  const overigCount = overigProjects.length + doneJobs.length;
+  const projectRow = (p: PickerProject, withQuickAdd: boolean) => (
+    <UrenRow
+      key={p.id}
+      active={selectedProjectId === p.id}
+      href={`/uren?project=${p.id}`}
+      icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
+      title={p.name}
+      sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
+      quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `p:${p.id}`, onAdd: (h) => quickAdd({ projectId: p.id }, `p:${p.id}`, h) } : undefined}
+      justAdded={justAdded}
+      pending={pending}
+    />
+  );
+
+  const jobRow = (j: PickerJob, withQuickAdd: boolean) => (
+    <UrenRow
+      key={j.id}
+      active={selectedJobId === j.id}
+      href={`/uren?job=${j.id}`}
+      icon={<Hammer size={14} />}
+      title={j.title}
+      sub={`Losse klus · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
+      quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `j:${j.id}`, onAdd: (h) => quickAdd({ quickJobId: j.id }, `j:${j.id}`, h) } : undefined}
+      justAdded={justAdded}
+      pending={pending}
+    />
+  );
+
+  if (searching) {
+    const foundProjects = [...todayProjects, ...otherProjects].filter((p) => matches(p.name) || (p.clientName && matches(p.clientName)));
+    const foundJobs = [...todayJobs, ...otherJobs].filter((j) => matches(j.title));
+    return (
+      <div className="uren-picker">
+        <div className="uren-search">
+          <Search size={14} />
+          <input type="text" placeholder="Zoek een project of klus…" value={query} onChange={(e) => setQuery(e.target.value)} autoFocus />
+        </div>
+        <div className="dash-panel-list">
+          {foundProjects.map((p) => projectRow(p, p.status === "lopend"))}
+          {foundJobs.map((j) => jobRow(j, isJobToday(j)))}
+          {foundProjects.length === 0 && foundJobs.length === 0 && (
+            <div className="empty-hint small">Niets gevonden voor &quot;{query}&quot;.</div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="uren-picker">
       <div className="uren-search">
         <Search size={14} />
-        <input
-          type="text"
-          placeholder="Zoek een project of klus…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-        />
+        <input type="text" placeholder="Zoek een project of klus…" value={query} onChange={(e) => setQuery(e.target.value)} />
       </div>
 
-      <div className="dash-panel-list">
-        {filteredActiveProjects.map((p) => (
-          <UrenRow
-            key={p.id}
-            active={selectedProjectId === p.id}
-            href={`/uren?project=${p.id}`}
-            icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
-            title={p.name}
-            sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
-            quickAdd={
-              canQuickAdd
-                ? { rowKey: `p:${p.id}`, onAdd: (h) => quickAdd({ projectId: p.id }, `p:${p.id}`, h) }
-                : undefined
-            }
-            justAdded={justAdded}
-            pending={pending}
-          />
-        ))}
-        {filteredActiveJobs.map((j) => (
-          <UrenRow
-            key={j.id}
-            active={selectedJobId === j.id}
-            href={`/uren?job=${j.id}`}
-            icon={<Hammer size={14} />}
-            title={j.title}
-            sub={`Losse klus · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
-            quickAdd={
-              canQuickAdd
-                ? { rowKey: `j:${j.id}`, onAdd: (h) => quickAdd({ quickJobId: j.id }, `j:${j.id}`, h) }
-                : undefined
-            }
-            justAdded={justAdded}
-            pending={pending}
-          />
-        ))}
-        {searching && filteredActiveProjects.length === 0 && filteredActiveJobs.length === 0 && (
-          <div className="empty-hint small">Niets gevonden voor &quot;{query}&quot;.</div>
-        )}
+      <div className="dash-section-title" style={{ marginTop: 0 }}>
+        Vandaag
       </div>
+      {todayProjects.length === 0 && todayJobs.length === 0 ? (
+        <div className="empty-hint small">Niets van jou gepland voor vandaag — zoek hierboven of kies iets uit &quot;overige&quot;.</div>
+      ) : (
+        <div className="dash-panel-list">
+          {todayProjects.map((p) => projectRow(p, true))}
+          {todayJobs.map((j) => jobRow(j, true))}
+        </div>
+      )}
 
-      {!searching && overigCount > 0 && (
+      {otherCount > 0 && (
         <div>
-          <button type="button" className="project-group-header" onClick={() => setShowOverig((v) => !v)}>
-            <ChevronDown size={13} className={"access-chevron" + (showOverig ? " open" : "")} />
-            <span>Overige (afgerond / gepland)</span>
-            <span className="count-badge">{overigCount}</span>
+          <button type="button" className="project-group-header" onClick={() => setShowOther((v) => !v)}>
+            <ChevronDown size={13} className={"access-chevron" + (showOther ? " open" : "")} />
+            <span>Overige projecten en klussen</span>
+            <span className="count-badge">{otherCount}</span>
           </button>
-          {showOverig && (
+          {showOther && (
             <div className="dash-panel-list">
-              {filteredOverigProjects.map((p) => (
-                <UrenRow
-                  key={p.id}
-                  active={selectedProjectId === p.id}
-                  href={`/uren?project=${p.id}`}
-                  icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
-                  title={p.name}
-                  sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
-                  justAdded={justAdded}
-                  pending={pending}
-                />
-              ))}
-              {filteredOverigJobs.map((j) => (
-                <UrenRow
-                  key={j.id}
-                  active={selectedJobId === j.id}
-                  href={`/uren?job=${j.id}`}
-                  icon={<Hammer size={14} />}
-                  title={j.title}
-                  sub={`Losse klus · afgerond · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
-                  justAdded={justAdded}
-                  pending={pending}
-                />
-              ))}
+              {otherProjects.map((p) => projectRow(p, false))}
+              {otherJobs.map((j) => jobRow(j, false))}
             </div>
           )}
         </div>
@@ -206,17 +198,14 @@ function UrenRow({
         <div className="uren-row-quick">
           {justAdded === quickAdd.rowKey ? (
             <span className="uren-row-quick-ok">
-              <Check size={12} /> Vandaag toegevoegd
+              <Check size={12} /> Toegevoegd
             </span>
           ) : (
-            <>
-              <span className="uren-row-quick-label">Vandaag:</span>
-              {[4, 6, 8].map((h) => (
-                <button key={h} type="button" className="chip-btn" disabled={pending} onClick={() => quickAdd.onAdd(h)}>
-                  {h}u
-                </button>
-              ))}
-            </>
+            [4, 6, 8].map((h) => (
+              <button key={h} type="button" className="chip-btn" disabled={pending} onClick={() => quickAdd.onAdd(h)}>
+                {h}u
+              </button>
+            ))
           )}
         </div>
       )}
