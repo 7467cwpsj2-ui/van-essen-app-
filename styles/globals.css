@@ -3252,6 +3252,11 @@ a.dash-panel-row:hover {
   text-decoration: none;
   color: inherit;
 }
+.uren-row-close {
+  flex-shrink: 0;
+  display: inline-flex;
+  color: var(--text-faint);
+}
 .uren-row-quick {
   display: flex;
   align-items: center;

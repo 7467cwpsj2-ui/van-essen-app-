@@ -80,33 +80,39 @@ export function UrenPicker({
     });
   };
 
-  const projectRow = (p: PickerProject, withQuickAdd: boolean) => (
-    <UrenRow
-      key={p.id}
-      active={selectedProjectId === p.id}
-      href={`/uren?project=${p.id}`}
-      icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
-      title={p.name}
-      sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
-      quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `p:${p.id}`, onAdd: (h) => quickAdd({ projectId: p.id }, `p:${p.id}`, h) } : undefined}
-      justAdded={justAdded}
-      pending={pending}
-    />
-  );
+  const projectRow = (p: PickerProject, withQuickAdd: boolean) => {
+    const active = selectedProjectId === p.id;
+    return (
+      <UrenRow
+        key={p.id}
+        active={active}
+        href={active ? "/uren" : `/uren?project=${p.id}`}
+        icon={<ProjectThumb id={p.id} name={p.name} coverPhotoUrl={p.coverPhotoUrl} planningColor={p.planningColor} />}
+        title={p.name}
+        sub={`${STATUS_LABEL[p.status] ?? p.status}${p.clientName ? ` · ${p.clientName}` : ""}`}
+        quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `p:${p.id}`, onAdd: (h) => quickAdd({ projectId: p.id }, `p:${p.id}`, h) } : undefined}
+        justAdded={justAdded}
+        pending={pending}
+      />
+    );
+  };
 
-  const jobRow = (j: PickerJob, withQuickAdd: boolean) => (
-    <UrenRow
-      key={j.id}
-      active={selectedJobId === j.id}
-      href={`/uren?job=${j.id}`}
-      icon={<Hammer size={14} />}
-      title={j.title}
-      sub={`Losse klus · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
-      quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `j:${j.id}`, onAdd: (h) => quickAdd({ quickJobId: j.id }, `j:${j.id}`, h) } : undefined}
-      justAdded={justAdded}
-      pending={pending}
-    />
-  );
+  const jobRow = (j: PickerJob, withQuickAdd: boolean) => {
+    const active = selectedJobId === j.id;
+    return (
+      <UrenRow
+        key={j.id}
+        active={active}
+        href={active ? "/uren" : `/uren?job=${j.id}`}
+        icon={<Hammer size={14} />}
+        title={j.title}
+        sub={`Losse klus · ${j.start_date === j.end_date ? j.start_date : `${j.start_date} – ${j.end_date}`}`}
+        quickAdd={canQuickAdd && withQuickAdd ? { rowKey: `j:${j.id}`, onAdd: (h) => quickAdd({ quickJobId: j.id }, `j:${j.id}`, h) } : undefined}
+        justAdded={justAdded}
+        pending={pending}
+      />
+    );
+  };
 
   if (searching) {
     const foundProjects = [...todayProjects, ...otherProjects].filter((p) => matches(p.name) || (p.clientName && matches(p.clientName)));
@@ -204,12 +210,17 @@ function UrenRow({
 
   return (
     <div className={"uren-row" + (active ? " active" : "")}>
-      <Link href={href} className="uren-row-main">
+      <Link href={href} className="uren-row-main" title={active ? "Sluiten" : undefined}>
         <div className="dash-panel-row-icon">{icon}</div>
         <div className="dash-panel-row-body">
           <div className="dash-panel-row-title">{title}</div>
           <div className="dash-panel-row-sub">{sub}</div>
         </div>
+        {active && (
+          <span className="uren-row-close">
+            <X size={14} />
+          </span>
+        )}
       </Link>
       {quickAdd && (
         <div className="uren-row-quick">
