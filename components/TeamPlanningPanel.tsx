@@ -6,7 +6,7 @@ import { AlertTriangle, Check, CheckCircle2, ChevronDown, Pencil, Plus, RotateCc
 import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
-import { createQuickJob, deleteQuickJob, toggleQuickJobDone, updateQuickJob } from "@/lib/actions/quickJobs";
+import { createQuickJob, deleteQuickJob, toggleQuickJobDone, updateQuickJob, updateQuickJobColor } from "@/lib/actions/quickJobs";
 import { colorForProject } from "@/lib/projectColor";
 import { endDateForWorkingDays, isoWeekNumber, workingDaysBetween } from "@/lib/workingDays";
 import type { QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
@@ -244,7 +244,10 @@ export function TeamPlanningPanel({
   const handleColorChange = (projectId: string, value: string) => {
     setColors((prev) => ({ ...prev, [projectId]: value }));
     startTransition(() => {
-      updateProjectPlanningColor(projectId, value).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+      const action = projectId.startsWith("qj:")
+        ? updateQuickJobColor(projectId.slice(3), value)
+        : updateProjectPlanningColor(projectId, value);
+      action.catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
     });
   };
 
@@ -300,17 +303,13 @@ export function TeamPlanningPanel({
         <div className="planning-legend">
           {legend.map(([id, info]) => (
             <div key={id} className={"planning-legend-item" + (info.done ? " done" : "")}>
-              {info.isQuickJob ? (
-                <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: colorOf(id) }} />
-              ) : (
-                <input
-                  type="color"
-                  value={colorOf(id)}
-                  onChange={(e) => handleColorChange(id, e.target.value)}
-                  className="planning-legend-swatch"
-                  title={`Kleur voor ${info.name} aanpassen`}
-                />
-              )}
+              <input
+                type="color"
+                value={colorOf(id)}
+                onChange={(e) => handleColorChange(id, e.target.value)}
+                className="planning-legend-swatch"
+                title={`Kleur voor ${info.name} aanpassen`}
+              />
               {info.isQuickJob ? (
                 <span className="planning-legend-label">
                   {info.name}

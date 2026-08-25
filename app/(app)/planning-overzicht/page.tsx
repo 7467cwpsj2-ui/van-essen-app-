@@ -77,7 +77,7 @@ export default async function PlanningOverzichtPage() {
       title: "Losse klus",
       projectId: `qj:${j.id}`,
       projectName: j.title,
-      projectColor: null,
+      projectColor: j.color,
       isQuickJob: true,
       fixedDate: false,
       start_date: j.start_date,

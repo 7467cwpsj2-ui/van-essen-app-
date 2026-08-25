@@ -169,6 +169,7 @@ export interface QuickJob {
   day_assignments: QuickJobDayAssignment[] | null;
   address: string | null;
   description: string | null;
+  color: string | null;
   created_at: string;
 }
 

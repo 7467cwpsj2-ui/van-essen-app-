@@ -84,6 +84,15 @@ export async function updateQuickJob(
   revalidatePath(`/klussen/${id}`);
 }
 
+export async function updateQuickJobColor(id: string, color: string) {
+  await requireOwner();
+  if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Ongeldige kleur.");
+  const supabase = createClient();
+  const { error } = await supabase.from("quick_jobs").update({ color }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/planning-overzicht");
+}
+
 export async function toggleQuickJobDone(id: string, done: boolean) {
   await requireOwner();
   const supabase = createClient();
