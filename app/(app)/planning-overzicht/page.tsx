@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPlanningPanel, type PlanningRow } from "@/components/TeamPlanningPanel";
-import type { QuickJob, TeamMember } from "@/types/database";
+import type { DayPart, QuickJob, TeamMember } from "@/types/database";
 
 export default async function PlanningOverzichtPage() {
   const current = await requireUser();
@@ -48,6 +48,8 @@ export default async function PlanningOverzichtPage() {
       start_date: r.start_date,
       end_date: r.end_date,
       done: false,
+      kind: "klus" as const,
+      daypart: "dag" as DayPart,
     };
     if (r.assignee_team_member_ids.length > 0) {
       for (const memberId of r.assignee_team_member_ids) {
@@ -74,7 +76,7 @@ export default async function PlanningOverzichtPage() {
   for (const j of jobs) {
     if (j.done && j.end_date < doneCutoffIso) continue;
     const base = {
-      title: "Losse klus",
+      title: j.kind === "kantoor" ? "Kantoordag" : "Losse klus",
       projectId: `qj:${j.id}`,
       projectName: j.title,
       projectColor: j.color,
@@ -83,55 +85,67 @@ export default async function PlanningOverzichtPage() {
       start_date: j.start_date,
       end_date: j.end_date,
       done: j.done,
+      kind: j.kind,
     };
     if (j.day_assignments && j.day_assignments.length > 0) {
-      // Bezetting kan per dag verschillen — per teamlid de aaneengesloten
-      // reeks dagen tot één balk samenvoegen i.p.v. de kalender te
-      // versnipperen in losse eendaagse balkjes.
-      const daysByMember = new Map<string, string[]>();
+      // Bezetting (én dagdeel) kan per dag verschillen — per teamlid de
+      // aaneengesloten reeks dagen mét hetzelfde dagdeel tot één balk
+      // samenvoegen i.p.v. de kalender te versnipperen in losse
+      // eendaagse balkjes.
+      const daysByMember = new Map<string, { date: string; daypart: DayPart }[]>();
       for (const d of j.day_assignments) {
         for (const memberId of d.team_member_ids) {
           if (!daysByMember.has(memberId)) daysByMember.set(memberId, []);
-          daysByMember.get(memberId)!.push(d.date);
+          daysByMember.get(memberId)!.push({ date: d.date, daypart: d.daypart ?? "dag" });
         }
       }
-      for (const [memberId, dates] of daysByMember) {
-        const sorted = [...dates].sort();
-        let rangeStart = sorted[0];
+      for (const [memberId, entries] of daysByMember) {
+        const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+        let rangeStart = sorted[0].date;
+        let rangeDaypart = sorted[0].daypart;
         let prev = sorted[0];
         let idx = 0;
-        const flush = (end: string) => {
+        const flush = (end: string, daypart: DayPart) => {
           rows.push({
             id: `qj:${j.id}:${memberId}:${idx++}`,
             ...base,
             start_date: rangeStart,
             end_date: end,
+            daypart,
             assignee: nameById.get(memberId) ?? "Onbekend personeelslid",
             memberType: memberTypeById.get(memberId) ?? "personeel",
           });
         };
         for (let i = 1; i < sorted.length; i++) {
-          const gapDays = (new Date(sorted[i] + "T00:00:00Z").getTime() - new Date(prev + "T00:00:00Z").getTime()) / 86400000;
-          if (gapDays > 3) {
-            flush(prev);
-            rangeStart = sorted[i];
+          const gapDays = (new Date(sorted[i].date + "T00:00:00Z").getTime() - new Date(prev.date + "T00:00:00Z").getTime()) / 86400000;
+          if (gapDays > 3 || sorted[i].daypart !== rangeDaypart) {
+            flush(prev.date, rangeDaypart);
+            rangeStart = sorted[i].date;
+            rangeDaypart = sorted[i].daypart;
           }
           prev = sorted[i];
         }
-        flush(prev);
+        flush(prev.date, rangeDaypart);
       }
     } else if (j.assignee_team_member_ids.length > 0) {
       for (const memberId of j.assignee_team_member_ids) {
         rows.push({
           id: `qj:${j.id}:${memberId}`,
           ...base,
+          daypart: j.daypart,
           assignee: nameById.get(memberId) ?? "Onbekend personeelslid",
           memberType: memberTypeById.get(memberId) ?? "personeel",
         });
       }
     } else {
       const name = j.assignee?.trim() || null;
-      rows.push({ id: `qj:${j.id}`, ...base, assignee: name, memberType: name ? memberTypeByName.get(name.toLowerCase()) ?? "onderaannemer" : null });
+      rows.push({
+        id: `qj:${j.id}`,
+        ...base,
+        daypart: j.daypart,
+        assignee: name,
+        memberType: name ? memberTypeByName.get(name.toLowerCase()) ?? "onderaannemer" : null,
+      });
     }
   }
 

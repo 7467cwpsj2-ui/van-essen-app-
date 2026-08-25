@@ -27,7 +27,7 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
 
   return (
     <div className="panel">
-      <div className="header-eyebrow">Losse klus</div>
+      <div className="header-eyebrow">{job.kind === "kantoor" ? "Kantoordag" : "Losse klus"}</div>
       <h1 className="page-title">{job.title}</h1>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span className={"stamp " + (job.done ? "stamp-akkoord" : "stamp-open")}>{job.done ? "Gereed" : "Actief"}</span>
@@ -35,6 +35,7 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
           <CalendarRange size={12} style={{ display: "inline", marginRight: 4, verticalAlign: -2 }} />
           {sameDay ? fmtDate(job.start_date) : `${fmtShort(job.start_date)} – ${fmtDate(job.end_date)}`}
         </span>
+        {job.daypart !== "dag" && <span className="stamp stamp-open">{job.daypart === "ochtend" ? "Ochtend" : "Middag"}</span>}
       </div>
 
       {job.address && (

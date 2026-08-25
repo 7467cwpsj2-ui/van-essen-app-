@@ -48,7 +48,8 @@ export async function GET(request: Request) {
     .select("id,title,address,description,day_assignments,assignee_team_member_ids")
     .lte("start_date", todayIso)
     .gte("end_date", todayIso)
-    .eq("done", false);
+    .eq("done", false)
+    .eq("kind", "klus");
 
   let notified = 0;
   for (const job of jobs ?? []) {

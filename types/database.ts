@@ -153,9 +153,13 @@ export interface SchedulePhase {
   created_at: string;
 }
 
+export type DayPart = "ochtend" | "middag" | "dag";
+
 export interface QuickJobDayAssignment {
   date: string;
   team_member_ids: string[];
+  // Ontbreekt = hele dag (oudere data, of nooit anders ingesteld).
+  daypart?: DayPart;
 }
 
 export interface QuickJob {
@@ -170,6 +174,10 @@ export interface QuickJob {
   address: string | null;
   description: string | null;
   color: string | null;
+  // 'kantoor' = geen klant/project, alleen intern (bijv. de eigenaar op
+  // kantoor) — geen adres/route, geen ochtend-pushmelding.
+  kind: "klus" | "kantoor";
+  daypart: DayPart;
   created_at: string;
 }
 

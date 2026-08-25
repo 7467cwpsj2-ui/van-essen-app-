@@ -16,7 +16,7 @@ import {
 } from "@/lib/actions/quickJobs";
 import { colorForProject } from "@/lib/projectColor";
 import { endDateForWorkingDays, isoWeekNumber, workingDaysBetween } from "@/lib/workingDays";
-import type { QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
+import type { DayPart, QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
@@ -93,11 +93,25 @@ export interface PlanningRow {
   start_date: string;
   end_date: string;
   done: boolean;
+  kind: "klus" | "kantoor";
+  daypart: DayPart;
+}
+
+// Vast grijs streeppatroon voor kantoordagen — bewust geen aanpasbare
+// kleur (zoals bij projecten/klussen), juist zodat "kantoor" overal
+// direct herkenbaar is, ongeacht welke kleuren er verder gekozen zijn.
+const OFFICE_PATTERN = "repeating-linear-gradient(45deg, #64748b, #64748b 5px, #475569 5px, #475569 10px)";
+
+interface DayHalf {
+  match: PlanningRow;
+  background: string;
 }
 
 interface DayCell {
-  blockKey: string | null;
-  background: string | null;
+  full: DayHalf | null;
+  ochtend: DayHalf | null;
+  middag: DayHalf | null;
+  conflict: boolean;
   label: string;
   done: boolean;
 }
@@ -146,10 +160,18 @@ export function TeamPlanningPanel({
   const [dayDetail, setDayDetail] = useState<{ person: string; iso: string } | null>(null);
   const [dayEditJobId, setDayEditJobId] = useState<string | null>(null);
   const [dayEditSelection, setDayEditSelection] = useState<string[]>([]);
+  const [dayEditDaypart, setDayEditDaypart] = useState<DayPart>("dag");
   const [perDay, setPerDay] = useState(false);
   const [dayAssignments, setDayAssignments] = useState<Record<string, string[]>>({});
   const [editPerDay, setEditPerDay] = useState(false);
   const [editDayAssignments, setEditDayAssignments] = useState<Record<string, string[]>>({});
+  const [showAddOffice, setShowAddOffice] = useState(false);
+  const [officeForm, setOfficeForm] = useState({
+    assigneeTeamMemberIds: [] as string[],
+    start: "",
+    days: "1",
+    daypart: "dag" as DayPart,
+  });
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
   const quickJobAssigneeLabel = (j: QuickJob) => {
@@ -189,6 +211,30 @@ export function TeamPlanningPanel({
       }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
     closeAddJob();
+  };
+
+  const officeComputedEnd =
+    officeForm.start && Number(officeForm.days) >= 1 ? endDateForWorkingDays(officeForm.start, Number(officeForm.days)) : "";
+
+  const closeAddOffice = () => {
+    setShowAddOffice(false);
+    setOfficeForm({ assigneeTeamMemberIds: [], start: "", days: "1", daypart: "dag" });
+  };
+
+  const addOfficeDay = () => {
+    if (officeForm.assigneeTeamMemberIds.length === 0 || !officeForm.start || !officeComputedEnd) return;
+    startTransition(() => {
+      createQuickJob({
+        title: "Kantoor",
+        assignee: null,
+        assigneeTeamMemberIds: officeForm.assigneeTeamMemberIds,
+        start: officeForm.start,
+        end: officeComputedEnd,
+        kind: "kantoor",
+        daypart: officeForm.daypart,
+      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+    });
+    closeAddOffice();
   };
 
   const startEditJob = (j: QuickJob) => {
@@ -268,12 +314,14 @@ export function TeamPlanningPanel({
     setDayDetail(null);
     setDayEditJobId(null);
     setDayEditSelection([]);
+    setDayEditDaypart("dag");
   };
 
   const startDayEdit = (job: QuickJob, iso: string) => {
-    const current = job.day_assignments?.find((d) => d.date === iso)?.team_member_ids ?? job.assignee_team_member_ids;
+    const existing = job.day_assignments?.find((d) => d.date === iso);
     setDayEditJobId(job.id);
-    setDayEditSelection(current);
+    setDayEditSelection(existing?.team_member_ids ?? job.assignee_team_member_ids);
+    setDayEditDaypart(existing?.daypart ?? job.daypart);
   };
 
   const saveDayEdit = () => {
@@ -281,7 +329,7 @@ export function TeamPlanningPanel({
     const jobId = dayEditJobId;
     const iso = dayDetail.iso;
     startTransition(() => {
-      updateQuickJobDayAssignment(jobId, iso, dayEditSelection).catch((err) =>
+      updateQuickJobDayAssignment(jobId, iso, dayEditSelection, dayEditDaypart).catch((err) =>
         alert(err instanceof Error ? err.message : "Opslaan mislukt.")
       );
     });
@@ -311,8 +359,11 @@ export function TeamPlanningPanel({
   const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
 
   const legend = Array.from(
-    new Map(assigned.map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob, done: r.done }])).entries()
+    new Map(
+      assigned.filter((r) => r.kind !== "kantoor").map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob, done: r.done }])
+    ).entries()
   ).sort((a, b) => a[1].name.localeCompare(b[1].name, "nl"));
+  const hasOfficeDays = assigned.some((r) => r.kind === "kantoor");
 
   return (
     <div className="panel panel-wide">
@@ -333,8 +384,14 @@ export function TeamPlanningPanel({
           Onderaannemers
         </button>
       </div>
-      {legend.length > 0 && (
+      {(legend.length > 0 || hasOfficeDays) && (
         <div className="planning-legend">
+          {hasOfficeDays && (
+            <div className="planning-legend-item">
+              <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: OFFICE_PATTERN }} />
+              <span className="planning-legend-label">Kantoor</span>
+            </div>
+          )}
           {legend.map(([id, info]) => (
             <div key={id} className={"planning-legend-item" + (info.done ? " done" : "")}>
               <input
@@ -404,32 +461,63 @@ export function TeamPlanningPanel({
 
             {people.map((person) => {
               const personRows = assigned.filter((r) => r.assignee === person);
+              const emptyCell: DayCell = { full: null, ochtend: null, middag: null, conflict: false, label: "", done: false };
+              const backgroundFor = (m: PlanningRow) => (m.kind === "kantoor" ? OFFICE_PATTERN : colorOf(m.projectId));
+              const labelFor = (m: PlanningRow) =>
+                `${m.projectName}${m.kind === "kantoor" ? "" : ` — ${m.title}`}${m.fixedDate ? " (vaste datum)" : ""}` +
+                (m.daypart !== "dag" ? ` (${m.daypart})` : "") +
+                (m.done ? " (afgerond)" : "");
               const cells: DayCell[] = days.map((d) => {
                 const wd = d.getUTCDay();
-                if (wd === 0 || wd === 6) return { blockKey: null, background: null, label: "", done: false };
+                if (wd === 0 || wd === 6) return emptyCell;
                 const iso = d.toISOString().slice(0, 10);
                 const matches = personRows.filter((r) => r.start_date <= iso && iso <= r.end_date);
-                if (matches.length === 0) return { blockKey: null, background: null, label: "", done: false };
-                if (matches.length === 1) {
-                  const color = colorOf(matches[0].projectId);
-                  const label =
-                    `${matches[0].projectName} — ${matches[0].title}${matches[0].fixedDate ? " (vaste datum)" : ""}` +
-                    (matches[0].done ? " (afgerond)" : "");
-                  return { blockKey: matches[0].projectId, background: color, label, done: matches[0].done };
+                if (matches.length === 0) return emptyCell;
+
+                const fullMatches = matches.filter((m) => m.daypart === "dag");
+                const ochtendMatches = matches.filter((m) => m.daypart === "ochtend");
+                const middagMatches = matches.filter((m) => m.daypart === "middag");
+                const conflict =
+                  fullMatches.length > 1 ||
+                  (fullMatches.length >= 1 && matches.length > fullMatches.length) ||
+                  ochtendMatches.length > 1 ||
+                  middagMatches.length > 1;
+
+                if (conflict) {
+                  const usedColors = Array.from(new Set(matches.map(backgroundFor)));
+                  const stripe =
+                    usedColors.length === 1
+                      ? usedColors[0]
+                      : `repeating-linear-gradient(45deg, ${usedColors[0]}, ${usedColors[0]} 6px, ${usedColors[1]} 6px, ${usedColors[1]} 12px)`;
+                  return {
+                    full: { match: matches[0], background: stripe },
+                    ochtend: null,
+                    middag: null,
+                    conflict: true,
+                    label: "Dubbel ingepland: " + matches.map((m) => `${m.projectName} — ${m.title}`).join(" / "),
+                    done: matches.every((m) => m.done),
+                  };
                 }
-                const usedColors = Array.from(new Set(matches.map((m) => colorOf(m.projectId))));
-                const stripe =
-                  usedColors.length === 1
-                    ? usedColors[0]
-                    : `repeating-linear-gradient(45deg, ${usedColors[0]}, ${usedColors[0]} 6px, ${usedColors[1]} 6px, ${usedColors[1]} 12px)`;
+
+                if (fullMatches.length === 1) {
+                  const m = fullMatches[0];
+                  return { full: { match: m, background: backgroundFor(m) }, ochtend: null, middag: null, conflict: false, label: labelFor(m), done: m.done };
+                }
+
+                const ochtendHalf = ochtendMatches[0] ? { match: ochtendMatches[0], background: backgroundFor(ochtendMatches[0]) } : null;
+                const middagHalf = middagMatches[0] ? { match: middagMatches[0], background: backgroundFor(middagMatches[0]) } : null;
                 return {
-                  blockKey: "conflict:" + usedColors.join(","),
-                  background: stripe,
-                  label: "Dubbel ingepland: " + matches.map((m) => `${m.projectName} — ${m.title}`).join(" / "),
-                  done: matches.every((m) => m.done),
+                  full: null,
+                  ochtend: ochtendHalf,
+                  middag: middagHalf,
+                  conflict: false,
+                  label: [ochtendHalf && `Ochtend: ${labelFor(ochtendHalf.match)}`, middagHalf && `Middag: ${labelFor(middagHalf.match)}`]
+                    .filter(Boolean)
+                    .join(" / "),
+                  done: (ochtendHalf?.match.done ?? true) && (middagHalf?.match.done ?? true),
                 };
               });
-              const hasConflict = cells.some((c) => c.blockKey?.startsWith("conflict:"));
+              const hasConflict = cells.some((c) => c.conflict);
 
               return (
                 <Fragment key={person}>
@@ -444,24 +532,37 @@ export function TeamPlanningPanel({
                     </div>
                   </div>
                   {cells.map((cell, idx) => {
-                    const isFirst = cell.blockKey !== null && cells[idx - 1]?.blockKey !== cell.blockKey;
-                    const isLast = cell.blockKey !== null && cells[idx + 1]?.blockKey !== cell.blockKey;
+                    const filled = cell.full !== null || cell.ochtend !== null || cell.middag !== null;
+                    // Rondingen bij begin/eind van een balk gelden bewust
+                    // alleen voor hele-dag-blokken — bij een gesplitste
+                    // cel (ochtend/middag) is een vlak rechthoekje
+                    // duidelijk genoeg en blijft de logica behapbaar.
+                    const blockKey = cell.full && !cell.conflict ? cell.full.match.projectId : null;
+                    const prevKey = cells[idx - 1]?.full && !cells[idx - 1]?.conflict ? cells[idx - 1].full!.match.projectId : null;
+                    const nextKey = cells[idx + 1]?.full && !cells[idx + 1]?.conflict ? cells[idx + 1].full!.match.projectId : null;
+                    const isFirst = blockKey !== null && prevKey !== blockKey;
+                    const isLast = blockKey !== null && nextKey !== blockKey;
                     const wd = days[idx].getUTCDay();
                     const iso = days[idx].toISOString().slice(0, 10);
+                    const background = cell.full
+                      ? cell.full.background
+                      : cell.ochtend || cell.middag
+                        ? `linear-gradient(to bottom, ${cell.ochtend?.background ?? "transparent"} 0%, ${cell.ochtend?.background ?? "transparent"} 50%, ${cell.middag?.background ?? "transparent"} 50%, ${cell.middag?.background ?? "transparent"} 100%)`
+                        : undefined;
                     return (
                       <div
                         key={idx}
                         className={
                           "gantt-cell gantt-daycell" +
-                          (cell.blockKey !== null ? " filled clickable" : "") +
+                          (filled ? " filled clickable" : "") +
                           (isFirst ? " first" : "") +
                           (isLast ? " last" : "") +
                           (wd === 0 || wd === 6 ? " weekend" : "") +
                           (cell.done ? " done" : "")
                         }
-                        style={cell.background ? { background: cell.background } : undefined}
+                        style={background ? { background } : undefined}
                         title={cell.label}
-                        onClick={() => cell.blockKey !== null && setDayDetail({ person, iso })}
+                        onClick={() => filled && setDayDetail({ person, iso })}
                       />
                     );
                   })}
@@ -494,12 +595,30 @@ export function TeamPlanningPanel({
                     return (
                       <div key={m.id} className="day-detail-item">
                         <div className="access-summary-name">
+                          {m.kind === "kantoor" ? "🏢 " : ""}
                           {m.projectName}
-                          {m.title !== "Losse klus" ? ` — ${m.title}` : ""}
+                          {m.kind !== "kantoor" && m.title !== "Losse klus" ? ` — ${m.title}` : ""}
+                          {m.daypart !== "dag" && (
+                            <span className="stamp stamp-open" style={{ marginLeft: 6 }}>
+                              {m.daypart === "ochtend" ? "Ochtend" : "Middag"}
+                            </span>
+                          )}
                         </div>
                         {job ? (
                           dayEditJobId === job.id ? (
                             <>
+                              <div className="mode-toggle">
+                                {(["dag", "ochtend", "middag"] as DayPart[]).map((dp) => (
+                                  <button
+                                    key={dp}
+                                    type="button"
+                                    className={dayEditDaypart === dp ? "active" : ""}
+                                    onClick={() => setDayEditDaypart(dp)}
+                                  >
+                                    {dp === "dag" ? "Hele dag" : dp === "ochtend" ? "Ochtend" : "Middag"}
+                                  </button>
+                                ))}
+                              </div>
                               <DayAssignmentPicker
                                 days={[dayDetail.iso]}
                                 value={{ [dayDetail.iso]: dayEditSelection }}
@@ -539,9 +658,71 @@ export function TeamPlanningPanel({
           );
         })()}
 
-      <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
-        <Plus size={14} /> Kleine klus toevoegen
-      </button>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Kleine klus toevoegen
+        </button>
+        <button type="button" className="btn-ghost" onClick={() => setShowAddOffice(true)} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Kantoordag toevoegen
+        </button>
+      </div>
+
+      {showAddOffice && (
+        <div className="sig-overlay" onClick={closeAddOffice}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">Kantoordag toevoegen</div>
+            <div className="hint-bar small">Voor kantoorwerk, geen klant of project — geen route/adres, geen ochtendherinnering.</div>
+            <div className="add-form-grid">
+              <input
+                type="date"
+                value={officeForm.start}
+                onChange={(e) => setOfficeForm({ ...officeForm, start: e.target.value })}
+                title="Startdatum"
+              />
+              <input
+                type="number"
+                min="1"
+                max="3"
+                placeholder="Aantal dagen"
+                value={officeForm.days}
+                onChange={(e) => setOfficeForm({ ...officeForm, days: e.target.value })}
+              />
+            </div>
+            <div className="mode-toggle">
+              {(["dag", "ochtend", "middag"] as DayPart[]).map((dp) => (
+                <button
+                  key={dp}
+                  type="button"
+                  className={officeForm.daypart === dp ? "active" : ""}
+                  onClick={() => setOfficeForm({ ...officeForm, daypart: dp })}
+                >
+                  {dp === "dag" ? "Hele dag" : dp === "ochtend" ? "Ochtend" : "Middag"}
+                </button>
+              ))}
+            </div>
+            <AssigneeInput
+              assignee=""
+              assigneeTeamMemberIds={officeForm.assigneeTeamMemberIds}
+              onChangeAssignee={() => {}}
+              onChangeTeamMemberIds={(ids) => setOfficeForm({ ...officeForm, assigneeTeamMemberIds: ids })}
+              teamMembers={teamMembers}
+            />
+            {officeComputedEnd && (
+              <div className="hint-bar small">
+                Kantoor van {fmtShort(officeForm.start)} t/m {fmtShort(officeComputedEnd)} (weekenden tellen niet mee).
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAddOffice}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={addOfficeDay}>
+                <Plus size={14} /> Toevoegen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showAddJob && (
         <div className="sig-overlay" onClick={closeAddJob}>
