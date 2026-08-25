@@ -47,6 +47,7 @@ export default async function PlanningOverzichtPage() {
       fixedDate: r.fixed_date,
       start_date: r.start_date,
       end_date: r.end_date,
+      done: false,
     };
     if (r.assignee_team_member_ids.length > 0) {
       for (const memberId of r.assignee_team_member_ids) {
@@ -63,9 +64,15 @@ export default async function PlanningOverzichtPage() {
     }
   }
 
+  // Een afgeronde klus verdwijnt niet meteen van het overzicht — de
+  // eigenaar wil kunnen terugkijken wat er deze (en vorige) week is
+  // gebeurd. Ouder dan twee weken schuift 'm van de kalender af (blijft
+  // wel gewoon terug te vinden in de lijst "Afgeronde losse klussen"
+  // eronder), anders zou de kalender oneindig blijven doorgroeien.
+  const doneCutoffIso = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
   const jobs = (quickJobs ?? []) as QuickJob[];
   for (const j of jobs) {
-    if (j.done) continue;
+    if (j.done && j.end_date < doneCutoffIso) continue;
     const base = {
       title: "Losse klus",
       projectId: `qj:${j.id}`,
@@ -75,6 +82,7 @@ export default async function PlanningOverzichtPage() {
       fixedDate: false,
       start_date: j.start_date,
       end_date: j.end_date,
+      done: j.done,
     };
     if (j.day_assignments && j.day_assignments.length > 0) {
       // Bezetting kan per dag verschillen — per teamlid de aaneengesloten

@@ -2613,6 +2613,19 @@ a.link-btn:hover {
   border-bottom-right-radius: 5px;
   margin-right: 2px;
 }
+/* Een afgeronde klus blijft op de kalender staan (zie
+   planning-overzicht/page.tsx) maar mag niet als "nog te doen" ogen —
+   gedimd en gearceerd houdt 'm herkenbaar als geschiedenis. */
+.gantt-daycell.filled.done {
+  opacity: 0.45;
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent,
+    transparent 4px,
+    rgba(0, 0, 0, 0.25) 4px,
+    rgba(0, 0, 0, 0.25) 8px
+  );
+}
 .planning-legend {
   display: flex;
   flex-wrap: wrap;
@@ -2624,6 +2637,9 @@ a.link-btn:hover {
   align-items: center;
   gap: 6px;
   font-size: 11px;
+}
+.planning-legend-item.done {
+  opacity: 0.55;
 }
 .planning-legend-swatch {
   width: 18px;

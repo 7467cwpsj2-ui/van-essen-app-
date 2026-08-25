@@ -85,12 +85,14 @@ export interface PlanningRow {
   memberType: TeamMemberType | null;
   start_date: string;
   end_date: string;
+  done: boolean;
 }
 
 interface DayCell {
   blockKey: string | null;
   background: string | null;
   label: string;
+  done: boolean;
 }
 
 function overlaps(aStart: string, aEnd: string, bStart: string, bEnd: string) {
@@ -271,9 +273,9 @@ export function TeamPlanningPanel({
   }
   const todayIdx = days.findIndex((d) => d.getTime() === todayMs);
 
-  const legend = Array.from(new Map(assigned.map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob }])).entries()).sort(
-    (a, b) => a[1].name.localeCompare(b[1].name, "nl")
-  );
+  const legend = Array.from(
+    new Map(assigned.map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob, done: r.done }])).entries()
+  ).sort((a, b) => a[1].name.localeCompare(b[1].name, "nl"));
 
   return (
     <div className="panel panel-wide">
@@ -297,7 +299,7 @@ export function TeamPlanningPanel({
       {legend.length > 0 && (
         <div className="planning-legend">
           {legend.map(([id, info]) => (
-            <div key={id} className="planning-legend-item">
+            <div key={id} className={"planning-legend-item" + (info.done ? " done" : "")}>
               {info.isQuickJob ? (
                 <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: colorOf(id) }} />
               ) : (
@@ -310,7 +312,10 @@ export function TeamPlanningPanel({
                 />
               )}
               {info.isQuickJob ? (
-                <span className="planning-legend-label">{info.name}</span>
+                <span className="planning-legend-label">
+                  {info.name}
+                  {info.done && " ✓"}
+                </span>
               ) : (
                 <Link href={`/projects/${id}/bouwplanning`} className="planning-legend-label">
                   {info.name}
@@ -368,14 +373,16 @@ export function TeamPlanningPanel({
               const personRows = assigned.filter((r) => r.assignee === person);
               const cells: DayCell[] = days.map((d) => {
                 const wd = d.getUTCDay();
-                if (wd === 0 || wd === 6) return { blockKey: null, background: null, label: "" };
+                if (wd === 0 || wd === 6) return { blockKey: null, background: null, label: "", done: false };
                 const iso = d.toISOString().slice(0, 10);
                 const matches = personRows.filter((r) => r.start_date <= iso && iso <= r.end_date);
-                if (matches.length === 0) return { blockKey: null, background: null, label: "" };
+                if (matches.length === 0) return { blockKey: null, background: null, label: "", done: false };
                 if (matches.length === 1) {
                   const color = colorOf(matches[0].projectId);
-                  const label = `${matches[0].projectName} — ${matches[0].title}${matches[0].fixedDate ? " (vaste datum)" : ""}`;
-                  return { blockKey: matches[0].projectId, background: color, label };
+                  const label =
+                    `${matches[0].projectName} — ${matches[0].title}${matches[0].fixedDate ? " (vaste datum)" : ""}` +
+                    (matches[0].done ? " (afgerond)" : "");
+                  return { blockKey: matches[0].projectId, background: color, label, done: matches[0].done };
                 }
                 const usedColors = Array.from(new Set(matches.map((m) => colorOf(m.projectId))));
                 const stripe =
@@ -386,6 +393,7 @@ export function TeamPlanningPanel({
                   blockKey: "conflict:" + usedColors.join(","),
                   background: stripe,
                   label: "Dubbel ingepland: " + matches.map((m) => `${m.projectName} — ${m.title}`).join(" / "),
+                  done: matches.every((m) => m.done),
                 };
               });
               const hasConflict = cells.some((c) => c.blockKey?.startsWith("conflict:"));
@@ -414,7 +422,8 @@ export function TeamPlanningPanel({
                           (cell.blockKey !== null ? " filled" : "") +
                           (isFirst ? " first" : "") +
                           (isLast ? " last" : "") +
-                          (wd === 0 || wd === 6 ? " weekend" : "")
+                          (wd === 0 || wd === 6 ? " weekend" : "") +
+                          (cell.done ? " done" : "")
                         }
                         style={cell.background ? { background: cell.background } : undefined}
                         title={cell.label}
