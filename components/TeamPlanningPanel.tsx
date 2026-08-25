@@ -128,10 +128,12 @@ export function TeamPlanningPanel({
   rows,
   quickJobs,
   teamMembers,
+  ownStaffMemberId,
 }: {
   rows: PlanningRow[];
   quickJobs: QuickJob[];
   teamMembers: AssigneeTeamMember[];
+  ownStaffMemberId: string | null;
 }) {
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
   const [, startTransition] = useTransition();
@@ -167,7 +169,6 @@ export function TeamPlanningPanel({
   const [editDayAssignments, setEditDayAssignments] = useState<Record<string, string[]>>({});
   const [showAddOffice, setShowAddOffice] = useState(false);
   const [officeForm, setOfficeForm] = useState({
-    assigneeTeamMemberIds: [] as string[],
     start: "",
     days: "1",
     daypart: "dag" as DayPart,
@@ -218,16 +219,16 @@ export function TeamPlanningPanel({
 
   const closeAddOffice = () => {
     setShowAddOffice(false);
-    setOfficeForm({ assigneeTeamMemberIds: [], start: "", days: "1", daypart: "dag" });
+    setOfficeForm({ start: "", days: "1", daypart: "dag" });
   };
 
   const addOfficeDay = () => {
-    if (officeForm.assigneeTeamMemberIds.length === 0 || !officeForm.start || !officeComputedEnd) return;
+    if (!ownStaffMemberId || !officeForm.start || !officeComputedEnd) return;
     startTransition(() => {
       createQuickJob({
         title: "Kantoor",
         assignee: null,
-        assigneeTeamMemberIds: officeForm.assigneeTeamMemberIds,
+        assigneeTeamMemberIds: [ownStaffMemberId],
         start: officeForm.start,
         end: officeComputedEnd,
         kind: "kantoor",
@@ -662,16 +663,27 @@ export function TeamPlanningPanel({
         <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
           <Plus size={14} /> Kleine klus toevoegen
         </button>
-        <button type="button" className="btn-ghost" onClick={() => setShowAddOffice(true)} style={{ alignSelf: "flex-start" }}>
-          <Plus size={14} /> Kantoordag toevoegen
-        </button>
+        {ownStaffMemberId && (
+          <button type="button" className="btn-ghost" onClick={() => setShowAddOffice(true)} style={{ alignSelf: "flex-start" }}>
+            <Plus size={14} /> Kantoordag toevoegen
+          </button>
+        )}
       </div>
+      {!ownStaffMemberId && (
+        <div className="hint-bar small">
+          Voeg jezelf eerst toe als eigen personeel op de{" "}
+          <Link href="/personeel" className="link-btn" style={{ display: "inline" }}>
+            Personeel-pagina
+          </Link>{" "}
+          om kantoordagen voor jezelf te kunnen inplannen.
+        </div>
+      )}
 
       {showAddOffice && (
         <div className="sig-overlay" onClick={closeAddOffice}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
             <div className="modal-title">Kantoordag toevoegen</div>
-            <div className="hint-bar small">Voor kantoorwerk, geen klant of project — geen route/adres, geen ochtendherinnering.</div>
+            <div className="hint-bar small">Voor jouw eigen kantoorwerk — geen klant of project, geen route/adres, geen ochtendherinnering.</div>
             <div className="add-form-grid">
               <input
                 type="date"
@@ -700,13 +712,6 @@ export function TeamPlanningPanel({
                 </button>
               ))}
             </div>
-            <AssigneeInput
-              assignee=""
-              assigneeTeamMemberIds={officeForm.assigneeTeamMemberIds}
-              onChangeAssignee={() => {}}
-              onChangeTeamMemberIds={(ids) => setOfficeForm({ ...officeForm, assigneeTeamMemberIds: ids })}
-              teamMembers={teamMembers}
-            />
             {officeComputedEnd && (
               <div className="hint-bar small">
                 Kantoor van {fmtShort(officeForm.start)} t/m {fmtShort(officeComputedEnd)} (weekenden tellen niet mee).

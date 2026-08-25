@@ -169,6 +169,7 @@ export default async function PlanningOverzichtPage() {
         trade: m.trade,
         member_type: m.member_type,
       }))}
+      ownStaffMemberId={current.ownStaffMember?.id ?? null}
     />
   );
 }
