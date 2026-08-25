@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useTransition } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { Download, FileSignature, FileText, Pencil, Plus, Trash2, X, Check } from "lucide-react";
 import {
@@ -217,7 +218,9 @@ export function SubsidyCheckPanel({
                       ) : (
                         <div key={ph.id} style={{ position: "relative" }}>
                           <button type="button" className="thumb-btn" onClick={() => ph.url && setLightboxSrc(ph.url)}>
-                            {ph.url && <img src={ph.url} alt="" className="work-attachment-thumb" />}
+                            {ph.url && (
+                              <Image src={ph.url} alt="" width={56} height={56} className="work-attachment-thumb" />
+                            )}
                           </button>
                           {!isLocked && (
                             <button

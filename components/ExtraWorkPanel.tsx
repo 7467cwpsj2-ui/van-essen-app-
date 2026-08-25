@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { FileText, Plus, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
@@ -321,7 +322,7 @@ export function ExtraWorkPanel({
                     </a>
                   ) : (
                     <button type="button" className="thumb-btn" onClick={() => setSigPreview(w.attachmentUrl)}>
-                      <img src={w.attachmentUrl} alt="" className="work-attachment-thumb" />
+                      <Image src={w.attachmentUrl} alt="" width={56} height={56} className="work-attachment-thumb" />
                     </button>
                   ))}
               </div>

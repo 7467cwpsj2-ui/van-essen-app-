@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Camera, Plus, Trash2 } from "lucide-react";
 import { FileCaptureButtons } from "@/components/FileCaptureButtons";
 import { FilePreview } from "@/components/FilePreview";
@@ -120,7 +121,7 @@ export function PhotosPanel({
           <div key={ph.id} className={"photo-card" + (role === "eigenaar" && !ph.reviewed ? " needs-review" : "")}>
             {ph.signedUrl ? (
               <button type="button" className="photo-card-thumb" onClick={() => setPreview(ph.signedUrl)}>
-                <img src={ph.signedUrl} alt="" />
+                <Image src={ph.signedUrl} alt="" fill sizes="(max-width: 640px) 45vw, 200px" style={{ objectFit: "cover" }} />
               </button>
             ) : (
               <div className="photo-card-icon">
