@@ -1,3 +1,5 @@
+import { cache } from "react";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
 import { getProjectClientNamesMap } from "@/lib/clientNames";
@@ -9,32 +11,50 @@ export interface ProjectWithProgress extends Project {
   coverPhotoUrl: string | null;
 }
 
+async function signedCoverUrls(supabase: SupabaseClient, paths: string[]): Promise<Map<string, string | null>> {
+  if (paths.length === 0) return new Map();
+  const { data } = await supabase.storage.from("project-files").createSignedUrls(paths, 3600);
+  return new Map(paths.map((path, i) => [path, data?.[i]?.signedUrl ?? null]));
+}
+
 // RLS beperkt dit vanzelf tot de projecten waar de ingelogde
-// gebruiker toegang toe heeft.
-export async function getProjectsWithProgress(): Promise<ProjectWithProgress[]> {
+// gebruiker toegang toe heeft. Draait op vrijwel elke paginanavigatie
+// (ook vanuit de layout, voor de zijbalk), dus fases en cover-foto's
+// worden bewust in telkens één bulk-aanroep opgehaald i.p.v. één per
+// project — bij bijv. 15 projecten scheelt dat tientallen losse
+// netwerk-round-trips per paginalading. cache() zorgt er daarnaast voor
+// dat wanneer zowel de layout als de pagina zelf dit aanroepen (zoals
+// op /dashboard en /uren), dat binnen één request maar één keer
+// daadwerkelijk wordt uitgevoerd.
+export const getProjectsWithProgress = cache(async (): Promise<ProjectWithProgress[]> => {
   const supabase = createClient();
   const { data: projects } = await supabase.from("projects").select("*").order("created_at", { ascending: false });
   const projectRows = (projects ?? []) as Project[];
+  if (projectRows.length === 0) return [];
 
-  const clientNameMap = await getProjectClientNamesMap(supabase, projectRows.map((p) => ({ id: p.id, client_id: p.client_id })));
+  const projectIds = projectRows.map((p) => p.id);
+  const coverPaths = projectRows.map((p) => p.cover_photo_path).filter((path): path is string => !!path);
 
-  return Promise.all(
-    projectRows.map(async (p) => {
-      const { data: phases } = await supabase.from("schedule_phases").select("*").eq("project_id", p.id);
-      let coverPhotoUrl: string | null = null;
-      if (p.cover_photo_path) {
-        const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(p.cover_photo_path, 3600);
-        coverPhotoUrl = signed?.signedUrl ?? null;
-      }
-      return {
-        ...p,
-        clientName: clientNameMap[p.id] ?? null,
-        progress: projectProgress((phases ?? []) as SchedulePhase[]),
-        coverPhotoUrl,
-      };
-    })
-  );
-}
+  const [clientNameMap, phasesResult, signedUrlByPath] = await Promise.all([
+    getProjectClientNamesMap(supabase, projectRows.map((p) => ({ id: p.id, client_id: p.client_id }))),
+    supabase.from("schedule_phases").select("*").in("project_id", projectIds),
+    signedCoverUrls(supabase, coverPaths),
+  ]);
+
+  const phasesByProject = new Map<string, SchedulePhase[]>();
+  for (const phase of (phasesResult.data ?? []) as SchedulePhase[]) {
+    const list = phasesByProject.get(phase.project_id) ?? [];
+    list.push(phase);
+    phasesByProject.set(phase.project_id, list);
+  }
+
+  return projectRows.map((p) => ({
+    ...p,
+    clientName: clientNameMap[p.id] ?? null,
+    progress: projectProgress(phasesByProject.get(p.id) ?? []),
+    coverPhotoUrl: (p.cover_photo_path ? signedUrlByPath.get(p.cover_photo_path) : null) ?? null,
+  }));
+});
 
 export interface TodayTask {
   id: string;
