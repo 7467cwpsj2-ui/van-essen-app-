@@ -32,11 +32,6 @@ export function NacalculatieOverviewPanel({ rows }: { rows: NacalculatieRow[] })
     [rows, filter]
   );
 
-  const totals = filtered.reduce(
-    (acc, r) => ({ begroot: acc.begroot + r.begroot, werkelijk: acc.werkelijk + r.werkelijk, marge: acc.marge + r.marge }),
-    { begroot: 0, werkelijk: 0, marge: 0 }
-  );
-
   const toggle = (id: string) => {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -56,21 +51,6 @@ export function NacalculatieOverviewPanel({ rows }: { rows: NacalculatieRow[] })
             {f === "alle" ? "Alles" : f === "lopend" ? "Lopend" : "Afgerond"}
           </button>
         ))}
-      </div>
-
-      <div className="calc-summary">
-        <div className="calc-line">
-          <span>Begroot</span>
-          <span className="mono">{fmtEuro(totals.begroot)}</span>
-        </div>
-        <div className="calc-line">
-          <span>Werkelijk</span>
-          <span className="mono">{fmtEuro(totals.werkelijk)}</span>
-        </div>
-        <div className={"calc-line calc-line-marge " + (totals.marge >= 0 ? "pos" : "neg")}>
-          <span>Totale marge</span>
-          <span className="mono">{fmtEuro(totals.marge)}</span>
-        </div>
       </div>
 
       {filtered.length === 0 ? (
