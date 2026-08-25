@@ -2603,6 +2603,23 @@ a.link-btn:hover {
 .gantt-daycell.filled {
   background: var(--brand);
 }
+.gantt-daycell.clickable {
+  cursor: pointer;
+}
+.gantt-daycell.clickable:hover {
+  filter: brightness(1.15);
+}
+.day-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+}
+.day-detail-item:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
 .gantt-daycell.filled.first {
   border-top-left-radius: 5px;
   border-bottom-left-radius: 5px;

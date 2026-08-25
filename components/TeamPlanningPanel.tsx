@@ -6,7 +6,14 @@ import { AlertTriangle, Check, CheckCircle2, ChevronDown, Pencil, Plus, RotateCc
 import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
-import { createQuickJob, deleteQuickJob, toggleQuickJobDone, updateQuickJob, updateQuickJobColor } from "@/lib/actions/quickJobs";
+import {
+  createQuickJob,
+  deleteQuickJob,
+  toggleQuickJobDone,
+  updateQuickJob,
+  updateQuickJobColor,
+  updateQuickJobDayAssignment,
+} from "@/lib/actions/quickJobs";
 import { colorForProject } from "@/lib/projectColor";
 import { endDateForWorkingDays, isoWeekNumber, workingDaysBetween } from "@/lib/workingDays";
 import type { QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
@@ -136,6 +143,9 @@ export function TeamPlanningPanel({
   });
   const [showDoneJobs, setShowDoneJobs] = useState(false);
   const [showAddJob, setShowAddJob] = useState(false);
+  const [dayDetail, setDayDetail] = useState<{ person: string; iso: string } | null>(null);
+  const [dayEditJobId, setDayEditJobId] = useState<string | null>(null);
+  const [dayEditSelection, setDayEditSelection] = useState<string[]>([]);
   const [perDay, setPerDay] = useState(false);
   const [dayAssignments, setDayAssignments] = useState<Record<string, string[]>>({});
   const [editPerDay, setEditPerDay] = useState(false);
@@ -253,6 +263,30 @@ export function TeamPlanningPanel({
 
   const assigned = rows.filter((r) => r.assignee && (filter === "alle" || r.memberType === filter));
   const people = Array.from(new Set(assigned.map((r) => r.assignee as string))).sort((a, b) => a.localeCompare(b, "nl"));
+
+  const closeDayDetail = () => {
+    setDayDetail(null);
+    setDayEditJobId(null);
+    setDayEditSelection([]);
+  };
+
+  const startDayEdit = (job: QuickJob, iso: string) => {
+    const current = job.day_assignments?.find((d) => d.date === iso)?.team_member_ids ?? job.assignee_team_member_ids;
+    setDayEditJobId(job.id);
+    setDayEditSelection(current);
+  };
+
+  const saveDayEdit = () => {
+    if (!dayEditJobId || !dayDetail) return;
+    const jobId = dayEditJobId;
+    const iso = dayDetail.iso;
+    startTransition(() => {
+      updateQuickJobDayAssignment(jobId, iso, dayEditSelection).catch((err) =>
+        alert(err instanceof Error ? err.message : "Opslaan mislukt.")
+      );
+    });
+    closeDayDetail();
+  };
 
   const jobMemberType = (j: QuickJob): TeamMemberType | null => {
     if (j.assignee_team_member_ids.length > 0) {
@@ -413,12 +447,13 @@ export function TeamPlanningPanel({
                     const isFirst = cell.blockKey !== null && cells[idx - 1]?.blockKey !== cell.blockKey;
                     const isLast = cell.blockKey !== null && cells[idx + 1]?.blockKey !== cell.blockKey;
                     const wd = days[idx].getUTCDay();
+                    const iso = days[idx].toISOString().slice(0, 10);
                     return (
                       <div
                         key={idx}
                         className={
                           "gantt-cell gantt-daycell" +
-                          (cell.blockKey !== null ? " filled" : "") +
+                          (cell.blockKey !== null ? " filled clickable" : "") +
                           (isFirst ? " first" : "") +
                           (isLast ? " last" : "") +
                           (wd === 0 || wd === 6 ? " weekend" : "") +
@@ -426,6 +461,7 @@ export function TeamPlanningPanel({
                         }
                         style={cell.background ? { background: cell.background } : undefined}
                         title={cell.label}
+                        onClick={() => cell.blockKey !== null && setDayDetail({ person, iso })}
                       />
                     );
                   })}
@@ -437,6 +473,71 @@ export function TeamPlanningPanel({
           </div>
         </ScrollToToday>
       )}
+
+      {dayDetail &&
+        (() => {
+          const matches = assigned.filter(
+            (r) => r.assignee === dayDetail.person && r.start_date <= dayDetail.iso && dayDetail.iso <= r.end_date
+          );
+          return (
+            <div className="sig-overlay" onClick={closeDayDetail}>
+              <div className="modal-card" onClick={(e) => e.stopPropagation()} style={{ maxHeight: "85vh", overflowY: "auto" }}>
+                <div className="modal-title">
+                  {dayDetail.person} — {fmtShort(dayDetail.iso)}
+                </div>
+                {matches.length === 0 ? (
+                  <div className="empty-hint small">Niets gepland op dit moment.</div>
+                ) : (
+                  matches.map((m) => {
+                    const jobId = m.isQuickJob ? m.projectId.slice(3) : null;
+                    const job = jobId ? quickJobs.find((j) => j.id === jobId) : null;
+                    return (
+                      <div key={m.id} className="day-detail-item">
+                        <div className="access-summary-name">
+                          {m.projectName}
+                          {m.title !== "Losse klus" ? ` — ${m.title}` : ""}
+                        </div>
+                        {job ? (
+                          dayEditJobId === job.id ? (
+                            <>
+                              <DayAssignmentPicker
+                                days={[dayDetail.iso]}
+                                value={{ [dayDetail.iso]: dayEditSelection }}
+                                onChange={(next) => setDayEditSelection(next[dayDetail.iso] || [])}
+                                teamMembers={teamMembers}
+                              />
+                              <div className="modal-actions">
+                                <button type="button" className="btn-ghost" onClick={() => setDayEditJobId(null)}>
+                                  Annuleren
+                                </button>
+                                <button type="button" className="btn-primary" onClick={saveDayEdit}>
+                                  <Check size={14} /> Opslaan
+                                </button>
+                              </div>
+                            </>
+                          ) : (
+                            <button type="button" className="btn-ghost" onClick={() => startDayEdit(job, dayDetail.iso)}>
+                              <Pencil size={13} /> Alleen deze dag aanpassen
+                            </button>
+                          )
+                        ) : (
+                          <Link href={`/projects/${m.projectId}/bouwplanning`} className="link-btn">
+                            Open in bouwplanning
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+                <div className="modal-actions">
+                  <button type="button" className="btn-ghost" onClick={closeDayDetail}>
+                    Sluiten
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
         <Plus size={14} /> Kleine klus toevoegen
