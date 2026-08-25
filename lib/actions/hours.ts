@@ -1,8 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireUser } from "@/lib/auth";
+import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
 import { weekdaysOfWeek } from "@/lib/workingDays";
 
 // Uren horen bij precies één van de twee: een echt project, of een
@@ -79,4 +80,19 @@ export async function deleteHourEntry(target: HoursTarget, id: string) {
   const { error } = await supabase.from("hours").delete().eq("id", id);
   if (error) throw new Error(error.message);
   revalidateTarget(target);
+}
+
+// Vanuit het uren-overzicht: de eigenaar ziet dat iemand nog geen uren
+// heeft ingevuld voor de gekozen periode en stuurt handmatig een
+// duwtje — geen automatische cron, want alleen de eigenaar kan
+// beoordelen of iemand die periode ook echt had moeten werken.
+export async function sendHoursReminder(teamMemberId: string) {
+  const current = await requireOwner();
+  const recipients = await getTeamMemberUserIds(teamMemberId, current.id);
+  if (recipients.length === 0) throw new Error("Dit teamlid heeft geen account om een melding naartoe te sturen.");
+  await sendPushToUsers(recipients, {
+    title: "Uren nog niet ingevuld",
+    body: "Vergeet je uren niet in te vullen — dat kan snel in de app.",
+    url: "/uren",
+  });
 }

@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { Bell, Check, ChevronDown } from "lucide-react";
+import { sendHoursReminder } from "@/lib/actions/hours";
 import { mondayOfWeek, monthRange, sundayOfWeek } from "@/lib/workingDays";
 
 export interface HoursOverviewEntry {
@@ -37,13 +38,21 @@ function fmtHours(h: number) {
 // hoeveel uur heeft geschreven. Periode en groepering zijn bewust puur
 // client-side state (alle uren zijn al in één keer meegegeven), zodat
 // wisselen instant is en niet elke keer een nieuwe pagina laadt.
-export function HoursOverviewPanel({ entries }: { entries: HoursOverviewEntry[] }) {
+export function HoursOverviewPanel({
+  entries,
+  personnel,
+}: {
+  entries: HoursOverviewEntry[];
+  personnel: { id: string; name: string }[];
+}) {
   const todayIso = new Date().toISOString().slice(0, 10);
   const [period, setPeriod] = useState<Period>("week");
   const [customFrom, setCustomFrom] = useState(mondayOfWeek(todayIso));
   const [customTo, setCustomTo] = useState(todayIso);
   const [groupBy, setGroupBy] = useState<GroupBy>("persoon");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
 
   const range = useMemo(() => {
     if (period === "last_week") {
@@ -90,6 +99,34 @@ export function HoursOverviewPanel({ entries }: { entries: HoursOverviewEntry[] 
       else next.add(key);
       return next;
     });
+  };
+
+  // Eigen personeel zonder uren in de gekozen periode — puur informatief,
+  // de eigenaar beoordeelt zelf of iemand die periode ook echt had
+  // moeten werken vóórdat hij een herinnering stuurt.
+  const missing = useMemo(() => {
+    const withHours = new Set(filtered.map((e) => e.memberId));
+    return personnel.filter((p) => !withHours.has(p.id));
+  }, [personnel, filtered]);
+
+  const remind = async (id: string) => {
+    setPendingIds((prev) => new Set(prev).add(id));
+    try {
+      await sendHoursReminder(id);
+      setSentIds((prev) => new Set(prev).add(id));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Versturen mislukt.");
+    } finally {
+      setPendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }
+  };
+
+  const remindAll = () => {
+    missing.filter((m) => !sentIds.has(m.id)).forEach((m) => remind(m.id));
   };
 
   return (
@@ -177,6 +214,45 @@ export function HoursOverviewPanel({ entries }: { entries: HoursOverviewEntry[] 
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {missing.length > 0 && (
+        <div>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+            <div className="add-form-title" style={{ marginTop: 0 }}>
+              Nog geen uren ingevuld deze periode
+            </div>
+            {missing.some((m) => !sentIds.has(m.id)) && (
+              <button type="button" className="btn-ghost" onClick={remindAll}>
+                <Bell size={13} /> Stuur naar iedereen
+              </button>
+            )}
+          </div>
+          <div className="task-list">
+            {missing.map((m) => {
+              const pending = pendingIds.has(m.id);
+              const sent = sentIds.has(m.id);
+              return (
+                <div key={m.id} className="task-row">
+                  <div className="task-body">
+                    <div className="task-title">{m.name}</div>
+                  </div>
+                  <button type="button" className="btn-ghost" disabled={pending || sent} onClick={() => remind(m.id)}>
+                    {sent ? (
+                      <>
+                        <Check size={13} /> Verstuurd
+                      </>
+                    ) : (
+                      <>
+                        <Bell size={13} /> {pending ? "Versturen…" : "Herinneren"}
+                      </>
+                    )}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

@@ -107,7 +107,10 @@ export default async function UrenTopLevelPage({
         hours: Number(e.hours),
       };
     });
-    panel = <HoursOverviewPanel entries={overviewEntries} />;
+    const personnel = teamMembers
+      .filter((m) => m.member_type === "personeel" && m.id !== myStaffId)
+      .map((m) => ({ id: m.id, name: m.name }));
+    panel = <HoursOverviewPanel entries={overviewEntries} personnel={personnel} />;
   }
 
   const nothingToPick = projects.length === 0 && quickJobs.length === 0;
