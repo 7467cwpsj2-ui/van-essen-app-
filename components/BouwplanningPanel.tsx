@@ -40,6 +40,7 @@ export function BouwplanningPanel({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ assignee: "", assigneeTeamMemberIds: [] as string[], start: "", days: "" });
   const [showAdd, setShowAdd] = useState(false);
+  const [detailPhase, setDetailPhase] = useState<SchedulePhase | null>(null);
   const [, startTransition] = useTransition();
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
@@ -241,13 +242,14 @@ export function BouwplanningPanel({
                         key={idx}
                         className={
                           "gantt-cell gantt-daycell" +
-                          (filled ? " filled" : "") +
+                          (filled ? " filled clickable" : "") +
                           (isFirst ? " first" : "") +
                           (isLast ? " last" : "") +
                           (wd === 0 || wd === 6 ? " weekend" : "")
                         }
                         style={filled ? { background: phaseColor } : undefined}
                         title={filled ? `${i.title}: ${i.start_date} – ${i.end_date}` : ""}
+                        onClick={() => filled && setDetailPhase(i)}
                       />
                     );
                   })}
@@ -260,6 +262,39 @@ export function BouwplanningPanel({
         </ScrollToToday>
       )}
       {!canEdit && phases.length > 0 && <div className="hint-bar small">Je kunt deze bouwplanning bekijken, maar niet wijzigen.</div>}
+
+      {detailPhase &&
+        (() => {
+          const linked = tasks.filter((t) => t.phase_id === detailPhase.id);
+          const done = linked.filter((t) => t.done).length;
+          return (
+            <div className="sig-overlay" onClick={() => setDetailPhase(null)}>
+              <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-title">{detailPhase.title}</div>
+                <div className="access-summary-sub">
+                  {fmtDate(detailPhase.start_date)} – {fmtDate(detailPhase.end_date)}
+                </div>
+                {phaseAssigneeLabel(detailPhase) && <div className="access-summary-sub">{phaseAssigneeLabel(detailPhase)}</div>}
+                {linked.length > 0 && (
+                  <div className="access-summary-sub">
+                    {done}/{linked.length} taken afgerond
+                  </div>
+                )}
+                {detailPhase.fixed_date && (
+                  <div className="hint-bar small">
+                    <Lock size={12} style={{ display: "inline", marginRight: 4, verticalAlign: -1 }} />
+                    Deze fase schuift niet automatisch mee met andere wijzigingen.
+                  </div>
+                )}
+                <div className="modal-actions">
+                  <button type="button" className="btn-ghost" onClick={() => setDetailPhase(null)}>
+                    Sluiten
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()}
 
       {canEdit && editingId && (
         <div className="add-form">
