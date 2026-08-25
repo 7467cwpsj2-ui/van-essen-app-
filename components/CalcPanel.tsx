@@ -76,13 +76,16 @@ export function CalcPanel({
       return;
     }
     startTransition(() => {
-      createCostItem(projectId, {
-        description,
-        amount: Number(itemAmount) || 0,
-        vatType: itemVatType,
-        supplier: itemSupplier,
-        invoiceNumber: itemInvoiceNumber,
-      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      createCostItem(
+        { projectId },
+        {
+          description,
+          amount: Number(itemAmount) || 0,
+          vatType: itemVatType,
+          supplier: itemSupplier,
+          invoiceNumber: itemInvoiceNumber,
+        }
+      ).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
     });
     closeAddCost();
   };
@@ -107,13 +110,17 @@ export function CalcPanel({
       return;
     }
     startTransition(() => {
-      updateCostItem(projectId, id, {
-        description,
-        amount: Number(editForm.amount) || 0,
-        vatType: editForm.vatType,
-        supplier: editForm.supplier,
-        invoiceNumber: editForm.invoiceNumber,
-      }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+      updateCostItem(
+        { projectId },
+        id,
+        {
+          description,
+          amount: Number(editForm.amount) || 0,
+          vatType: editForm.vatType,
+          supplier: editForm.supplier,
+          invoiceNumber: editForm.invoiceNumber,
+        }
+      ).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
     });
     setEditingId(null);
   };
@@ -297,7 +304,7 @@ export function CalcPanel({
                   <button
                     className="icon-btn danger ghost"
                     title="Verwijderen"
-                    onClick={() => startTransition(() => deleteCostItem(projectId, c.id).catch(() => {}))}
+                    onClick={() => startTransition(() => deleteCostItem({ projectId }, c.id).catch(() => {}))}
                   >
                     <Trash2 size={14} />
                   </button>
@@ -326,7 +333,7 @@ export function CalcPanel({
         </>
       )}
 
-      {!isLocked && <InvoiceUploadPanel projectId={projectId} projectName={project.name} />}
+      {!isLocked && <InvoiceUploadPanel target={{ projectId }} targetName={project.name} />}
 
       {!isLocked && showAddCost && (
         <div className="sig-overlay" onClick={closeAddCost}>

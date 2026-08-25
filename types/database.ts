@@ -93,7 +93,8 @@ export interface TeamMember {
 
 export interface CostItem {
   id: string;
-  project_id: string;
+  project_id: string | null;
+  quick_job_id: string | null;
   description: string;
   amount: number;
   vat_type: ExtraWorkVatType;
@@ -178,6 +179,10 @@ export interface QuickJob {
   // kantoor) — geen adres/route, geen ochtend-pushmelding.
   kind: "klus" | "kantoor";
   daypart: DayPart;
+  // Voor nacalculatie: het afgesproken/gefactureerde bedrag voor deze
+  // klus — het equivalent van quote_amount/quote_vat_type bij een project.
+  price: number;
+  price_vat_type: ExtraWorkVatType;
   created_at: string;
 }
 

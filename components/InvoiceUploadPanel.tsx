@@ -3,20 +3,22 @@
 import { useRef, useState, useTransition } from "react";
 import { CheckCircle2, FileText, Loader2, Upload } from "lucide-react";
 import { parseInvoicePdf, type InvoiceResult } from "@/lib/actions/invoices";
-import { createCostItem } from "@/lib/actions/calc";
+import { createCostItem, type CalcTarget } from "@/lib/actions/calc";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(n);
 
-export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fixedProjectName }: { projectId?: string; projectName?: string }) {
+export function InvoiceUploadPanel({ target: fixedTarget, targetName: fixedTargetName }: { target?: CalcTarget; targetName?: string }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<InvoiceResult | null>(null);
-  const [projectId, setProjectId] = useState(fixedProjectId || "");
+  const [projectId, setProjectId] = useState(fixedTarget?.projectId || "");
   const [supplier, setSupplier] = useState("");
   const [amount, setAmount] = useState("");
   const [saved, setSaved] = useState(false);
   const [, startTransition] = useTransition();
+
+  const isFixed = !!fixedTarget;
 
   const reset = () => {
     setResult(null);
@@ -24,7 +26,7 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
     setSaved(false);
     setSupplier("");
     setAmount("");
-    setProjectId(fixedProjectId || "");
+    setProjectId(fixedTarget?.projectId || "");
     if (inputRef.current) inputRef.current.value = "";
   };
 
@@ -36,12 +38,12 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const parsed = await parseInvoicePdf(formData, fixedProjectId);
+      const parsed = await parseInvoicePdf(formData, fixedTarget);
       setResult(parsed);
       if (!parsed.autoFiled) {
         setSupplier(parsed.supplier || "");
         setAmount(parsed.amount != null ? String(parsed.amount) : "");
-        setProjectId(fixedProjectId || parsed.matchedProjectId || "");
+        setProjectId(fixedTarget?.projectId || parsed.matchedProjectId || "");
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Uitlezen mislukt.");
@@ -51,9 +53,14 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
   };
 
   const confirm = () => {
-    if (!projectId || !supplier.trim() || !amount) return;
+    const target: CalcTarget | null = fixedTarget?.quickJobId
+      ? { quickJobId: fixedTarget.quickJobId }
+      : projectId
+        ? { projectId }
+        : null;
+    if (!target || !supplier.trim() || !amount) return;
     startTransition(() => {
-      createCostItem(projectId, {
+      createCostItem(target, {
         description: supplier.trim(),
         amount: Number(amount) || 0,
         vatType: "incl",
@@ -65,13 +72,18 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
     });
   };
 
+  const savedTargetName = () => {
+    if (fixedTargetName) return fixedTargetName;
+    return result?.projects.find((p) => p.id === projectId)?.name;
+  };
+
   return (
-    <div className={fixedProjectId ? "add-form" : "panel"}>
+    <div className={isFixed ? "add-form" : "panel"}>
       <div className="hint-bar">
-        {fixedProjectId ? (
+        {isFixed ? (
           <>
             Sleep een factuur (PDF) hierheen of kies een bestand — wordt met genoeg zekerheid leverancier en bedrag herkend, dan komt
-            het er direct als kostenpost bij voor <b>{fixedProjectName}</b>.
+            het er direct als kostenpost bij voor <b>{fixedTargetName}</b>.
           </>
         ) : (
           <>
@@ -114,7 +126,7 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
         <div className="add-form">
           <div className="hint-bar small">
             <CheckCircle2 size={13} style={{ display: "inline", marginRight: 5, verticalAlign: -2 }} />
-            Automatisch toegevoegd aan de nacalculatie van <b>{result.matchedProjectName}</b>: {result.supplier} —{" "}
+            Automatisch toegevoegd aan de nacalculatie van <b>{result.matchedQuickJobId ? result.matchedQuickJobTitle : result.matchedProjectName}</b>: {result.supplier} —{" "}
             {fmtEuro(result.amount ?? 0)}.
           </div>
           <button className="btn-ghost" onClick={reset} style={{ alignSelf: "flex-start" }}>
@@ -130,7 +142,7 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
             Niet zeker genoeg — vul aan en bevestig
           </div>
           <div className="hint-bar small">
-            {fixedProjectId
+            {isFixed
               ? "Leverancier of bedrag kon niet met zekerheid gelezen worden — controleer hieronder."
               : !result.matchedProjectId && result.workAddress
                 ? `Geen project gevonden voor werkadres "${result.workAddress}" — kies er zelf een.`
@@ -139,7 +151,7 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
                   : "Leverancier of bedrag kon niet met zekerheid gelezen worden — controleer hieronder."}
           </div>
           <div className="add-form-grid">
-            {!fixedProjectId && (
+            {!isFixed && (
               <label className="field-with-label">
                 <span className="field-label">Project</span>
                 <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
@@ -162,7 +174,11 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
             </label>
           </div>
           <div className="dossier-status-actions">
-            <button className="btn-primary" onClick={confirm} disabled={!projectId || !supplier.trim() || !amount}>
+            <button
+              className="btn-primary"
+              onClick={confirm}
+              disabled={!(fixedTarget?.quickJobId || projectId) || !supplier.trim() || !amount}
+            >
               <CheckCircle2 size={14} /> Toevoegen aan nacalculatie
             </button>
             <button className="btn-ghost" onClick={reset}>
@@ -175,8 +191,7 @@ export function InvoiceUploadPanel({ projectId: fixedProjectId, projectName: fix
       {saved && (
         <div className="add-form">
           <div className="hint-bar small">
-            Toegevoegd aan de nacalculatie van {fixedProjectName || result?.projects.find((p) => p.id === projectId)?.name}:{" "}
-            {supplier} — {fmtEuro(Number(amount) || 0)}.
+            Toegevoegd aan de nacalculatie van {savedTargetName()}: {supplier} — {fmtEuro(Number(amount) || 0)}.
           </div>
           <button className="btn-ghost" onClick={reset} style={{ alignSelf: "flex-start" }}>
             <Upload size={13} /> Nog een factuur uploaden

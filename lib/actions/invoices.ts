@@ -18,6 +18,8 @@ export interface InvoiceResult {
   amount: number | null;
   matchedProjectId: string | null;
   matchedProjectName: string | null;
+  matchedQuickJobId: string | null;
+  matchedQuickJobTitle: string | null;
   projects: { id: string; name: string }[];
 }
 
@@ -29,7 +31,10 @@ function normalize(s: string): string {
     .replace(/[^a-z0-9]/g, "");
 }
 
-export async function parseInvoicePdf(formData: FormData, targetProjectId?: string): Promise<InvoiceResult> {
+export async function parseInvoicePdf(
+  formData: FormData,
+  target?: { projectId?: string; quickJobId?: string }
+): Promise<InvoiceResult> {
   const current = await requireOwner();
 
   if (!process.env.ANTHROPIC_API_KEY) {
@@ -86,16 +91,22 @@ ${text.slice(0, 6000)}
 
   let matchedProjectId: string | null = null;
   let matchedProjectName: string | null = null;
+  let matchedQuickJobId: string | null = null;
+  let matchedQuickJobTitle: string | null = null;
   const workAddress = parsed.work_address ?? null;
-  if (targetProjectId) {
-    const target = rows.find((p) => p.id === targetProjectId);
-    matchedProjectId = target?.id ?? targetProjectId;
-    matchedProjectName = target?.name ?? null;
+  if (target?.quickJobId) {
+    const { data: job } = await supabase.from("quick_jobs").select("id,title").eq("id", target.quickJobId).maybeSingle();
+    matchedQuickJobId = (job?.id as string | undefined) ?? target.quickJobId;
+    matchedQuickJobTitle = (job?.title as string | undefined) ?? null;
+  } else if (target?.projectId) {
+    const p = rows.find((r) => r.id === target.projectId);
+    matchedProjectId = p?.id ?? target.projectId;
+    matchedProjectName = p?.name ?? null;
   } else if (workAddress) {
-    const target = normalize(workAddress);
+    const norm = normalize(workAddress);
     for (const p of rows) {
       const addr = p.address ? normalize(p.address) : "";
-      if (addr && target.length > 3 && (target.includes(addr) || addr.includes(target))) {
+      if (addr && norm.length > 3 && (norm.includes(addr) || addr.includes(norm))) {
         matchedProjectId = p.id;
         matchedProjectName = p.name;
         break;
@@ -108,9 +119,10 @@ ${text.slice(0, 6000)}
   const amount = typeof parsed.amount === "number" ? parsed.amount : null;
 
   let autoFiled = false;
-  if (matchedProjectId && supplier && amount != null) {
+  if ((matchedProjectId || matchedQuickJobId) && supplier && amount != null) {
     const { error } = await supabase.from("cost_items").insert({
       project_id: matchedProjectId,
+      quick_job_id: matchedQuickJobId,
       description: supplier,
       amount,
       vat_type: "incl",
@@ -119,14 +131,27 @@ ${text.slice(0, 6000)}
     });
     if (!error) {
       autoFiled = true;
-      revalidatePath(`/projects/${matchedProjectId}/nacalculatie`);
+      const targetName = matchedQuickJobId ? matchedQuickJobTitle : matchedProjectName;
+      const url = matchedQuickJobId ? "/nacalculatie" : `/projects/${matchedProjectId}/nacalculatie`;
+      revalidatePath(url);
       await sendPushToUsers([current.id], {
         title: "Factuur automatisch verwerkt",
-        body: `${supplier} — ${fmtEuro(amount)} toegevoegd aan ${matchedProjectName}.`,
-        url: `/projects/${matchedProjectId}/nacalculatie`,
+        body: `${supplier} — ${fmtEuro(amount)} toegevoegd aan ${targetName}.`,
+        url,
       });
     }
   }
 
-  return { autoFiled, supplier, invoiceNumber, workAddress, amount, matchedProjectId, matchedProjectName, projects };
+  return {
+    autoFiled,
+    supplier,
+    invoiceNumber,
+    workAddress,
+    amount,
+    matchedProjectId,
+    matchedProjectName,
+    matchedQuickJobId,
+    matchedQuickJobTitle,
+    projects,
+  };
 }

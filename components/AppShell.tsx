@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   CalendarRange,
+  Calculator,
   ClipboardList,
   Clock,
   FileText,
@@ -163,6 +164,13 @@ export function AppShell({
               onClick={() => setSidebarOpen(false)}
             >
               <FileText size={14} /> Facturen
+            </Link>
+            <Link
+              href="/nacalculatie"
+              className={"toegang-toggle" + (pathname === "/nacalculatie" ? " active" : "")}
+              onClick={() => setSidebarOpen(false)}
+            >
+              <Calculator size={14} /> Nacalculatie
             </Link>
             <Link
               href="/subsidies"
