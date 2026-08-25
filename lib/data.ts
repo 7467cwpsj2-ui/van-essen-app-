@@ -136,6 +136,7 @@ export interface StaffTodayItem {
   teamMemberName: string;
   title: string;
   projectId: string | null;
+  quickJobId: string | null;
   projectName: string;
 }
 
@@ -157,7 +158,8 @@ export async function getTodayStaffSchedule(): Promise<StaffTodayItem[]> {
       .from("quick_jobs")
       .select("id,title,assignee_team_member_ids,start_date,end_date")
       .lte("start_date", todayIso)
-      .gte("end_date", todayIso),
+      .gte("end_date", todayIso)
+      .eq("done", false),
   ]);
 
   const staffRows = (staff ?? []) as { id: string; name: string }[];
@@ -174,14 +176,28 @@ export async function getTodayStaffSchedule(): Promise<StaffTodayItem[]> {
     for (const memberId of p.assignee_team_member_ids) {
       const name = nameById.get(memberId);
       if (!name) continue;
-      items.push({ teamMemberId: memberId, teamMemberName: name, title: p.title, projectId: p.project_id, projectName: p.projects?.name ?? "project" });
+      items.push({
+        teamMemberId: memberId,
+        teamMemberName: name,
+        title: p.title,
+        projectId: p.project_id,
+        quickJobId: null,
+        projectName: p.projects?.name ?? "project",
+      });
     }
   }
   for (const j of (jobs ?? []) as { id: string; title: string; assignee_team_member_ids: string[] }[]) {
     for (const memberId of j.assignee_team_member_ids) {
       const name = nameById.get(memberId);
       if (!name) continue;
-      items.push({ teamMemberId: memberId, teamMemberName: name, title: j.title, projectId: null, projectName: "Losse klus" });
+      items.push({
+        teamMemberId: memberId,
+        teamMemberName: name,
+        title: j.title,
+        projectId: null,
+        quickJobId: j.id,
+        projectName: "Losse klus",
+      });
     }
   }
   items.sort((a, b) => a.teamMemberName.localeCompare(b.teamMemberName, "nl"));

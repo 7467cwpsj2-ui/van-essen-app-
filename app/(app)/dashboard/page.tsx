@@ -171,6 +171,10 @@ export default async function DashboardPage({
                     <Link key={`${s.teamMemberId}-${idx}`} href={`/projects/${s.projectId}/bouwplanning`} className="dash-panel-row">
                       {row}
                     </Link>
+                  ) : s.quickJobId ? (
+                    <Link key={`${s.teamMemberId}-${idx}`} href={`/klussen/${s.quickJobId}`} className="dash-panel-row">
+                      {row}
+                    </Link>
                   ) : (
                     <Link key={`${s.teamMemberId}-${idx}`} href="/planning-overzicht" className="dash-panel-row">
                       {row}
