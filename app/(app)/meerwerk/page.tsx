@@ -13,21 +13,37 @@ export default async function AlleMeerwerkPage() {
 
   const supabase = createClient();
   const { data: projects } = await supabase.from("projects").select("id,name").order("name");
+  const projectIds = (projects ?? []).map((p) => p.id);
 
-  const sections = await Promise.all(
-    (projects ?? []).map(async (p) => {
-      const [{ data: items }, { data: phases }] = await Promise.all([
-        supabase.from("extra_work").select("*").eq("project_id", p.id).eq("status", "open").order("created_at", { ascending: false }),
-        supabase.from("schedule_phases").select("*").eq("project_id", p.id).order("start_date"),
-      ]);
-      const withSignatures: ExtraWorkWithSignature[] = ((items ?? []) as ExtraWork[]).map((w) => ({
-        ...w,
-        signatureUrl: null,
-        attachmentUrl: null,
-      }));
-      return { project: p, items: withSignatures, phases: (phases ?? []) as SchedulePhase[] };
-    })
-  );
+  const [{ data: allItems }, { data: allPhases }] =
+    projectIds.length > 0
+      ? await Promise.all([
+          supabase.from("extra_work").select("*").in("project_id", projectIds).eq("status", "open").order("created_at", { ascending: false }),
+          supabase.from("schedule_phases").select("*").in("project_id", projectIds).order("start_date"),
+        ])
+      : [{ data: [] as ExtraWork[] }, { data: [] as SchedulePhase[] }];
+
+  const itemsByProject = new Map<string, ExtraWork[]>();
+  for (const w of (allItems ?? []) as ExtraWork[]) {
+    const list = itemsByProject.get(w.project_id) ?? [];
+    list.push(w);
+    itemsByProject.set(w.project_id, list);
+  }
+  const phasesByProject = new Map<string, SchedulePhase[]>();
+  for (const ph of (allPhases ?? []) as SchedulePhase[]) {
+    const list = phasesByProject.get(ph.project_id) ?? [];
+    list.push(ph);
+    phasesByProject.set(ph.project_id, list);
+  }
+
+  const sections = (projects ?? []).map((p) => {
+    const withSignatures: ExtraWorkWithSignature[] = (itemsByProject.get(p.id) ?? []).map((w) => ({
+      ...w,
+      signatureUrl: null,
+      attachmentUrl: null,
+    }));
+    return { project: p, items: withSignatures, phases: phasesByProject.get(p.id) ?? [] };
+  });
 
   const withOpenItems = sections.filter((s) => s.items.length > 0);
 

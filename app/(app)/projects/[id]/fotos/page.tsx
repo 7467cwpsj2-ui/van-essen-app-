@@ -1,5 +1,6 @@
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedUrlMap } from "@/lib/storage";
 import { PhotosPanel, type PhotoWithUrl } from "@/components/PhotosPanel";
 import type { Photo } from "@/types/database";
 
@@ -17,16 +18,12 @@ export default async function FotosPage({ params }: { params: { id: string } }) 
     .order("created_at", { ascending: false });
 
   const rows = (photos ?? []) as Photo[];
-  const withUrls: PhotoWithUrl[] = await Promise.all(
-    rows.map(async (ph) => {
-      let signedUrl: string | null = null;
-      if (ph.file_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(ph.file_path, 3600);
-        signedUrl = data?.signedUrl ?? null;
-      }
-      return { ...ph, signedUrl };
-    })
+  const urlByPath = await signedUrlMap(
+    supabase,
+    "project-files",
+    rows.map((ph) => ph.file_path)
   );
+  const withUrls: PhotoWithUrl[] = rows.map((ph) => ({ ...ph, signedUrl: (ph.file_path ? urlByPath.get(ph.file_path) : null) ?? null }));
 
   return <PhotosPanel projectId={params.id} role={current.profile.role} currentUserId={current.id} photos={withUrls} />;
 }

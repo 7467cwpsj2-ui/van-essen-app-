@@ -1,20 +1,14 @@
 import { cache } from "react";
-import type { SupabaseClient } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
 import { getProjectClientNamesMap } from "@/lib/clientNames";
+import { signedUrlMap } from "@/lib/storage";
 import type { AppNotification, Project, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
   progress: number;
   coverPhotoUrl: string | null;
-}
-
-async function signedCoverUrls(supabase: SupabaseClient, paths: string[]): Promise<Map<string, string | null>> {
-  if (paths.length === 0) return new Map();
-  const { data } = await supabase.storage.from("project-files").createSignedUrls(paths, 3600);
-  return new Map(paths.map((path, i) => [path, data?.[i]?.signedUrl ?? null]));
 }
 
 // RLS beperkt dit vanzelf tot de projecten waar de ingelogde
@@ -33,12 +27,15 @@ export const getProjectsWithProgress = cache(async (): Promise<ProjectWithProgre
   if (projectRows.length === 0) return [];
 
   const projectIds = projectRows.map((p) => p.id);
-  const coverPaths = projectRows.map((p) => p.cover_photo_path).filter((path): path is string => !!path);
 
   const [clientNameMap, phasesResult, signedUrlByPath] = await Promise.all([
     getProjectClientNamesMap(supabase, projectRows.map((p) => ({ id: p.id, client_id: p.client_id }))),
     supabase.from("schedule_phases").select("*").in("project_id", projectIds),
-    signedCoverUrls(supabase, coverPaths),
+    signedUrlMap(
+      supabase,
+      "project-files",
+      projectRows.map((p) => p.cover_photo_path)
+    ),
   ]);
 
   const phasesByProject = new Map<string, SchedulePhase[]>();

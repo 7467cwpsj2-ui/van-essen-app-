@@ -1,5 +1,6 @@
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedUrlMap } from "@/lib/storage";
 import { CompletionPointsPanel, type CompletionPointWithPhoto } from "@/components/CompletionPointsPanel";
 import type { CompletionPoint, Project, TeamMember } from "@/types/database";
 
@@ -17,16 +18,15 @@ export default async function OpleverpuntenPage({ params }: { params: { id: stri
   ]);
 
   const rows = (points ?? []) as CompletionPoint[];
-  const withPhotos: CompletionPointWithPhoto[] = await Promise.all(
-    rows.map(async (p) => {
-      let photoUrl: string | null = null;
-      if (p.photo_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(p.photo_path, 3600);
-        photoUrl = data?.signedUrl ?? null;
-      }
-      return { ...p, photoUrl };
-    })
+  const urlByPath = await signedUrlMap(
+    supabase,
+    "project-files",
+    rows.map((p) => p.photo_path)
   );
+  const withPhotos: CompletionPointWithPhoto[] = rows.map((p) => ({
+    ...p,
+    photoUrl: (p.photo_path ? urlByPath.get(p.photo_path) : null) ?? null,
+  }));
 
   return (
     <CompletionPointsPanel

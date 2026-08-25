@@ -1,5 +1,6 @@
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedUrlMap } from "@/lib/storage";
 import { ExtraWorkPanel, type ExtraWorkWithSignature } from "@/components/ExtraWorkPanel";
 import type { ExtraWork, SchedulePhase } from "@/types/database";
 
@@ -16,21 +17,15 @@ export default async function MeerwerkPage({ params }: { params: { id: string } 
   ]);
 
   const rows = (items ?? []) as ExtraWork[];
-  const withSignatures: ExtraWorkWithSignature[] = await Promise.all(
-    rows.map(async (w) => {
-      let signatureUrl: string | null = null;
-      if (w.signature_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(w.signature_path, 3600);
-        signatureUrl = data?.signedUrl ?? null;
-      }
-      let attachmentUrl: string | null = null;
-      if (w.photo_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(w.photo_path, 3600);
-        attachmentUrl = data?.signedUrl ?? null;
-      }
-      return { ...w, signatureUrl, attachmentUrl };
-    })
-  );
+  const urlByPath = await signedUrlMap(supabase, "project-files", [
+    ...rows.map((w) => w.signature_path),
+    ...rows.map((w) => w.photo_path),
+  ]);
+  const withSignatures: ExtraWorkWithSignature[] = rows.map((w) => ({
+    ...w,
+    signatureUrl: (w.signature_path ? urlByPath.get(w.signature_path) : null) ?? null,
+    attachmentUrl: (w.photo_path ? urlByPath.get(w.photo_path) : null) ?? null,
+  }));
 
   return (
     <ExtraWorkPanel

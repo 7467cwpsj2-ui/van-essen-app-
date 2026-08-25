@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import type { Client, ModuleKey, Profile, TeamMember } from "@/types/database";
 import { redirect } from "next/navigation";
@@ -18,7 +19,12 @@ export interface CurrentUser {
 
 // Haalt de ingelogde gebruiker + bijbehorend profiel op. RLS zorgt dat
 // een gebruiker altijd zijn eigen profiel/team-/klantrecord mag lezen.
-export async function getCurrentUser(): Promise<CurrentUser | null> {
+// Wordt zowel in de root-layout als in de (geneste) project-layout als
+// in vrijwel elke pagina zelf aangeroepen — cache() zorgt dat dat
+// binnen één paginalading maar één keer echt draait, inclusief het
+// netwerk-rondje naar Supabase Auth (auth.getUser()), i.p.v. dat elke
+// laag dat opnieuw doet.
+export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
   const supabase = createClient();
   const {
     data: { user },
@@ -47,7 +53,7 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
   }
 
   return { id: user.id, profile, teamMember, client, ownStaffMember };
-}
+});
 
 export async function requireUser(): Promise<CurrentUser> {
   const current = await getCurrentUser();

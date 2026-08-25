@@ -2,6 +2,7 @@ import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getProjectClientName } from "@/lib/clientNames";
+import { signedUrlMap } from "@/lib/storage";
 import type { ClientChoice, CompanyDetails, CompletionPoint, Drawing, ExtraWork, Photo, PhotoCategory, Project, WarrantyItem } from "@/types/database";
 
 export interface DossierPhoto {
@@ -88,13 +89,31 @@ export async function loadDossierData(
 
   const clientName = await getProjectClientName(supabase, projectId, p.client_id);
 
+  const photoRows = (photos ?? []) as Photo[];
+  const drawingRows = (drawings ?? []) as Drawing[];
+  const warrantyRows = (warrantyItems ?? []) as WarrantyItem[];
+
+  // Alle bestanden van dit dossier (foto's, tekeningen, garantie-
+  // certificaten, cover-foto, handtekening) in één keer laten
+  // ondertekenen i.p.v. één opslag-aanroep per bestand — een dossier
+  // met tientallen foto's deed hier voorheen evenzoveel losse, zelfs
+  // sequentiële (niet eens parallelle) netwerk-round-trips.
+  const urlByPath = await signedUrlMap(
+    supabase,
+    "project-files",
+    [
+      ...photoRows.map((ph) => ph.file_path),
+      ...drawingRows.map((d) => d.file_path),
+      ...warrantyRows.map((w) => w.certificate_path),
+      p.cover_photo_path,
+      p.delivery_signature_path,
+    ],
+    urlTtlSeconds
+  );
+
   const photosByCategory: Record<PhotoCategory, DossierPhoto[]> = { voor: [], tijdens: [], na: [], oplevering: [] };
-  for (const ph of (photos ?? []) as Photo[]) {
-    let url: string | null = null;
-    if (ph.file_path) {
-      const { data } = await supabase.storage.from("project-files").createSignedUrl(ph.file_path, urlTtlSeconds);
-      url = data?.signedUrl ?? null;
-    }
+  for (const ph of photoRows) {
+    const url = (ph.file_path ? urlByPath.get(ph.file_path) : null) ?? null;
     photosByCategory[ph.category].push({ id: ph.id, title: ph.title, url });
   }
   // Voor/tijdens/na is een verhaal, geen onbeperkt archief — een ruime
@@ -104,42 +123,24 @@ export async function loadDossierData(
     photosByCategory[cat] = photosByCategory[cat].slice(0, 40);
   }
 
-  let coverPhotoUrl: string | null = null;
-  if (p.cover_photo_path) {
-    const { data } = await supabase.storage.from("project-files").createSignedUrl(p.cover_photo_path, urlTtlSeconds);
-    coverPhotoUrl = data?.signedUrl ?? null;
-  }
+  let coverPhotoUrl = (p.cover_photo_path ? urlByPath.get(p.cover_photo_path) : null) ?? null;
   if (!coverPhotoUrl) {
     coverPhotoUrl = photosByCategory.oplevering[0]?.url ?? photosByCategory.na[0]?.url ?? null;
   }
 
-  const drawingData: DossierDrawing[] = await Promise.all(
-    ((drawings ?? []) as Drawing[]).map(async (d) => {
-      let url: string | null = null;
-      if (d.file_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(d.file_path, urlTtlSeconds);
-        url = data?.signedUrl ?? null;
-      }
-      return { id: d.id, title: d.title, url, fileType: d.file_type };
-    })
-  );
+  const drawingData: DossierDrawing[] = drawingRows.map((d) => ({
+    id: d.id,
+    title: d.title,
+    url: (d.file_path ? urlByPath.get(d.file_path) : null) ?? null,
+    fileType: d.file_type,
+  }));
 
-  const warrantyData: DossierWarrantyItem[] = await Promise.all(
-    ((warrantyItems ?? []) as WarrantyItem[]).map(async (w) => {
-      let certificateUrl: string | null = null;
-      if (w.certificate_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(w.certificate_path, urlTtlSeconds);
-        certificateUrl = data?.signedUrl ?? null;
-      }
-      return { ...w, certificateUrl };
-    })
-  );
+  const warrantyData: DossierWarrantyItem[] = warrantyRows.map((w) => ({
+    ...w,
+    certificateUrl: (w.certificate_path ? urlByPath.get(w.certificate_path) : null) ?? null,
+  }));
 
-  let signatureUrl: string | null = null;
-  if (p.delivery_signature_path) {
-    const { data } = await supabase.storage.from("project-files").createSignedUrl(p.delivery_signature_path, urlTtlSeconds);
-    signatureUrl = data?.signedUrl ?? null;
-  }
+  const signatureUrl = (p.delivery_signature_path ? urlByPath.get(p.delivery_signature_path) : null) ?? null;
 
   const admin = createAdminClient();
   const { data: settings } = await admin

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedUrlMap } from "@/lib/storage";
 import { CompletionPointsPanel, type CompletionPointWithPhoto } from "@/components/CompletionPointsPanel";
 import type { CompletionPoint, TeamMember } from "@/types/database";
 
@@ -18,29 +19,26 @@ export default async function AlleOpleverpuntenPage() {
   ]);
 
   const teamMemberOptions = ((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name }));
+  const projectIds = (projects ?? []).map((p) => p.id);
 
-  const sections = await Promise.all(
-    (projects ?? []).map(async (p) => {
-      const { data: points } = await supabase
-        .from("completion_points")
-        .select("*")
-        .eq("project_id", p.id)
-        .neq("status", "goedgekeurd")
-        .order("created_at");
-      const rows = (points ?? []) as CompletionPoint[];
-      const withPhotos: CompletionPointWithPhoto[] = await Promise.all(
-        rows.map(async (point) => {
-          let photoUrl: string | null = null;
-          if (point.photo_path) {
-            const { data } = await supabase.storage.from("project-files").createSignedUrl(point.photo_path, 3600);
-            photoUrl = data?.signedUrl ?? null;
-          }
-          return { ...point, photoUrl };
-        })
-      );
-      return { project: p, points: withPhotos };
-    })
+  const { data: allPoints } =
+    projectIds.length > 0
+      ? await supabase.from("completion_points").select("*").in("project_id", projectIds).neq("status", "goedgekeurd").order("created_at")
+      : { data: [] as CompletionPoint[] };
+  const pointRows = (allPoints ?? []) as CompletionPoint[];
+  const urlByPath = await signedUrlMap(
+    supabase,
+    "project-files",
+    pointRows.map((p) => p.photo_path)
   );
+  const pointsByProject = new Map<string, CompletionPointWithPhoto[]>();
+  for (const point of pointRows) {
+    const list = pointsByProject.get(point.project_id) ?? [];
+    list.push({ ...point, photoUrl: (point.photo_path ? urlByPath.get(point.photo_path) : null) ?? null });
+    pointsByProject.set(point.project_id, list);
+  }
+
+  const sections = (projects ?? []).map((p) => ({ project: p, points: pointsByProject.get(p.id) ?? [] }));
 
   const withOpenItems = sections.filter((s) => s.points.length > 0);
 

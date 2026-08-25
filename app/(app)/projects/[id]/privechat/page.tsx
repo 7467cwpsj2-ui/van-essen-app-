@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { canSeePrivateChat, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedUrlMap } from "@/lib/storage";
 import { ChatPanel } from "@/components/ChatPanel";
 import { sendPrivateMessage } from "@/lib/actions/chat";
 import type { OwnerClientMessage } from "@/types/database";
@@ -17,16 +18,20 @@ export default async function PrivateChatPage({ params }: { params: { id: string
     .order("created_at", { ascending: true });
 
   const rows = (messages ?? []) as OwnerClientMessage[];
-  const withFiles = await Promise.all(
-    rows.map(async (m) => {
-      let fileUrl: string | null = null;
-      if (m.file_path) {
-        const { data } = await supabase.storage.from("project-files").createSignedUrl(m.file_path, 3600);
-        fileUrl = data?.signedUrl ?? null;
-      }
-      return { id: m.id, author_name: m.author_name, author_id: m.author_id, text: m.text, created_at: m.created_at, fileUrl, fileType: m.file_type };
-    })
+  const urlByPath = await signedUrlMap(
+    supabase,
+    "project-files",
+    rows.map((m) => m.file_path)
   );
+  const withFiles = rows.map((m) => ({
+    id: m.id,
+    author_name: m.author_name,
+    author_id: m.author_id,
+    text: m.text,
+    created_at: m.created_at,
+    fileUrl: (m.file_path ? urlByPath.get(m.file_path) : null) ?? null,
+    fileType: m.file_type,
+  }));
 
   const hint =
     current.profile.role === "eigenaar"

@@ -18,18 +18,20 @@ export default async function AlleTeDoenPage() {
   ]);
 
   const teamMemberOptions = ((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, member_type: m.member_type }));
+  const projectIds = (projects ?? []).map((p) => p.id);
 
-  const sections = await Promise.all(
-    (projects ?? []).map(async (p) => {
-      const { data: tasks } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("project_id", p.id)
-        .eq("done", false)
-        .order("due_date", { ascending: true, nullsFirst: false });
-      return { project: p, tasks: (tasks ?? []) as Task[] };
-    })
-  );
+  const { data: allTasks } =
+    projectIds.length > 0
+      ? await supabase.from("tasks").select("*").in("project_id", projectIds).eq("done", false).order("due_date", { ascending: true, nullsFirst: false })
+      : { data: [] as Task[] };
+  const tasksByProject = new Map<string, Task[]>();
+  for (const t of (allTasks ?? []) as Task[]) {
+    const list = tasksByProject.get(t.project_id) ?? [];
+    list.push(t);
+    tasksByProject.set(t.project_id, list);
+  }
+
+  const sections = (projects ?? []).map((p) => ({ project: p, tasks: tasksByProject.get(p.id) ?? [] }));
 
   const withOpenItems = sections.filter((s) => s.tasks.length > 0);
 
