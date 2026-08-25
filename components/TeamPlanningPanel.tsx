@@ -168,6 +168,7 @@ export function TeamPlanningPanel({
   const [editPerDay, setEditPerDay] = useState(false);
   const [editDayAssignments, setEditDayAssignments] = useState<Record<string, string[]>>({});
   const [showAddOffice, setShowAddOffice] = useState(false);
+  const [editingOfficeId, setEditingOfficeId] = useState<string | null>(null);
   const [officeForm, setOfficeForm] = useState({
     start: "",
     days: "1",
@@ -217,23 +218,47 @@ export function TeamPlanningPanel({
   const officeComputedEnd =
     officeForm.start && Number(officeForm.days) >= 1 ? endDateForWorkingDays(officeForm.start, Number(officeForm.days)) : "";
 
+  const openAddOffice = () => {
+    setEditingOfficeId(null);
+    setOfficeForm({ start: "", days: "1", daypart: "dag" });
+    setShowAddOffice(true);
+  };
+
+  const startEditOffice = (j: QuickJob) => {
+    setEditingOfficeId(j.id);
+    setOfficeForm({ start: j.start_date, days: String(workingDaysBetween(j.start_date, j.end_date).length || 1), daypart: j.daypart });
+    setShowAddOffice(true);
+  };
+
   const closeAddOffice = () => {
     setShowAddOffice(false);
+    setEditingOfficeId(null);
     setOfficeForm({ start: "", days: "1", daypart: "dag" });
   };
 
-  const addOfficeDay = () => {
-    if (!ownStaffMemberId || !officeForm.start || !officeComputedEnd) return;
+  const saveOfficeDay = () => {
+    if (!officeForm.start || !officeComputedEnd) return;
     startTransition(() => {
-      createQuickJob({
-        title: "Kantoor",
-        assignee: null,
-        assigneeTeamMemberIds: [ownStaffMemberId],
-        start: officeForm.start,
-        end: officeComputedEnd,
-        kind: "kantoor",
-        daypart: officeForm.daypart,
-      }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      if (editingOfficeId) {
+        updateQuickJob(editingOfficeId, {
+          title: "Kantoor",
+          assignee: null,
+          assigneeTeamMemberIds: ownStaffMemberId ? [ownStaffMemberId] : [],
+          start: officeForm.start,
+          end: officeComputedEnd,
+          daypart: officeForm.daypart,
+        }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+      } else if (ownStaffMemberId) {
+        createQuickJob({
+          title: "Kantoor",
+          assignee: null,
+          assigneeTeamMemberIds: [ownStaffMemberId],
+          start: officeForm.start,
+          end: officeComputedEnd,
+          kind: "kantoor",
+          daypart: officeForm.daypart,
+        }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      }
     });
     closeAddOffice();
   };
@@ -348,8 +373,11 @@ export function TeamPlanningPanel({
     }
     return null;
   };
-  const filteredQuickJobs = quickJobs.filter((j) => !j.done && (filter === "alle" || jobMemberType(j) === filter));
-  const doneQuickJobs = quickJobs.filter((j) => j.done && (filter === "alle" || jobMemberType(j) === filter));
+  const filteredQuickJobs = quickJobs.filter((j) => j.kind !== "kantoor" && !j.done && (filter === "alle" || jobMemberType(j) === filter));
+  const doneQuickJobs = quickJobs.filter((j) => j.kind !== "kantoor" && j.done && (filter === "alle" || jobMemberType(j) === filter));
+  // Kantoordagen zijn geen klus — er is niets om "gereed" te melden, dus
+  // die krijgen een eigen, kleinere lijst zonder die knop.
+  const officeJobs = quickJobs.filter((j) => j.kind === "kantoor" && (filter === "alle" || jobMemberType(j) === filter));
 
   const days: Date[] = [];
   if (assigned.length) {
@@ -664,7 +692,7 @@ export function TeamPlanningPanel({
           <Plus size={14} /> Kleine klus toevoegen
         </button>
         {ownStaffMemberId && (
-          <button type="button" className="btn-ghost" onClick={() => setShowAddOffice(true)} style={{ alignSelf: "flex-start" }}>
+          <button type="button" className="btn-ghost" onClick={openAddOffice} style={{ alignSelf: "flex-start" }}>
             <Plus size={14} /> Kantoordag toevoegen
           </button>
         )}
@@ -682,7 +710,7 @@ export function TeamPlanningPanel({
       {showAddOffice && (
         <div className="sig-overlay" onClick={closeAddOffice}>
           <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-title">Kantoordag toevoegen</div>
+            <div className="modal-title">{editingOfficeId ? "Kantoordag bewerken" : "Kantoordag toevoegen"}</div>
             <div className="hint-bar small">Voor jouw eigen kantoorwerk — geen klant of project, geen route/adres, geen ochtendherinnering.</div>
             <div className="add-form-grid">
               <input
@@ -721,8 +749,16 @@ export function TeamPlanningPanel({
               <button type="button" className="btn-ghost" onClick={closeAddOffice}>
                 Annuleren
               </button>
-              <button type="button" className="btn-primary" onClick={addOfficeDay}>
-                <Plus size={14} /> Toevoegen
+              <button type="button" className="btn-primary" onClick={saveOfficeDay}>
+                {editingOfficeId ? (
+                  <>
+                    <Check size={14} /> Opslaan
+                  </>
+                ) : (
+                  <>
+                    <Plus size={14} /> Toevoegen
+                  </>
+                )}
               </button>
             </div>
           </div>
@@ -909,6 +945,41 @@ export function TeamPlanningPanel({
                 </div>
               )
             )}
+          </div>
+        </>
+      )}
+
+      {officeJobs.length > 0 && (
+        <>
+          <div className="add-form-title" style={{ marginTop: 4 }}>
+            Kantoordagen
+          </div>
+          <div className="task-list">
+            {officeJobs.map((j) => (
+              <div key={j.id} className="task-row">
+                <div className="task-body">
+                  <span className="task-title">Kantoor{j.daypart !== "dag" ? ` (${j.daypart === "ochtend" ? "ochtend" : "middag"})` : ""}</span>
+                  <div className="task-meta">
+                    <span className="mono">
+                      {fmtShort(j.start_date)}
+                      {j.start_date !== j.end_date ? ` – ${fmtShort(j.end_date)}` : ""}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button className="icon-btn ghost" onClick={() => startEditOffice(j)} title="Bewerken">
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    className="icon-btn danger ghost"
+                    title="Verwijderen"
+                    onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
           </div>
         </>
       )}

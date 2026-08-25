@@ -2809,7 +2809,8 @@ a.link-btn:hover {
   padding-top: 10px;
 }
 .access-item.team-row,
-.access-item.client-row {
+.access-item.client-row,
+.access-item.hours-row {
   flex-direction: column;
   align-items: stretch;
   padding: 0;

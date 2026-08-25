@@ -23,6 +23,20 @@ export function mondayOfWeek(dateIso: string): string {
   return monday.toISOString().slice(0, 10);
 }
 
+// Geeft de zondag van de week waarin `dateIso` valt.
+export function sundayOfWeek(dateIso: string): string {
+  const monday = new Date(mondayOfWeek(dateIso) + "T00:00:00Z");
+  return new Date(monday.getTime() + 6 * 86400000).toISOString().slice(0, 10);
+}
+
+// Eerste en laatste dag van de maand waarin `dateIso` valt.
+export function monthRange(dateIso: string): { start: string; end: string } {
+  const d = new Date(dateIso + "T00:00:00Z");
+  const start = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1)).toISOString().slice(0, 10);
+  const end = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).toISOString().slice(0, 10);
+  return { start, end };
+}
+
 // De vijf werkdagen (ma t/m vr) van de week waarin `dateIso` valt.
 export function weekdaysOfWeek(dateIso: string): string[] {
   const monday = new Date(mondayOfWeek(dateIso) + "T00:00:00Z");
