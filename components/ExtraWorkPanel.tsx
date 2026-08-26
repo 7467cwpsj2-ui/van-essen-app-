@@ -304,7 +304,7 @@ export function ExtraWorkPanel({
                     Akkoord door {w.approved_by} op {w.approved_date}
                     {w.signatureUrl && (
                       <button type="button" className="sig-thumb-btn" onClick={() => setSigPreview(w.signatureUrl)} title="Handtekening bekijken">
-                        <img src={w.signatureUrl} alt="Handtekening" className="sig-thumb" />
+                        <Image src={w.signatureUrl} alt="Handtekening" width={46} height={20} className="sig-thumb" />
                       </button>
                     )}
                   </div>
