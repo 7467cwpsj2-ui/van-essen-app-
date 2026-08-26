@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/siteUrl";
 import { CalendarFeedCard } from "@/components/CalendarFeedCard";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import {
@@ -54,7 +55,7 @@ export default async function DashboardPage({
     const supabase = createClient();
     const { data: staffRow } = await supabase.from("team_members").select("calendar_token").eq("id", myStaffId).maybeSingle();
     if (staffRow?.calendar_token) {
-      calendarFeedUrl = `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/api/agenda/${staffRow.calendar_token}`;
+      calendarFeedUrl = `${siteUrl()}/api/agenda/${staffRow.calendar_token}`;
     }
   }
 

@@ -4,8 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser, type CurrentUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-
-const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+import { siteUrl } from "@/lib/siteUrl";
 
 // Iedereen mag alleen zijn eigen agenda-link opvragen/intrekken — nooit
 // die van een ander. Voor team is dat de gekoppelde team_member_id, voor

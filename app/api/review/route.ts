@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { siteUrl } from "@/lib/siteUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,5 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const admin = createAdminClient();
   const { data } = await admin.from("app_settings").select("google_review_url").eq("id", true).single();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  return NextResponse.redirect((data?.google_review_url as string | undefined) || `${siteUrl}/dashboard`);
+  return NextResponse.redirect((data?.google_review_url as string | undefined) || `${siteUrl()}/dashboard`);
 }

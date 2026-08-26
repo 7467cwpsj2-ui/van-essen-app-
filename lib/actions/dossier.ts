@@ -4,9 +4,8 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/siteUrl";
 import type { FileType, WarrantyType, WarrantyUnit } from "@/types/database";
-
-const siteUrl = () => process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function updateDossierSettings(
   projectId: string,

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireOwner } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { siteUrl } from "@/lib/siteUrl";
 import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
 import { defaultPermissions, type ModuleKey, type QuickJobDayAssignment, type TeamMemberType } from "@/types/database";
@@ -50,9 +51,8 @@ export async function inviteTeamMember(formData: FormData) {
   if (memberError || !member) throw new Error(memberError?.message || "Kon teamlid niet aanmaken.");
 
   const admin = createAdminClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`,
+    redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`,
   });
 
   if (inviteError || !invited?.user) {
@@ -86,11 +86,10 @@ export async function resendTeamInvite(teamMemberId: string): Promise<string> {
   const email = userData?.user?.email;
   if (userError || !email) throw new Error(userError?.message || "Kon het e-mailadres niet vinden.");
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   const { data: link, error } = await admin.auth.admin.generateLink({
     type: "invite",
     email,
-    options: { redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}` },
+    options: { redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}` },
   });
   if (error || !link?.properties?.action_link) throw new Error(error?.message || "Opnieuw uitnodigen mislukt.");
   revalidatePath("/personeel");

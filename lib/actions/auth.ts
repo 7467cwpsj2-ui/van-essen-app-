@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { siteUrl } from "@/lib/siteUrl";
 import { withTimeout } from "@/lib/withTimeout";
 import { redirect } from "next/navigation";
 
@@ -47,9 +48,8 @@ export async function requestPasswordReset(formData: FormData) {
   }
 
   const supabase = createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
   await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${siteUrl}/auth/callback?next=/account/wachtwoord`,
+    redirectTo: `${siteUrl()}/auth/callback?next=/account/wachtwoord`,
   });
 
   // Altijd dezelfde uitkomst tonen, ongeacht of dit e-mailadres bestaat —

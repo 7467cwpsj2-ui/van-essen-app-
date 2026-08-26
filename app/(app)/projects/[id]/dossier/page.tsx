@@ -2,6 +2,7 @@ import QRCode from "qrcode";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { loadDossierData } from "@/lib/dossierData";
+import { siteUrl } from "@/lib/siteUrl";
 import { DossierPanel } from "@/components/DossierPanel";
 
 export default async function DossierPage({ params }: { params: { id: string } }) {
@@ -19,9 +20,7 @@ export default async function DossierPage({ params }: { params: { id: string } }
     reviewQrDataUrl = await QRCode.toDataURL(data.reviewUrl, { margin: 1, width: 200 });
   }
 
-  const shareUrl = data.project.dossier_share_token
-    ? `${process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"}/d/${data.project.dossier_share_token}`
-    : null;
+  const shareUrl = data.project.dossier_share_token ? `${siteUrl()}/d/${data.project.dossier_share_token}` : null;
 
   return (
     <DossierPanel
