@@ -20,6 +20,15 @@ self.addEventListener("activate", (event) => {
 // snel-achter-elkaar navigeren binnen dit korte venster profiteert nu
 // van een lokale kopie i.p.v. altijd op het netwerk te wachten.
 const NAV_CACHE = "van-essen-nav-v1";
+// Aparte, "onzichtbare" cache puur voor het bijhouden van het moment
+// van bewaren — de echte pagina in NAV_CACHE blijft daardoor een
+// letterlijke, ongewijzigde kopie van wat de server terugstuurde.
+// (Eerder werd hiervoor een nieuwe Response met handmatig
+// gekopieerde headers gemaakt over een losse .blob() van de body —
+// dat kan de gecomprimeerde inhoud die Vercel terugstuurt corrupt
+// laten weergeven bij het teruglezen uit de cache. clone() voorkomt
+// dat probleem, dus de tijdstempel gaat nu apart.)
+const NAV_META_CACHE = "van-essen-nav-meta-v1";
 const FRESH_WINDOW_MS = 15000;
 
 self.addEventListener("fetch", (event) => {
@@ -33,21 +42,32 @@ self.addEventListener("fetch", (event) => {
   event.respondWith(handleNavigate(event));
 });
 
+function metaRequestFor(url) {
+  return new Request("https://sw-meta.invalid/nav-cached-at?u=" + encodeURIComponent(url));
+}
+
+async function getCachedAt(metaCache, url) {
+  const res = await metaCache.match(metaRequestFor(url));
+  if (!res) return 0;
+  return Number(await res.text()) || 0;
+}
+
 async function handleNavigate(event) {
   const request = event.request;
   const cache = await caches.open(NAV_CACHE);
+  const metaCache = await caches.open(NAV_META_CACHE);
   const cached = await cache.match(request);
-  const cachedAt = cached ? Number(cached.headers.get("x-sw-cached-at") || 0) : 0;
+  const cachedAt = cached ? await getCachedAt(metaCache, request.url) : 0;
   const isFresh = cached && Date.now() - cachedAt < FRESH_WINDOW_MS;
 
   if (isFresh) {
-    event.waitUntil(refreshInBackground(request, cache));
+    event.waitUntil(refreshInBackground(request, cache, metaCache));
     return cached;
   }
 
   try {
     const fresh = await fetch(request, { cache: "no-store" });
-    event.waitUntil(storeInCache(cache, request, fresh.clone()));
+    event.waitUntil(storeInCache(cache, metaCache, request, fresh.clone()));
     return fresh;
   } catch (err) {
     // Geen netwerk (bv. offline) — beter een oudere versie tonen dan
@@ -57,27 +77,24 @@ async function handleNavigate(event) {
   }
 }
 
-async function refreshInBackground(request, cache) {
+async function refreshInBackground(request, cache, metaCache) {
   try {
     const fresh = await fetch(request, { cache: "no-store" });
-    await storeInCache(cache, request, fresh);
+    await storeInCache(cache, metaCache, request, fresh);
   } catch {
     // Achtergrond-ververs mislukt — de al bewaarde versie blijft
     // gewoon staan tot de volgende poging.
   }
 }
 
-async function storeInCache(cache, request, response) {
+async function storeInCache(cache, metaCache, request, response) {
   // Nooit een respons bewaren die via een redirect tot stand kwam (bv.
   // een verlopen sessie die naar /login doorstuurt) — anders zou de
   // inhoud van /login onder de URL van de oorspronkelijke pagina
   // bewaard kunnen blijven staan.
   if (!response.ok || response.redirected) return;
-  const headers = new Headers(response.headers);
-  headers.set("x-sw-cached-at", String(Date.now()));
-  const body = await response.blob();
-  const stamped = new Response(body, { status: response.status, statusText: response.statusText, headers });
-  await cache.put(request, stamped);
+  await cache.put(request, response);
+  await metaCache.put(metaRequestFor(request.url), new Response(String(Date.now())));
 }
 
 // De pagina zelf vraagt hierom bij het uitloggen (voorkomt dat een
@@ -87,7 +104,7 @@ async function storeInCache(cache, request, response) {
 // versie ophaalt, niet een net daarvoor bewaarde oudere kopie).
 self.addEventListener("message", (event) => {
   if (event.data && event.data.type === "CLEAR_NAV_CACHE") {
-    event.waitUntil(caches.delete(NAV_CACHE));
+    event.waitUntil(Promise.all([caches.delete(NAV_CACHE), caches.delete(NAV_META_CACHE)]));
   }
 });
 
