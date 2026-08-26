@@ -1,9 +1,6 @@
 import Link from "next/link";
 import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
-import { createClient } from "@/lib/supabase/server";
-import { siteUrl } from "@/lib/siteUrl";
-import { CalendarFeedCard } from "@/components/CalendarFeedCard";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import {
   getDashboardExtras,
@@ -50,14 +47,6 @@ export default async function DashboardPage({
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
   const myHoursToday = myStaffId ? await getMyHoursToday(myStaffId) : null;
-  let calendarFeedUrl: string | null = null;
-  if (myStaffId) {
-    const supabase = createClient();
-    const { data: staffRow } = await supabase.from("team_members").select("calendar_token").eq("id", myStaffId).maybeSingle();
-    if (staffRow?.calendar_token) {
-      calendarFeedUrl = `${siteUrl()}/api/agenda/${staffRow.calendar_token}`;
-    }
-  }
 
   const hasOverdueTasks = extras.todayTasks.some((t) => t.overdue);
 
@@ -243,8 +232,6 @@ export default async function DashboardPage({
             )}
           </div>
         )}
-
-        {myStaffId && <CalendarFeedCard initialUrl={calendarFeedUrl} />}
 
         <div className="dash-panel">
           <div className="dash-panel-head">

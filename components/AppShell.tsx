@@ -19,6 +19,7 @@ import {
   ChevronDown,
   Menu,
   Smartphone,
+  User,
   X,
 } from "lucide-react";
 import { Brandmark } from "@/components/Brandmark";
@@ -253,6 +254,15 @@ export function AppShell({
               })}
         </div>
 
+        {(role === "eigenaar" || role === "team") && (
+          <Link
+            href="/account"
+            className={"toegang-toggle" + (pathname === "/account" ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <User size={14} /> Mijn account
+          </Link>
+        )}
         <Link
           href="/installeren"
           className={"toegang-toggle" + (pathname === "/installeren" ? " active" : "")}
