@@ -277,7 +277,11 @@ export function AppShell({
             <div className="sidebar-user-role">{roleLabel}</div>
           </div>
           <form action={signOut}>
-            <button type="submit" className="logout-btn">
+            <button
+              type="submit"
+              className="logout-btn"
+              onClick={() => navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_NAV_CACHE" })}
+            >
               <LogOut size={12} /> Uit
             </button>
           </form>

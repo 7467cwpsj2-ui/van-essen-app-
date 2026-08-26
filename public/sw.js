@@ -9,16 +9,85 @@ self.addEventListener("activate", (event) => {
   event.waitUntil(self.clients.claim());
 });
 
-// Deze service worker cachet zelf niets — maar de standaard navigatie
-// van een op het beginscherm geïnstalleerde app (standalone-modus) blijkt
-// op iOS soms een oude, lokaal bewaarde versie van de pagina te tonen,
-// zelfs met "no-store"-headers op de server. Door zelf expliciet met
-// cache: "no-store" opnieuw te fetchen bij elke paginanavigatie, omzeilen
-// we die verouderde cache en krijgt de geïnstalleerde app altijd de
-// actuele pagina — net als een gewoon Safari-tabblad al deed.
+// Binnen dit venster na het laatst bewaren van een pagina wordt die
+// direct getoond (voelt instant aan bij snel wisselen tussen
+// pagina's), met een ververs-poging op de achtergrond voor de
+// volgende keer. Ouder dan dit venster — bijv. de app was een tijdje
+// dicht of stond op de achtergrond — wordt altijd een verse versie
+// opgehaald vóór er iets getoond wordt. Dat laatste is precies het
+// moment waarop een verouderde pagina eerder op iOS bleef hangen, dus
+// dat gedrag (altijd vers na een pauze) blijft ongewijzigd; alleen
+// snel-achter-elkaar navigeren binnen dit korte venster profiteert nu
+// van een lokale kopie i.p.v. altijd op het netwerk te wachten.
+const NAV_CACHE = "van-essen-nav-v1";
+const FRESH_WINDOW_MS = 15000;
+
 self.addEventListener("fetch", (event) => {
-  if (event.request.mode === "navigate") {
+  if (event.request.mode !== "navigate") return;
+  if (event.request.method !== "GET") {
+    // Geen cache-logica voor bv. een formulier-POST zonder JS —
+    // gewoon altijd naar het netwerk, zoals voorheen.
     event.respondWith(fetch(event.request, { cache: "no-store" }));
+    return;
+  }
+  event.respondWith(handleNavigate(event));
+});
+
+async function handleNavigate(event) {
+  const request = event.request;
+  const cache = await caches.open(NAV_CACHE);
+  const cached = await cache.match(request);
+  const cachedAt = cached ? Number(cached.headers.get("x-sw-cached-at") || 0) : 0;
+  const isFresh = cached && Date.now() - cachedAt < FRESH_WINDOW_MS;
+
+  if (isFresh) {
+    event.waitUntil(refreshInBackground(request, cache));
+    return cached;
+  }
+
+  try {
+    const fresh = await fetch(request, { cache: "no-store" });
+    event.waitUntil(storeInCache(cache, request, fresh.clone()));
+    return fresh;
+  } catch (err) {
+    // Geen netwerk (bv. offline) — beter een oudere versie tonen dan
+    // helemaal niets, mocht die er nog liggen.
+    if (cached) return cached;
+    throw err;
+  }
+}
+
+async function refreshInBackground(request, cache) {
+  try {
+    const fresh = await fetch(request, { cache: "no-store" });
+    await storeInCache(cache, request, fresh);
+  } catch {
+    // Achtergrond-ververs mislukt — de al bewaarde versie blijft
+    // gewoon staan tot de volgende poging.
+  }
+}
+
+async function storeInCache(cache, request, response) {
+  // Nooit een respons bewaren die via een redirect tot stand kwam (bv.
+  // een verlopen sessie die naar /login doorstuurt) — anders zou de
+  // inhoud van /login onder de URL van de oorspronkelijke pagina
+  // bewaard kunnen blijven staan.
+  if (!response.ok || response.redirected) return;
+  const headers = new Headers(response.headers);
+  headers.set("x-sw-cached-at", String(Date.now()));
+  const body = await response.blob();
+  const stamped = new Response(body, { status: response.status, statusText: response.statusText, headers });
+  await cache.put(request, stamped);
+}
+
+// De pagina zelf vraagt hierom bij het uitloggen (voorkomt dat een
+// volgende gebruiker op hetzelfde toestel nog heel even een bewaarde
+// pagina van de vorige, uitgelogde gebruiker te zien krijgt) en bij
+// "Verversen" na een update-melding (zodat dat ook echt de nieuwste
+// versie ophaalt, niet een net daarvoor bewaarde oudere kopie).
+self.addEventListener("message", (event) => {
+  if (event.data && event.data.type === "CLEAR_NAV_CACHE") {
+    event.waitUntil(caches.delete(NAV_CACHE));
   }
 });
 

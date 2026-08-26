@@ -63,7 +63,13 @@ export function UpdateChecker() {
         <div className="push-prompt-sub">Ververs de app om de laatste wijzigingen te zien.</div>
       </div>
       <div className="push-prompt-actions">
-        <button className="btn-primary" onClick={() => window.location.reload()}>
+        <button
+          className="btn-primary"
+          onClick={() => {
+            navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_NAV_CACHE" });
+            window.location.reload();
+          }}
+        >
           Verversen
         </button>
       </div>
