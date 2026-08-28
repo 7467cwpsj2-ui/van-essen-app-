@@ -124,6 +124,16 @@ body {
   padding: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Vangnet: als ergens dieper in de pagina een element per ongeluk
+     net iets breder wordt dan het scherm (bv. een scrollbare balk die
+     zijn eigen breedte niet volledig inhoudt), mag dat nooit de hele
+     pagina breder dan het scherm maken — de mobiele browser reageert
+     daar namelijk op door de hele pagina uit te zoomen, waardoor alles
+     ineens klein oogt. Losse, bewust brede onderdelen (zoals de
+     bouwplanning-Gantt) hebben hun eigen interne horizontale scroll en
+     blijven daardoor gewoon werken.
+  */
+  overflow-x: hidden;
 }
 
 a {
@@ -648,6 +658,16 @@ a:has(> .brandmark) {
 }
 
 .main {
+  /* Zonder dit staat een CSS-grid-kolom standaard op min-width: auto —
+     dan mag een breed onderdeel diep in de pagina (bv. de tabbalk die
+     nu bewust niet meer wrapt, of de bouwplanning-Gantt) de hele
+     kolom, en daarmee de hele pagina, breder dan het scherm forceren.
+     Dat is precies wat de "alles ineens heel klein"-weergave op
+     tablet/mobiel veroorzaakte — de browser zoomt dan de hele pagina
+     uit om het te laten passen. min-width: 0 laat deze kolom altijd
+     krimpen tot de beschikbare breedte; onderdelen die zelf breed
+     moeten zijn, scrollen daarbinnen gewoon zelf horizontaal. */
+  min-width: 0;
   padding: var(--space-6) var(--space-8) var(--space-12);
   overflow-y: auto;
 }
