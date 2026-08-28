@@ -1123,12 +1123,33 @@ a:has(> .brandmark) {
 .tabs {
   display: flex;
   gap: 2px;
-  flex-wrap: wrap;
+  /* Altijd één rij die zo nodig horizontaal scrolt i.p.v. wrap — een
+     project met veel tabs (bouwplanning, foto's, meerwerk, ...) paste
+     op een middelgroot scherm (bv. tablet-breedte, breder dan de
+     mobiele indeling maar smaller dan een volle desktop) niet meer op
+     één regel, waardoor elke tab op zijn eigen regel viel en de balk
+     een verticale stapel werd i.p.v. een tabbalk. Dit is bewust geen
+     mobiel-only regel meer (was eerder alleen binnen een
+     max-width-mediaquery), want ditzelfde kan op elke smallere
+     desktop-breedte gebeuren, niet alleen op een telefoon.
+  */
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  max-width: 100%;
+  /* Zachte uitloop aan de randen als aanwijzing dat er meer tabs zijn
+     om naar te scrollen, i.p.v. tekst die abrupt wordt afgesneden. */
+  mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
   background: var(--panel-2);
   border: 1px solid var(--border);
   border-radius: 13px;
   padding: 4px;
   min-width: 0;
+}
+.tabs::-webkit-scrollbar {
+  display: none;
 }
 .tabs-pinned-actions {
   display: flex;
@@ -1201,6 +1222,7 @@ a:has(> .brandmark) {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-shrink: 0;
   background: transparent;
   border: none;
   border-radius: 9px;
@@ -3900,32 +3922,12 @@ a.dash-panel-row:hover {
   .project-header h1 {
     font-size: 20px;
   }
-  .tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
-    max-width: 100%;
-    /* Zachte uitloop aan de randen als aanwijzing dat er meer tabs zijn
-       om naar te scrollen, i.p.v. tekst die abrupt wordt afgesneden. */
-    mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
-    -webkit-mask-image: linear-gradient(to right, transparent, #000 16px, #000 calc(100% - 16px), transparent);
-  }
-  .tabs::-webkit-scrollbar {
-    display: none;
-  }
   .project-search {
     width: 100%;
   }
   .project-search input {
     width: 100%;
     max-width: none;
-  }
-  .tabs::-webkit-scrollbar {
-    display: none;
-  }
-  .tab-btn {
-    flex-shrink: 0;
   }
   .login-shell {
     min-height: 100dvh;
