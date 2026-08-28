@@ -93,7 +93,7 @@ export interface PlanningRow {
   start_date: string;
   end_date: string;
   done: boolean;
-  kind: "klus" | "kantoor";
+  kind: "klus" | "kantoor" | "verlof";
   daypart: DayPart;
 }
 
@@ -101,6 +101,10 @@ export interface PlanningRow {
 // kleur (zoals bij projecten/klussen), juist zodat "kantoor" overal
 // direct herkenbaar is, ongeacht welke kleuren er verder gekozen zijn.
 const OFFICE_PATTERN = "repeating-linear-gradient(45deg, #64748b, #64748b 5px, #475569 5px, #475569 10px)";
+// Zelfde idee voor vakantie, maar met een eigen, herkenbaar zonnig
+// amber streeppatroon i.p.v. grijs — zodat vakantie in de Gantt in één
+// oogopslag te onderscheiden is van een kantoordag of gewoon werk.
+const VACATION_PATTERN = "repeating-linear-gradient(45deg, #f59e0b, #f59e0b 5px, #d97706 5px, #d97706 10px)";
 
 interface DayHalf {
   match: PlanningRow;
@@ -174,7 +178,16 @@ export function TeamPlanningPanel({
     days: "1",
     daypart: "dag" as DayPart,
   });
+  const [showAddVacation, setShowAddVacation] = useState(false);
+  const [editingVacationId, setEditingVacationId] = useState<string | null>(null);
+  const [vacationForm, setVacationForm] = useState({
+    assigneeTeamMemberIds: [] as string[],
+    start: "",
+    days: "1",
+    daypart: "dag" as DayPart,
+  });
 
+  const ownStaffList = teamMembers.filter((m) => m.member_type === "personeel");
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
   const quickJobAssigneeLabel = (j: QuickJob) => {
     if (j.day_assignments && j.day_assignments.length > 0) {
@@ -261,6 +274,68 @@ export function TeamPlanningPanel({
       }
     });
     closeAddOffice();
+  };
+
+  const vacationComputedEnd =
+    vacationForm.start && Number(vacationForm.days) >= 1 ? endDateForWorkingDays(vacationForm.start, Number(vacationForm.days)) : "";
+
+  const openAddVacation = () => {
+    setEditingVacationId(null);
+    setVacationForm({ assigneeTeamMemberIds: [], start: "", days: "1", daypart: "dag" });
+    setShowAddVacation(true);
+  };
+
+  const startEditVacation = (j: QuickJob) => {
+    setEditingVacationId(j.id);
+    setVacationForm({
+      assigneeTeamMemberIds: j.assignee_team_member_ids,
+      start: j.start_date,
+      days: String(workingDaysBetween(j.start_date, j.end_date).length || 1),
+      daypart: j.daypart,
+    });
+    setShowAddVacation(true);
+  };
+
+  const closeAddVacation = () => {
+    setShowAddVacation(false);
+    setEditingVacationId(null);
+    setVacationForm({ assigneeTeamMemberIds: [], start: "", days: "1", daypart: "dag" });
+  };
+
+  const toggleVacationMember = (id: string) => {
+    setVacationForm((f) => ({
+      ...f,
+      assigneeTeamMemberIds: f.assigneeTeamMemberIds.includes(id)
+        ? f.assigneeTeamMemberIds.filter((x) => x !== id)
+        : [...f.assigneeTeamMemberIds, id],
+    }));
+  };
+
+  const saveVacationDay = () => {
+    if (!vacationForm.start || !vacationComputedEnd || vacationForm.assigneeTeamMemberIds.length === 0) return;
+    startTransition(() => {
+      if (editingVacationId) {
+        updateQuickJob(editingVacationId, {
+          title: "Vakantie",
+          assignee: null,
+          assigneeTeamMemberIds: vacationForm.assigneeTeamMemberIds,
+          start: vacationForm.start,
+          end: vacationComputedEnd,
+          daypart: vacationForm.daypart,
+        }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+      } else {
+        createQuickJob({
+          title: "Vakantie",
+          assignee: null,
+          assigneeTeamMemberIds: vacationForm.assigneeTeamMemberIds,
+          start: vacationForm.start,
+          end: vacationComputedEnd,
+          kind: "verlof",
+          daypart: vacationForm.daypart,
+        }).catch((err) => alert(err instanceof Error ? err.message : "Toevoegen mislukt."));
+      }
+    });
+    closeAddVacation();
   };
 
   const startEditJob = (j: QuickJob) => {
@@ -373,11 +448,12 @@ export function TeamPlanningPanel({
     }
     return null;
   };
-  const filteredQuickJobs = quickJobs.filter((j) => j.kind !== "kantoor" && !j.done && (filter === "alle" || jobMemberType(j) === filter));
-  const doneQuickJobs = quickJobs.filter((j) => j.kind !== "kantoor" && j.done && (filter === "alle" || jobMemberType(j) === filter));
-  // Kantoordagen zijn geen klus — er is niets om "gereed" te melden, dus
-  // die krijgen een eigen, kleinere lijst zonder die knop.
+  const filteredQuickJobs = quickJobs.filter((j) => j.kind === "klus" && !j.done && (filter === "alle" || jobMemberType(j) === filter));
+  const doneQuickJobs = quickJobs.filter((j) => j.kind === "klus" && j.done && (filter === "alle" || jobMemberType(j) === filter));
+  // Kantoordagen en vakantie zijn geen klus — er is niets om "gereed" te
+  // melden, dus die krijgen elk een eigen, kleinere lijst zonder die knop.
   const officeJobs = quickJobs.filter((j) => j.kind === "kantoor" && (filter === "alle" || jobMemberType(j) === filter));
+  const vacationJobs = quickJobs.filter((j) => j.kind === "verlof" && (filter === "alle" || jobMemberType(j) === filter));
 
   const days: Date[] = [];
   if (assigned.length) {
@@ -389,10 +465,13 @@ export function TeamPlanningPanel({
 
   const legend = Array.from(
     new Map(
-      assigned.filter((r) => r.kind !== "kantoor").map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob, done: r.done }])
+      assigned
+        .filter((r) => r.kind !== "kantoor" && r.kind !== "verlof")
+        .map((r) => [r.projectId, { name: r.projectName, isQuickJob: r.isQuickJob, done: r.done }])
     ).entries()
   ).sort((a, b) => a[1].name.localeCompare(b[1].name, "nl"));
   const hasOfficeDays = assigned.some((r) => r.kind === "kantoor");
+  const hasVacationDays = assigned.some((r) => r.kind === "verlof");
 
   return (
     <div className="panel panel-wide">
@@ -413,12 +492,18 @@ export function TeamPlanningPanel({
           Onderaannemers
         </button>
       </div>
-      {(legend.length > 0 || hasOfficeDays) && (
+      {(legend.length > 0 || hasOfficeDays || hasVacationDays) && (
         <div className="planning-legend">
           {hasOfficeDays && (
             <div className="planning-legend-item">
               <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: OFFICE_PATTERN }} />
               <span className="planning-legend-label">Kantoor</span>
+            </div>
+          )}
+          {hasVacationDays && (
+            <div className="planning-legend-item">
+              <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: VACATION_PATTERN }} />
+              <span className="planning-legend-label">Vakantie</span>
             </div>
           )}
           {legend.map(([id, info]) => (
@@ -491,9 +576,10 @@ export function TeamPlanningPanel({
             {people.map((person) => {
               const personRows = assigned.filter((r) => r.assignee === person);
               const emptyCell: DayCell = { full: null, ochtend: null, middag: null, conflict: false, label: "", done: false };
-              const backgroundFor = (m: PlanningRow) => (m.kind === "kantoor" ? OFFICE_PATTERN : colorOf(m.projectId));
+              const backgroundFor = (m: PlanningRow) =>
+                m.kind === "kantoor" ? OFFICE_PATTERN : m.kind === "verlof" ? VACATION_PATTERN : colorOf(m.projectId);
               const labelFor = (m: PlanningRow) =>
-                `${m.projectName}${m.kind === "kantoor" ? "" : ` — ${m.title}`}${m.fixedDate ? " (vaste datum)" : ""}` +
+                `${m.projectName}${m.kind === "kantoor" || m.kind === "verlof" ? "" : ` — ${m.title}`}${m.fixedDate ? " (vaste datum)" : ""}` +
                 (m.daypart !== "dag" ? ` (${m.daypart})` : "") +
                 (m.done ? " (afgerond)" : "");
               const cells: DayCell[] = days.map((d) => {
@@ -624,9 +710,9 @@ export function TeamPlanningPanel({
                     return (
                       <div key={m.id} className="day-detail-item">
                         <div className="access-summary-name">
-                          {m.kind === "kantoor" ? "🏢 " : ""}
+                          {m.kind === "kantoor" ? "🏢 " : m.kind === "verlof" ? "🏖️ " : ""}
                           {m.projectName}
-                          {m.kind !== "kantoor" && m.title !== "Losse klus" ? ` — ${m.title}` : ""}
+                          {m.kind !== "kantoor" && m.kind !== "verlof" && m.title !== "Losse klus" ? ` — ${m.title}` : ""}
                           {m.daypart !== "dag" && (
                             <span className="stamp stamp-open" style={{ marginLeft: 6 }}>
                               {m.daypart === "ochtend" ? "Ochtend" : "Middag"}
@@ -696,6 +782,9 @@ export function TeamPlanningPanel({
             <Plus size={14} /> Kantoordag toevoegen
           </button>
         )}
+        <button type="button" className="btn-ghost" onClick={openAddVacation} style={{ alignSelf: "flex-start" }}>
+          <Plus size={14} /> Vakantie toevoegen
+        </button>
       </div>
       {!ownStaffMemberId && (
         <div className="hint-bar small">
@@ -751,6 +840,84 @@ export function TeamPlanningPanel({
               </button>
               <button type="button" className="btn-primary" onClick={saveOfficeDay}>
                 {editingOfficeId ? (
+                  <>
+                    <Check size={14} /> Opslaan
+                  </>
+                ) : (
+                  <>
+                    <Plus size={14} /> Toevoegen
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showAddVacation && (
+        <div className="sig-overlay" onClick={closeAddVacation}>
+          <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-title">{editingVacationId ? "Vakantie bewerken" : "Vakantie toevoegen"}</div>
+            <div className="hint-bar small">
+              Voor eigen personeel — geen klant of project, geen route/adres, geen ochtendherinnering, telt niet mee in de
+              nacalculatie.
+            </div>
+            {ownStaffList.length === 0 ? (
+              <div className="empty-hint small">Nog geen eigen personeel toegevoegd.</div>
+            ) : (
+              <div className="assignee-staff-list">
+                {ownStaffList.map((m) => (
+                  <label key={m.id} className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={vacationForm.assigneeTeamMemberIds.includes(m.id)}
+                      onChange={() => toggleVacationMember(m.id)}
+                    />
+                    {m.name}
+                    {m.trade ? ` — ${m.trade}` : ""}
+                  </label>
+                ))}
+              </div>
+            )}
+            <div className="add-form-grid">
+              <input
+                type="date"
+                value={vacationForm.start}
+                onChange={(e) => setVacationForm({ ...vacationForm, start: e.target.value })}
+                title="Startdatum"
+              />
+              <input
+                type="number"
+                min="1"
+                max="60"
+                placeholder="Aantal dagen"
+                value={vacationForm.days}
+                onChange={(e) => setVacationForm({ ...vacationForm, days: e.target.value })}
+              />
+            </div>
+            <div className="mode-toggle">
+              {(["dag", "ochtend", "middag"] as DayPart[]).map((dp) => (
+                <button
+                  key={dp}
+                  type="button"
+                  className={vacationForm.daypart === dp ? "active" : ""}
+                  onClick={() => setVacationForm({ ...vacationForm, daypart: dp })}
+                >
+                  {dp === "dag" ? "Hele dag" : dp === "ochtend" ? "Ochtend" : "Middag"}
+                </button>
+              ))}
+            </div>
+            {vacationComputedEnd && (
+              <div className="hint-bar small">
+                Vakantie van {fmtShort(vacationForm.start)} t/m {fmtShort(vacationComputedEnd)} (weekenden tellen niet mee).
+              </div>
+            )}
+            <div className="modal-actions">
+              <button type="button" className="btn-ghost" onClick={closeAddVacation}>
+                Annuleren
+              </button>
+              <button type="button" className="btn-primary" onClick={saveVacationDay}>
+                {editingVacationId ? (
                   <>
                     <Check size={14} /> Opslaan
                   </>
@@ -968,6 +1135,44 @@ export function TeamPlanningPanel({
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <button className="icon-btn ghost" onClick={() => startEditOffice(j)} title="Bewerken">
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    className="icon-btn danger ghost"
+                    title="Verwijderen"
+                    onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
+
+      {vacationJobs.length > 0 && (
+        <>
+          <div className="add-form-title" style={{ marginTop: 4 }}>
+            Vakantie
+          </div>
+          <div className="task-list">
+            {vacationJobs.map((j) => (
+              <div key={j.id} className="task-row">
+                <div className="task-body">
+                  <span className="task-title">
+                    {j.assignee_team_member_ids.length > 0 ? j.assignee_team_member_ids.map(teamMemberName).join(", ") : "Onbekend"}
+                    {j.daypart !== "dag" ? ` (${j.daypart === "ochtend" ? "ochtend" : "middag"})` : ""}
+                  </span>
+                  <div className="task-meta">
+                    <span className="mono">
+                      {fmtShort(j.start_date)}
+                      {j.start_date !== j.end_date ? ` – ${fmtShort(j.end_date)}` : ""}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <button className="icon-btn ghost" onClick={() => startEditVacation(j)} title="Bewerken">
                     <Pencil size={14} />
                   </button>
                   <button

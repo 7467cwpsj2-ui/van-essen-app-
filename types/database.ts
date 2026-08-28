@@ -176,8 +176,9 @@ export interface QuickJob {
   description: string | null;
   color: string | null;
   // 'kantoor' = geen klant/project, alleen intern (bijv. de eigenaar op
-  // kantoor) — geen adres/route, geen ochtend-pushmelding.
-  kind: "klus" | "kantoor";
+  // kantoor) — geen adres/route, geen ochtend-pushmelding. 'verlof' =
+  // vakantie voor een teamlid, zelfde soort uitsluitingen.
+  kind: "klus" | "kantoor" | "verlof";
   daypart: DayPart;
   // Voor nacalculatie: het afgesproken/gefactureerde bedrag voor deze
   // klus — het equivalent van quote_amount/quote_vat_type bij een project.

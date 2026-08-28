@@ -27,7 +27,7 @@ export async function createQuickJob(data: {
   address?: string | null;
   description?: string | null;
   dayAssignments?: QuickJobDayAssignment[] | null;
-  kind?: "klus" | "kantoor";
+  kind?: "klus" | "kantoor" | "verlof";
   daypart?: DayPart;
 }) {
   await requireOwner();

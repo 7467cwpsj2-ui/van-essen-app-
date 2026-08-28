@@ -76,7 +76,7 @@ export default async function PlanningOverzichtPage() {
   for (const j of jobs) {
     if (j.done && j.end_date < doneCutoffIso) continue;
     const base = {
-      title: j.kind === "kantoor" ? "Kantoordag" : "Losse klus",
+      title: j.kind === "kantoor" ? "Kantoordag" : j.kind === "verlof" ? "Vakantie" : "Losse klus",
       projectId: `qj:${j.id}`,
       projectName: j.title,
       projectColor: j.color,
