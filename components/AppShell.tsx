@@ -22,6 +22,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { AppBadgeUpdater } from "@/components/AppBadgeUpdater";
 import { Brandmark } from "@/components/Brandmark";
 import { NotificationBell } from "@/components/NotificationBell";
 import { PendingPushNavigator } from "@/components/PendingPushNavigator";
@@ -55,15 +56,18 @@ export function AppShell({
   name,
   projects,
   notifications,
+  openTaskCount,
   children,
 }: {
   role: Role;
   name: string;
   projects: SidebarProject[];
   notifications: { items: AppNotification[]; unreadCount: number };
+  openTaskCount: number;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const badgeCount = notifications.unreadCount + openTaskCount;
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({ afgerond: true });
 
@@ -280,7 +284,10 @@ export function AppShell({
             <button
               type="submit"
               className="logout-btn"
-              onClick={() => navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_NAV_CACHE" })}
+              onClick={() => {
+                navigator.serviceWorker?.controller?.postMessage({ type: "CLEAR_NAV_CACHE" });
+                (navigator as Navigator & { clearAppBadge?: () => Promise<void> }).clearAppBadge?.().catch(() => {});
+              }}
             >
               <LogOut size={12} /> Uit
             </button>
@@ -289,6 +296,7 @@ export function AppShell({
       </aside>
 
       <main className="main">
+        <AppBadgeUpdater count={badgeCount} />
         <PendingPushNavigator />
         <UpdateChecker />
         <PushPrompt />

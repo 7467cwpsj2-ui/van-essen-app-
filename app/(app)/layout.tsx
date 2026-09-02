@@ -1,10 +1,14 @@
 import { requireUser } from "@/lib/auth";
-import { getNotifications, getProjectsWithProgress } from "@/lib/data";
+import { getNotifications, getOpenTaskCount, getProjectsWithProgress } from "@/lib/data";
 import { AppShell, type SidebarProject } from "@/components/AppShell";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const current = await requireUser();
-  const [projects, notifications] = await Promise.all([getProjectsWithProgress(), getNotifications()]);
+  const [projects, notifications, openTaskCount] = await Promise.all([
+    getProjectsWithProgress(),
+    getNotifications(),
+    getOpenTaskCount(),
+  ]);
 
   const sidebarProjects: SidebarProject[] = projects.map((p) => ({
     id: p.id,
@@ -17,7 +21,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   }));
 
   return (
-    <AppShell role={current.profile.role} name={current.profile.name} projects={sidebarProjects} notifications={notifications}>
+    <AppShell
+      role={current.profile.role}
+      name={current.profile.name}
+      projects={sidebarProjects}
+      notifications={notifications}
+      openTaskCount={openTaskCount}
+    >
       {children}
     </AppShell>
   );

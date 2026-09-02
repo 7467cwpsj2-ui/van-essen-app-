@@ -258,6 +258,17 @@ export async function getNotifications(): Promise<NotificationsSummary> {
   return { items: (items ?? []) as AppNotification[], unreadCount: count ?? 0 };
 }
 
+// Voor de badge op het geïnstalleerde app-icoon (naast ongelezen
+// meldingen) — het aantal openstaande te-doen-items over alle
+// toegankelijke projecten heen, dezelfde afbakening als de
+// /te-doen-pagina zelf. RLS beperkt dit vanzelf tot projecten waar de
+// ingelogde gebruiker toegang toe heeft.
+export const getOpenTaskCount = cache(async (): Promise<number> => {
+  const supabase = createClient();
+  const { count } = await supabase.from("tasks").select("id", { count: "exact", head: true }).eq("done", false);
+  return count ?? 0;
+});
+
 export interface DashboardExtras {
   todayTasks: TodayTask[];
   openMeerwerk: { count: number; amount: number };
