@@ -67,7 +67,7 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0062_cleanup_orphaned_team_member_refs.sql`, `0063_quick_job_color.sql`,
 `0064_quick_job_office_daypart.sql`, `0065_quick_job_nacalculatie.sql`,
 `0066_performance_indexes.sql`, `0067_team_calendar_feed.sql`,
-`0068_quick_job_vacation.sql`,
+`0068_quick_job_vacation.sql`, `0069_planning_overzicht_access.sql`,
 en klik telkens Run), of met de
 Supabase CLI:
 

@@ -57,6 +57,8 @@ export function AppShell({
   projects,
   notifications,
   openTaskCount,
+  canSeePlanningOverzicht,
+  hasOwnPlanning,
   children,
 }: {
   role: Role;
@@ -64,6 +66,8 @@ export function AppShell({
   projects: SidebarProject[];
   notifications: { items: AppNotification[]; unreadCount: number };
   openTaskCount: number;
+  canSeePlanningOverzicht: boolean;
+  hasOwnPlanning: boolean;
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
@@ -126,6 +130,24 @@ export function AppShell({
             onClick={() => setSidebarOpen(false)}
           >
             <Clock size={14} /> Uren registreren
+          </Link>
+        )}
+        {hasOwnPlanning && (
+          <Link
+            href="/mijn-planning"
+            className={"toegang-toggle" + (pathname === "/mijn-planning" ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <CalendarRange size={14} /> Mijn planning
+          </Link>
+        )}
+        {role === "team" && canSeePlanningOverzicht && (
+          <Link
+            href="/planning-overzicht"
+            className={"toegang-toggle" + (pathname === "/planning-overzicht" ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <CalendarRange size={14} /> Algemene planning
           </Link>
         )}
         {role === "eigenaar" && (

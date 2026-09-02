@@ -7,7 +7,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { siteUrl } from "@/lib/siteUrl";
 import { permissionsFromFormData } from "@/lib/permissionsFromFormData";
 import { getProjectName, getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
-import { defaultPermissions, type ModuleKey, type QuickJobDayAssignment, type TeamMemberType } from "@/types/database";
+import {
+  defaultPermissions,
+  type ModuleKey,
+  type PlanningOverzichtAccess,
+  type QuickJobDayAssignment,
+  type TeamMemberType,
+} from "@/types/database";
 
 // De eigenaar wil zichzelf ook kunnen inplannen als eigen personeel —
 // bijv. op de bouwplanning of een losse klus — en daarbij dezelfde
@@ -133,6 +139,15 @@ export async function toggleTeamCanEditSchedule(id: string, value: boolean) {
   const { error } = await supabase.from("team_members").update({ can_edit_schedule: value }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath("/personeel");
+}
+
+export async function updateTeamPlanningAccess(id: string, access: PlanningOverzichtAccess) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase.from("team_members").update({ planning_overzicht_access: access }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath("/personeel");
+  revalidatePath("/planning-overzicht");
 }
 
 export async function updateTeamMemberType(id: string, memberType: TeamMemberType) {

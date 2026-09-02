@@ -190,6 +190,9 @@ export default async function DashboardPage({
           <div className="dash-panel">
             <div className="dash-panel-head">
               <span>Mijn planning</span>
+              <Link href="/mijn-planning" className="link-btn">
+                Bekijk alle
+              </Link>
             </div>
             {mySchedule.length === 0 ? (
               <div className="empty-hint small empty-hint-row">

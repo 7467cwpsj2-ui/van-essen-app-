@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireOwner } from "@/lib/auth";
+import { requireOwner, requirePlanningEditAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { workingDaysBetween } from "@/lib/workingDays";
 import type { DayPart, QuickJobDayAssignment } from "@/types/database";
@@ -92,10 +92,13 @@ export async function updateQuickJob(
 }
 
 export async function updateQuickJobColor(id: string, color: string) {
-  await requireOwner();
+  await requirePlanningEditAccess();
   if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Ongeldige kleur.");
   const supabase = createClient();
-  const { error } = await supabase.from("quick_jobs").update({ color }).eq("id", id);
+  // Via een smalle RPC i.p.v. een rechtstreekse UPDATE — zo kan een
+  // teamlid met "wijzigen"-toegang alleen de kleur aanpassen, niet via
+  // dezelfde weg om de goedkeuringsflow heen voor de gevoelige velden.
+  const { error } = await supabase.rpc("update_quick_job_color", { p_id: id, p_color: color });
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
 }
@@ -139,9 +142,9 @@ export async function updateQuickJobDayAssignment(id: string, date: string, team
 }
 
 export async function toggleQuickJobDone(id: string, done: boolean) {
-  await requireOwner();
+  await requirePlanningEditAccess();
   const supabase = createClient();
-  const { error } = await supabase.from("quick_jobs").update({ done }).eq("id", id);
+  const { error } = await supabase.rpc("toggle_quick_job_done", { p_id: id, p_done: done });
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
   revalidatePath(`/klussen/${id}`);

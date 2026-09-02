@@ -20,6 +20,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     planningColor: p.planning_color,
   }));
 
+  const canSeePlanningOverzicht =
+    current.profile.role === "eigenaar" || (current.teamMember?.planning_overzicht_access ?? "geen") !== "geen";
+  // Eigen personeel (ook de eigenaar zelf, als die zich heeft toegevoegd
+  // via migratie 0061) krijgt de "Mijn planning"-link.
+  const myStaffId = current.profile.role === "team" ? current.profile.team_member_id : current.ownStaffMember?.id ?? null;
+
   return (
     <AppShell
       role={current.profile.role}
@@ -27,6 +33,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       projects={sidebarProjects}
       notifications={notifications}
       openTaskCount={openTaskCount}
+      canSeePlanningOverzicht={canSeePlanningOverzicht}
+      hasOwnPlanning={!!myStaffId}
     >
       {children}
     </AppShell>

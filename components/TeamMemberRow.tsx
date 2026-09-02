@@ -13,9 +13,23 @@ import {
   toggleTeamSeesAllProjects,
   updateTeamMemberDetails,
   updateTeamMemberType,
+  updateTeamPlanningAccess,
 } from "@/lib/actions/team";
 import type { InviteStatus } from "@/lib/inviteStatus";
-import { VAT_TYPE_LABEL, type ExtraWorkVatType, type ModuleKey, type TeamMember, type TeamMemberType } from "@/types/database";
+import {
+  VAT_TYPE_LABEL,
+  type ExtraWorkVatType,
+  type ModuleKey,
+  type PlanningOverzichtAccess,
+  type TeamMember,
+  type TeamMemberType,
+} from "@/types/database";
+
+const PLANNING_ACCESS_LABEL: Record<PlanningOverzichtAccess, string> = {
+  geen: "Geen toegang",
+  bekijken: "Mag bekijken",
+  wijzigen: "Mag bekijken en wijzigen (met goedkeuring)",
+};
 
 const TRADES = [
   "Timmerman",
@@ -249,6 +263,26 @@ export function TeamMemberRow({
             />
             Mag de bouwplanning zelf bewerken (i.p.v. alleen bekijken)
           </label>
+          <label className="field-with-label">
+            <span className="field-label">Algemene planning (overzicht van alle projecten/personeel tegelijk)</span>
+            <select
+              value={member.planning_overzicht_access}
+              onChange={(e) => run(() => updateTeamPlanningAccess(member.id, e.target.value as PlanningOverzichtAccess))}
+            >
+              {(Object.keys(PLANNING_ACCESS_LABEL) as PlanningOverzichtAccess[]).map((v) => (
+                <option key={v} value={v}>
+                  {PLANNING_ACCESS_LABEL[v]}
+                </option>
+              ))}
+            </select>
+          </label>
+          {member.planning_overzicht_access !== "geen" && (
+            <div className="hint-bar small">
+              Ziet daarbij alleen de planning van eigen personeel, geen onderaannemers. Bij &quot;wijzigen&quot; gaat elke
+              planningswijziging (nieuwe/andere klus, bezetting) eerst als voorstel naar jou ter goedkeuring — gereed afvinken en
+              kleuren aanpassen mag wel meteen.
+            </div>
+          )}
           <div className="project-access">
             <label className="checkbox-label">
               <input

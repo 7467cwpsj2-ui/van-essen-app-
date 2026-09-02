@@ -7,6 +7,15 @@ import { ScrollToToday } from "@/components/ScrollToToday";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { updateProjectPlanningColor } from "@/lib/actions/projects";
 import {
+  cancelChangeRequest,
+  approveChangeRequest,
+  proposeCreateQuickJob,
+  proposeDeleteQuickJob,
+  proposeUpdateQuickJob,
+  proposeUpdateQuickJobDayAssignment,
+  rejectChangeRequest,
+} from "@/lib/actions/planningRequests";
+import {
   createQuickJob,
   deleteQuickJob,
   toggleQuickJobDone,
@@ -16,7 +25,7 @@ import {
 } from "@/lib/actions/quickJobs";
 import { colorForProject } from "@/lib/projectColor";
 import { endDateForWorkingDays, isoWeekNumber, workingDaysBetween } from "@/lib/workingDays";
-import type { DayPart, QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
+import type { DayPart, PlanningChangeRequest, QuickJob, QuickJobDayAssignment, TeamMemberType } from "@/types/database";
 
 const DAY_MS = 86400000;
 const WEEKDAY_LETTERS = ["Zo", "Ma", "Di", "Wo", "Do", "Vr", "Za"];
@@ -133,12 +142,24 @@ export function TeamPlanningPanel({
   quickJobs,
   teamMembers,
   ownStaffMemberId,
+  accessLevel,
+  restrictToOwnStaff,
+  changeRequests,
 }: {
   rows: PlanningRow[];
   quickJobs: QuickJob[];
   teamMembers: AssigneeTeamMember[];
   ownStaffMemberId: string | null;
+  accessLevel: "eigenaar" | "bekijken" | "wijzigen";
+  restrictToOwnStaff: boolean;
+  changeRequests: PlanningChangeRequest[];
 }) {
+  const isOwner = accessLevel === "eigenaar";
+  // "bekijken" is puur lezen: geen enkele knop om iets aan te passen.
+  // "wijzigen" mag dezelfde acties als de eigenaar aanroepen, alleen
+  // gaan de planningskritische acties (nieuwe/andere klus, bezetting)
+  // via een voorstel i.p.v. direct — zie de do*-wrappers hieronder.
+  const canEdit = accessLevel !== "bekijken";
   const todayMs = new Date(new Date().toISOString().slice(0, 10) + "T00:00:00Z").getTime();
   const [, startTransition] = useTransition();
   const [form, setForm] = useState({
@@ -189,6 +210,22 @@ export function TeamPlanningPanel({
 
   const ownStaffList = teamMembers.filter((m) => m.member_type === "personeel");
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
+
+  // Planningskritische acties (nieuwe/andere klus, verwijderen,
+  // bezetting) lopen bij de eigenaar direct door zoals altijd; bij een
+  // teamlid met "wijzigen"-toegang worden ze in plaats daarvan als
+  // voorstel ingediend, ter goedkeuring door de eigenaar. Zo hoeft de
+  // rest van dit bestand niet overal apart te vertakken — alleen deze
+  // vier aanroeppunten worden verlegd.
+  const doCreateQuickJob = (data: Omit<Parameters<typeof createQuickJob>[0], "kind"> & { kind?: "klus" | "verlof" }) =>
+    isOwner ? createQuickJob(data) : proposeCreateQuickJob(data);
+  const doUpdateQuickJob = (id: string, data: Parameters<typeof updateQuickJob>[1]) =>
+    isOwner ? updateQuickJob(id, data) : proposeUpdateQuickJob(id, data);
+  const doDeleteQuickJob = (id: string, title: string) => (isOwner ? deleteQuickJob(id) : proposeDeleteQuickJob(id, title));
+  const doUpdateDayAssignment = (id: string, title: string, date: string, teamMemberIds: string[], daypart: DayPart) =>
+    isOwner
+      ? updateQuickJobDayAssignment(id, date, teamMemberIds, daypart)
+      : proposeUpdateQuickJobDayAssignment(id, title, { date, teamMemberIds, daypart });
   const quickJobAssigneeLabel = (j: QuickJob) => {
     if (j.day_assignments && j.day_assignments.length > 0) {
       return j.day_assignments.map((d) => `${d.team_member_ids.map(teamMemberName).join(" + ") || "niemand"} (${fmtShort(d.date)})`).join(", ");
@@ -214,7 +251,7 @@ export function TeamPlanningPanel({
   const addQuickJob = () => {
     if (!form.title.trim() || !form.start || !computedEnd) return;
     startTransition(() => {
-      createQuickJob({
+      doCreateQuickJob({
         title: form.title,
         assignee: form.assignee,
         assigneeTeamMemberIds: form.assigneeTeamMemberIds,
@@ -315,7 +352,7 @@ export function TeamPlanningPanel({
     if (!vacationForm.start || !vacationComputedEnd || vacationForm.assigneeTeamMemberIds.length === 0) return;
     startTransition(() => {
       if (editingVacationId) {
-        updateQuickJob(editingVacationId, {
+        doUpdateQuickJob(editingVacationId, {
           title: "Vakantie",
           assignee: null,
           assigneeTeamMemberIds: vacationForm.assigneeTeamMemberIds,
@@ -324,7 +361,7 @@ export function TeamPlanningPanel({
           daypart: vacationForm.daypart,
         }).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
       } else {
-        createQuickJob({
+        doCreateQuickJob({
           title: "Vakantie",
           assignee: null,
           assigneeTeamMemberIds: vacationForm.assigneeTeamMemberIds,
@@ -374,7 +411,7 @@ export function TeamPlanningPanel({
   const saveEditJob = (id: string) => {
     if (!editJobForm.title.trim() || !editJobForm.start || !editJobComputedEnd) return;
     startTransition(() => {
-      updateQuickJob(id, {
+      doUpdateQuickJob(id, {
         title: editJobForm.title,
         assignee: editJobForm.assignee,
         assigneeTeamMemberIds: editJobForm.assigneeTeamMemberIds,
@@ -429,8 +466,9 @@ export function TeamPlanningPanel({
     if (!dayEditJobId || !dayDetail) return;
     const jobId = dayEditJobId;
     const iso = dayDetail.iso;
+    const jobTitle = quickJobs.find((j) => j.id === jobId)?.title ?? "klus";
     startTransition(() => {
-      updateQuickJobDayAssignment(jobId, iso, dayEditSelection, dayEditDaypart).catch((err) =>
+      doUpdateDayAssignment(jobId, jobTitle, iso, dayEditSelection, dayEditDaypart).catch((err) =>
         alert(err instanceof Error ? err.message : "Opslaan mislukt.")
       );
     });
@@ -473,6 +511,29 @@ export function TeamPlanningPanel({
   const hasOfficeDays = assigned.some((r) => r.kind === "kantoor");
   const hasVacationDays = assigned.some((r) => r.kind === "verlof");
 
+  const STATUS_LABEL: Record<PlanningChangeRequest["status"], string> = {
+    pending: "In behandeling",
+    approved: "Goedgekeurd",
+    rejected: "Afgewezen",
+  };
+  const STATUS_CLASS: Record<PlanningChangeRequest["status"], string> = {
+    pending: "stamp-open",
+    approved: "stamp-akkoord",
+    rejected: "stamp-afgewezen",
+  };
+  const respondToRequest = (id: string, approve: boolean) => {
+    startTransition(() => {
+      (approve ? approveChangeRequest(id) : rejectChangeRequest(id)).catch((err) =>
+        alert(err instanceof Error ? err.message : "Bijwerken mislukt.")
+      );
+    });
+  };
+  const withdrawRequest = (id: string) => {
+    startTransition(() => {
+      cancelChangeRequest(id).catch((err) => alert(err instanceof Error ? err.message : "Intrekken mislukt."));
+    });
+  };
+
   return (
     <div className="panel panel-wide">
       <div className="header-eyebrow">Overzicht</div>
@@ -481,17 +542,74 @@ export function TeamPlanningPanel({
         Personeelsplanning over al je projecten heen — elke rij is één persoon, elke kleur een project of losse klus. Klik op een
         kleurbolletje hieronder om de kleur van een project zelf aan te passen.
       </div>
-      <div className="mode-toggle">
-        <button type="button" className={filter === "alle" ? "active" : ""} onClick={() => setFilter("alle")}>
-          Alles
-        </button>
-        <button type="button" className={filter === "personeel" ? "active" : ""} onClick={() => setFilter("personeel")}>
-          Eigen personeel
-        </button>
-        <button type="button" className={filter === "onderaannemer" ? "active" : ""} onClick={() => setFilter("onderaannemer")}>
-          Onderaannemers
-        </button>
-      </div>
+
+      {isOwner && changeRequests.length > 0 && (
+        <div>
+          <div className="add-form-title" style={{ marginTop: 4 }}>
+            Wijzigingen ter goedkeuring
+            <span className="count-badge">{changeRequests.length}</span>
+          </div>
+          <div className="task-list">
+            {changeRequests.map((r) => (
+              <div key={r.id} className="task-row">
+                <div className="task-body">
+                  <div className="task-title">{r.requested_by_name}</div>
+                  <div className="task-meta">
+                    <span>{r.summary}</span>
+                  </div>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                  <button type="button" className="btn-success" onClick={() => respondToRequest(r.id, true)}>
+                    <Check size={14} /> Goedkeuren
+                  </button>
+                  <button type="button" className="btn-ghost" onClick={() => respondToRequest(r.id, false)}>
+                    <X size={14} /> Afwijzen
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!isOwner && accessLevel === "wijzigen" && changeRequests.length > 0 && (
+        <div>
+          <div className="add-form-title" style={{ marginTop: 4 }}>
+            Mijn voorstellen
+          </div>
+          <div className="task-list">
+            {changeRequests.map((r) => (
+              <div key={r.id} className="task-row">
+                <div className="task-body">
+                  <div className="task-title">{r.summary}</div>
+                  <div className="task-meta">
+                    <span className={"stamp " + STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</span>
+                  </div>
+                </div>
+                {r.status === "pending" && (
+                  <button className="icon-btn danger ghost" title="Intrekken" onClick={() => withdrawRequest(r.id)}>
+                    <Trash2 size={14} />
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!restrictToOwnStaff && (
+        <div className="mode-toggle">
+          <button type="button" className={filter === "alle" ? "active" : ""} onClick={() => setFilter("alle")}>
+            Alles
+          </button>
+          <button type="button" className={filter === "personeel" ? "active" : ""} onClick={() => setFilter("personeel")}>
+            Eigen personeel
+          </button>
+          <button type="button" className={filter === "onderaannemer" ? "active" : ""} onClick={() => setFilter("onderaannemer")}>
+            Onderaannemers
+          </button>
+        </div>
+      )}
       {(legend.length > 0 || hasOfficeDays || hasVacationDays) && (
         <div className="planning-legend">
           {hasOfficeDays && (
@@ -508,13 +626,17 @@ export function TeamPlanningPanel({
           )}
           {legend.map(([id, info]) => (
             <div key={id} className={"planning-legend-item" + (info.done ? " done" : "")}>
-              <input
-                type="color"
-                value={colorOf(id)}
-                onChange={(e) => handleColorChange(id, e.target.value)}
-                className="planning-legend-swatch"
-                title={`Kleur voor ${info.name} aanpassen`}
-              />
+              {canEdit ? (
+                <input
+                  type="color"
+                  value={colorOf(id)}
+                  onChange={(e) => handleColorChange(id, e.target.value)}
+                  className="planning-legend-swatch"
+                  title={`Kleur voor ${info.name} aanpassen`}
+                />
+              ) : (
+                <span className="planning-legend-swatch planning-legend-swatch-static" style={{ background: colorOf(id) }} />
+              )}
               {info.isQuickJob ? (
                 <span className="planning-legend-label">
                   {info.name}
@@ -720,7 +842,7 @@ export function TeamPlanningPanel({
                           )}
                         </div>
                         {job ? (
-                          dayEditJobId === job.id ? (
+                          !canEdit ? null : dayEditJobId === job.id ? (
                             <>
                               <div className="mode-toggle">
                                 {(["dag", "ochtend", "middag"] as DayPart[]).map((dp) => (
@@ -773,20 +895,22 @@ export function TeamPlanningPanel({
           );
         })()}
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
-          <Plus size={14} /> Kleine klus toevoegen
-        </button>
-        {ownStaffMemberId && (
-          <button type="button" className="btn-ghost" onClick={openAddOffice} style={{ alignSelf: "flex-start" }}>
-            <Plus size={14} /> Kantoordag toevoegen
+      {canEdit && (
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
+            <Plus size={14} /> Kleine klus toevoegen
           </button>
-        )}
-        <button type="button" className="btn-ghost" onClick={openAddVacation} style={{ alignSelf: "flex-start" }}>
-          <Plus size={14} /> Vakantie toevoegen
-        </button>
-      </div>
-      {!ownStaffMemberId && (
+          {isOwner && ownStaffMemberId && (
+            <button type="button" className="btn-ghost" onClick={openAddOffice} style={{ alignSelf: "flex-start" }}>
+              <Plus size={14} /> Kantoordag toevoegen
+            </button>
+          )}
+          <button type="button" className="btn-ghost" onClick={openAddVacation} style={{ alignSelf: "flex-start" }}>
+            <Plus size={14} /> Vakantie toevoegen
+          </button>
+        </div>
+      )}
+      {canEdit && isOwner && !ownStaffMemberId && (
         <div className="hint-bar small">
           Voeg jezelf eerst toe als eigen personeel op de{" "}
           <Link href="/personeel" className="link-btn" style={{ display: "inline" }}>
@@ -1090,25 +1214,27 @@ export function TeamPlanningPanel({
                       </span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
-                    <button
-                      type="button"
-                      className="btn-success"
-                      onClick={() => startTransition(() => toggleQuickJobDone(j.id, true).catch(() => {}))}
-                    >
-                      <CheckCircle2 size={15} /> Gereed
-                    </button>
-                    <button className="icon-btn ghost" onClick={() => startEditJob(j)} title="Bewerken">
-                      <Pencil size={14} />
-                    </button>
-                    <button
-                      className="icon-btn danger ghost"
-                      title="Verwijderen"
-                      onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
+                      <button
+                        type="button"
+                        className="btn-success"
+                        onClick={() => startTransition(() => toggleQuickJobDone(j.id, true).catch(() => {}))}
+                      >
+                        <CheckCircle2 size={15} /> Gereed
+                      </button>
+                      <button className="icon-btn ghost" onClick={() => startEditJob(j)} title="Bewerken">
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        className="icon-btn danger ghost"
+                        title="Verwijderen"
+                        onClick={() => startTransition(() => doDeleteQuickJob(j.id, j.title).catch(() => {}))}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               )
             )}
@@ -1133,18 +1259,20 @@ export function TeamPlanningPanel({
                     </span>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button className="icon-btn ghost" onClick={() => startEditOffice(j)} title="Bewerken">
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    className="icon-btn danger ghost"
-                    title="Verwijderen"
-                    onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                {isOwner && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button className="icon-btn ghost" onClick={() => startEditOffice(j)} title="Bewerken">
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="icon-btn danger ghost"
+                      title="Verwijderen"
+                      onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1171,18 +1299,20 @@ export function TeamPlanningPanel({
                     </span>
                   </div>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <button className="icon-btn ghost" onClick={() => startEditVacation(j)} title="Bewerken">
-                    <Pencil size={14} />
-                  </button>
-                  <button
-                    className="icon-btn danger ghost"
-                    title="Verwijderen"
-                    onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
+                {canEdit && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <button className="icon-btn ghost" onClick={() => startEditVacation(j)} title="Bewerken">
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="icon-btn danger ghost"
+                      title="Verwijderen"
+                      onClick={() => startTransition(() => doDeleteQuickJob(j.id, j.title).catch(() => {}))}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1211,22 +1341,24 @@ export function TeamPlanningPanel({
                       </span>
                     </div>
                   </div>
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <button
-                      className="icon-btn ghost"
-                      title="Heropenen"
-                      onClick={() => startTransition(() => toggleQuickJobDone(j.id, false).catch(() => {}))}
-                    >
-                      <RotateCcw size={14} />
-                    </button>
-                    <button
-                      className="icon-btn danger ghost"
-                      title="Verwijderen"
-                      onClick={() => startTransition(() => deleteQuickJob(j.id).catch(() => {}))}
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
+                  {canEdit && (
+                    <div style={{ display: "flex", gap: 4 }}>
+                      <button
+                        className="icon-btn ghost"
+                        title="Heropenen"
+                        onClick={() => startTransition(() => toggleQuickJobDone(j.id, false).catch(() => {}))}
+                      >
+                        <RotateCcw size={14} />
+                      </button>
+                      <button
+                        className="icon-btn danger ghost"
+                        title="Verwijderen"
+                        onClick={() => startTransition(() => doDeleteQuickJob(j.id, j.title).catch(() => {}))}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>

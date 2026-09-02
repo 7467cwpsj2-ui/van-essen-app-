@@ -88,6 +88,21 @@ export interface TeamMember {
   hourly_rate_vat_type: ExtraWorkVatType;
   color: string | null;
   owner_profile_id: string | null;
+  planning_overzicht_access: PlanningOverzichtAccess;
+  created_at: string;
+}
+
+export type PlanningOverzichtAccess = "geen" | "bekijken" | "wijzigen";
+
+export interface PlanningChangeRequest {
+  id: string;
+  requested_by: string;
+  requested_by_name: string;
+  action: "create" | "update" | "delete" | "day_assignment";
+  quick_job_id: string | null;
+  summary: string;
+  status: "pending" | "approved" | "rejected";
+  reviewed_at: string | null;
   created_at: string;
 }
 

@@ -2,20 +2,58 @@ import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { TeamPlanningPanel, type PlanningRow } from "@/components/TeamPlanningPanel";
-import type { DayPart, QuickJob, TeamMember } from "@/types/database";
+import type { DayPart, PlanningChangeRequest, QuickJob, TeamMember } from "@/types/database";
+
+// Een klus/fase met minstens één onderaannemer erbij wordt voor een
+// beperkte viewer (uitvoerder) helemaal niet getoond — RLS kan geen
+// losse array-elementen uit een rij filteren (zie migratie 0069), dus
+// bij gemengde bezetting valt de hele rij weg i.p.v. dat de
+// onderaannemer alsnog half zichtbaar blijft.
+function quickJobIsOwnStaffOnly(
+  j: QuickJob,
+  memberTypeById: Map<string, TeamMember["member_type"]>,
+  memberTypeByName: Map<string, TeamMember["member_type"]>
+): boolean {
+  const ids =
+    j.day_assignments && j.day_assignments.length > 0
+      ? Array.from(new Set(j.day_assignments.flatMap((d) => d.team_member_ids)))
+      : j.assignee_team_member_ids;
+  if (ids.length > 0) {
+    return ids.every((id) => (memberTypeById.get(id) ?? "personeel") === "personeel");
+  }
+  const name = j.assignee?.trim().toLowerCase();
+  if (!name) return true;
+  return (memberTypeByName.get(name) ?? "onderaannemer") === "personeel";
+}
 
 export default async function PlanningOverzichtPage() {
   const current = await requireUser();
-  if (current.profile.role !== "eigenaar") notFound();
+  const teamAccess = current.profile.role === "team" ? current.teamMember?.planning_overzicht_access ?? "geen" : "geen";
+  if (current.profile.role !== "eigenaar" && teamAccess === "geen") notFound();
+  const accessLevel: "eigenaar" | "bekijken" | "wijzigen" =
+    current.profile.role === "eigenaar" ? "eigenaar" : (teamAccess as "bekijken" | "wijzigen");
+  // Uitvoerders zien voor nu bewust alleen eigen personeel, geen
+  // onderaannemers — zie het gesprek dat tot deze functie leidde.
+  const restrictToOwnStaff = accessLevel !== "eigenaar";
 
   const supabase = createClient();
-  const [{ data }, { data: teamMembers }, { data: quickJobs }] = await Promise.all([
+  const [{ data }, { data: teamMembers }, { data: quickJobs }, { data: changeRequests }] = await Promise.all([
     supabase
       .from("schedule_phases")
       .select("id,project_id,title,assignee,assignee_team_member_ids,start_date,end_date,fixed_date,projects(name,planning_color)")
       .order("start_date"),
     supabase.from("team_members").select("id,name,trade,member_type"),
     supabase.from("quick_jobs").select("*").order("start_date"),
+    accessLevel === "eigenaar"
+      ? supabase.from("planning_change_requests").select("*").eq("status", "pending").order("created_at")
+      : accessLevel === "wijzigen"
+        ? supabase
+            .from("planning_change_requests")
+            .select("*")
+            .eq("requested_by", current.id)
+            .order("created_at", { ascending: false })
+            .limit(20)
+        : Promise.resolve({ data: [] as PlanningChangeRequest[] }),
   ]);
 
   const nameById = new Map((teamMembers ?? []).map((m) => [m.id as string, m.name as string]));
@@ -72,7 +110,10 @@ export default async function PlanningOverzichtPage() {
   // wel gewoon terug te vinden in de lijst "Afgeronde losse klussen"
   // eronder), anders zou de kalender oneindig blijven doorgroeien.
   const doneCutoffIso = new Date(Date.now() - 14 * 86400000).toISOString().slice(0, 10);
-  const jobs = (quickJobs ?? []) as QuickJob[];
+  const allJobs = (quickJobs ?? []) as QuickJob[];
+  const jobs = restrictToOwnStaff
+    ? allJobs.filter((j) => quickJobIsOwnStaffOnly(j, memberTypeById, memberTypeByName))
+    : allJobs;
   for (const j of jobs) {
     if (j.done && j.end_date < doneCutoffIso) continue;
     const base = {
@@ -149,7 +190,8 @@ export default async function PlanningOverzichtPage() {
     }
   }
 
-  rows.sort((a, b) => {
+  const visibleRows = restrictToOwnStaff ? rows.filter((r) => r.memberType !== "onderaannemer") : rows;
+  visibleRows.sort((a, b) => {
     if (!a.assignee && b.assignee) return 1;
     if (a.assignee && !b.assignee) return -1;
     if (a.assignee && b.assignee) {
@@ -159,17 +201,19 @@ export default async function PlanningOverzichtPage() {
     return a.start_date.localeCompare(b.start_date);
   });
 
+  const teamMembersForPanel = ((teamMembers ?? []) as Pick<TeamMember, "id" | "name" | "trade" | "member_type">[])
+    .filter((m) => !restrictToOwnStaff || m.member_type === "personeel")
+    .map((m) => ({ id: m.id, name: m.name, trade: m.trade, member_type: m.member_type }));
+
   return (
     <TeamPlanningPanel
-      rows={rows}
+      rows={visibleRows}
       quickJobs={jobs}
-      teamMembers={((teamMembers ?? []) as Pick<TeamMember, "id" | "name" | "trade" | "member_type">[]).map((m) => ({
-        id: m.id,
-        name: m.name,
-        trade: m.trade,
-        member_type: m.member_type,
-      }))}
+      teamMembers={teamMembersForPanel}
       ownStaffMemberId={current.ownStaffMember?.id ?? null}
+      accessLevel={accessLevel}
+      restrictToOwnStaff={restrictToOwnStaff}
+      changeRequests={(changeRequests ?? []) as PlanningChangeRequest[]}
     />
   );
 }

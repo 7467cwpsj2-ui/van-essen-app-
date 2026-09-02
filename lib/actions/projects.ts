@@ -2,7 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { requireOwner } from "@/lib/auth";
+import { requireOwner, requirePlanningEditAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import type { ProjectStatus } from "@/types/database";
@@ -38,10 +38,10 @@ export async function updateProjectStatus(id: string, status: ProjectStatus) {
 }
 
 export async function updateProjectPlanningColor(id: string, color: string) {
-  await requireOwner();
+  await requirePlanningEditAccess();
   if (!/^#[0-9a-fA-F]{6}$/.test(color)) throw new Error("Ongeldige kleur.");
   const supabase = createClient();
-  const { error } = await supabase.from("projects").update({ planning_color: color }).eq("id", id);
+  const { error } = await supabase.rpc("update_project_planning_color", { p_id: id, p_color: color });
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
 }

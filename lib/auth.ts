@@ -67,6 +67,20 @@ export async function requireOwner(): Promise<CurrentUser> {
   return current;
 }
 
+// Voor de kleine, niet-goedkeuring-plichtige acties in de algemene
+// planning (gereed afvinken, kleur aanpassen) — de eigenaar mag dit
+// altijd, een teamlid alleen met expliciete "wijzigen"-toegang. Echte
+// planningswijzigingen (nieuwe/andere klus, bezetting) lopen niet via
+// deze check, maar via de voorstel-acties in lib/actions/planningRequests.ts.
+export async function requirePlanningEditAccess(): Promise<CurrentUser> {
+  const current = await requireUser();
+  const allowed =
+    current.profile.role === "eigenaar" ||
+    (current.profile.role === "team" && current.teamMember?.planning_overzicht_access === "wijzigen");
+  if (!allowed) redirect("/dashboard");
+  return current;
+}
+
 // Cliëntzijdige spiegel van has_module_access() uit de SQL-migratie —
 // alleen voor UI-beslissingen (tonen/verbergen). De database-RLS is de
 // echte grens, dit voorkomt alleen onnodige flitsen van UI die toch
