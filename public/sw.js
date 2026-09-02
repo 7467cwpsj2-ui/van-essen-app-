@@ -117,12 +117,24 @@ self.addEventListener("push", (event) => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(payload.title || "Van Essen", {
-      body: payload.body || "",
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
-      data: { url: payload.url || "/dashboard" },
-    })
+    (async () => {
+      await self.registration.showNotification(payload.title || "Van Essen", {
+        body: payload.body || "",
+        icon: "/icons/icon-192.png",
+        badge: "/icons/icon-192.png",
+        data: { url: payload.url || "/dashboard" },
+      });
+      // Zet de badge op het app-icoon zelf ook meteen bij binnenkomst,
+      // zodat die klopt zonder dat de app geopend hoeft te worden —
+      // de Badging API zit in service workers op self.navigator, niet
+      // op self.registration.
+      if (typeof payload.badgeCount === "number" && self.navigator && self.navigator.setAppBadge) {
+        try {
+          if (payload.badgeCount > 0) await self.navigator.setAppBadge(payload.badgeCount);
+          else await self.navigator.clearAppBadge();
+        } catch {}
+      }
+    })()
   );
 });
 

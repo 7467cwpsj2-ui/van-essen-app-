@@ -47,12 +47,21 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
     const { data: subs } = await admin.from("push_subscriptions").select("*").in("user_id", userIds);
     if (!subs?.length) return;
 
+    // De badge op het app-icoon moet ook reageren als de app dicht is —
+    // dat kan alleen de service worker zelf, op het moment dat de push
+    // binnenkomt (zie public/sw.js) — dus het actuele aantal ongelezen
+    // meldingen gaat gewoon mee in de payload, per ontvanger.
+    const badgeCounts = await getUnreadCounts(
+      admin,
+      Array.from(new Set(subs.map((s) => s.user_id as string)))
+    );
+
     await Promise.all(
       subs.map(async (sub) => {
         try {
           await webpush.sendNotification(
             { endpoint: sub.endpoint as string, keys: { p256dh: sub.p256dh as string, auth: sub.auth_key as string } },
-            JSON.stringify(payload)
+            JSON.stringify({ ...payload, badgeCount: badgeCounts.get(sub.user_id as string) ?? undefined })
           );
         } catch (err) {
           const statusCode = (err as { statusCode?: number })?.statusCode;
@@ -69,6 +78,17 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
 
 export async function sendPushToUser(userId: string, payload: PushPayload) {
   return sendPushToUsers([userId], payload);
+}
+
+async function getUnreadCounts(admin: ReturnType<typeof createAdminClient>, userIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  await Promise.all(
+    userIds.map(async (id) => {
+      const { count } = await admin.from("notifications").select("id", { count: "exact", head: true }).eq("user_id", id).eq("read", false);
+      counts.set(id, count ?? 0);
+    })
+  );
+  return counts;
 }
 
 // ---------- doelgroep-helpers: van rol/koppeling naar auth user-id's ----------

@@ -3,12 +3,35 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnerUserIds, getProjectClientUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
 import type { FileType, PhotoCategory } from "@/types/database";
 
 function defaultVisibility(role: string) {
   if (role === "eigenaar") return { team_visible: true, client_visible: false, reviewed: true };
   if (role === "team") return { team_visible: false, client_visible: false, reviewed: false };
   return { team_visible: false, client_visible: true, reviewed: false }; // klant
+}
+
+// Zelfde afweging als bij notities: iemand anders dan de eigenaar upload
+// altijd eerst ter beoordeling naar de eigenaar; deelt de eigenaar zelf
+// meteen met de klant, dan hoort de klant het ook meteen.
+async function notifyUpload(
+  projectId: string,
+  currentId: string,
+  currentRole: string,
+  shareWithClient: boolean | undefined,
+  title: string,
+  body: string,
+  url: string
+) {
+  const recipients =
+    currentRole !== "eigenaar"
+      ? await getOwnerUserIds(currentId)
+      : shareWithClient
+        ? await getProjectClientUserIds(projectId, currentId)
+        : [];
+  if (recipients.length === 0) return;
+  await sendPushToUsers(recipients, { title, body, url });
 }
 
 export async function createDrawing(
@@ -34,6 +57,17 @@ export async function createDrawing(
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/tekeningen`);
+
+  const projectName = await getProjectName(projectId);
+  await notifyUpload(
+    projectId,
+    current.id,
+    current.profile.role,
+    data.shareWithClient,
+    `Nieuwe tekening — ${projectName}`,
+    data.title.trim(),
+    `/projects/${projectId}/tekeningen`
+  );
 }
 
 export async function setDrawingVisibility(
@@ -91,6 +125,17 @@ export async function createPhoto(
   });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/fotos`);
+
+  const projectName = await getProjectName(projectId);
+  await notifyUpload(
+    projectId,
+    current.id,
+    current.profile.role,
+    data.shareWithClient,
+    `Nieuwe foto — ${projectName}`,
+    data.title.trim(),
+    `/projects/${projectId}/fotos`
+  );
 }
 
 export async function setPhotoVisibility(
