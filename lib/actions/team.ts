@@ -86,9 +86,15 @@ export async function inviteTeamMember(formData: FormData): Promise<string> {
   return linkData.properties.action_link;
 }
 
-// Opnieuw uitnodigen als de vorige link is verlopen — zonder het teamlid
-// en diens rechten/projectkoppelingen te hoeven verwijderen en opnieuw
-// aan te maken. Zie resendClientInvite voor de uitleg van de aanpak.
+// Op elk moment een nieuwe inloglink kunnen aanmaken voor een teamlid —
+// niet alleen zolang de uitnodiging nog openstaat, maar ook daarna nog
+// (bijv. een wachtwoord kwijt of een nieuw toestel). Heeft het teamlid
+// de uitnodiging nog niet geaccepteerd, dan is dit gewoon een nieuwe
+// uitnodigingslink (type 'invite'); is het account al bevestigd, dan is
+// het een wachtwoord-resetlink (type 'recovery') — Supabase behandelt
+// die twee verschillend, dus de juiste soort wordt hier bepaald aan de
+// hand van of de uitnodiging al geaccepteerd is. Zie resendClientInvite
+// voor de uitleg van de aanpak.
 export async function resendTeamInvite(teamMemberId: string): Promise<string> {
   await requireOwner();
   const supabase = createClient();
@@ -99,12 +105,14 @@ export async function resendTeamInvite(teamMemberId: string): Promise<string> {
   const email = userData?.user?.email;
   if (userError || !email) throw new Error(userError?.message || "Kon het e-mailadres niet vinden.");
 
+  const accepted = !!userData.user?.email_confirmed_at;
+  const next = accepted ? "/account/wachtwoord" : "/account/wachtwoord?onboarding=1";
   const { data: link, error } = await admin.auth.admin.generateLink({
-    type: "invite",
+    type: accepted ? "recovery" : "invite",
     email,
-    options: { redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}` },
+    options: { redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent(next)}` },
   });
-  if (error || !link?.properties?.action_link) throw new Error(error?.message || "Opnieuw uitnodigen mislukt.");
+  if (error || !link?.properties?.action_link) throw new Error(error?.message || "Aanmaken van de link mislukt.");
   revalidatePath("/personeel");
   return link.properties.action_link;
 }

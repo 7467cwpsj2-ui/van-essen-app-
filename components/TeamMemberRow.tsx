@@ -182,12 +182,14 @@ export function TeamMemberRow({
             </button>
           </div>
 
-          {inviteStatus?.pending && (
+          {inviteStatus && (
             <div className="hint-bar small">
-              Uitnodiging nog niet geaccepteerd door {inviteStatus.email || "dit teamlid"} — de link kan verlopen zijn.
+              {inviteStatus.pending
+                ? `Uitnodiging nog niet geaccepteerd door ${inviteStatus.email || "dit teamlid"} — de link kan verlopen zijn.`
+                : "Wachtwoord kwijt of nieuw toestel? Maak hier een nieuwe inloglink aan om zelf door te sturen."}
               <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
                 <button type="button" className="btn-ghost" disabled={resending} onClick={resend}>
-                  <RefreshCw size={13} /> {resending ? "Bezig…" : "Opnieuw uitnodigen"}
+                  <RefreshCw size={13} /> {resending ? "Bezig…" : inviteStatus.pending ? "Opnieuw uitnodigen" : "Nieuwe link aanmaken"}
                 </button>
                 {resendLink && (
                   <>
