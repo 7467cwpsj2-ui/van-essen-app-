@@ -39,7 +39,7 @@ export async function addSelfAsStaff() {
   revalidatePath("/dashboard");
 }
 
-export async function inviteTeamMember(formData: FormData) {
+export async function inviteTeamMember(formData: FormData): Promise<string> {
   await requireOwner();
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim();
@@ -57,9 +57,8 @@ export async function inviteTeamMember(formData: FormData) {
   if (memberError || !member) throw new Error(memberError?.message || "Kon teamlid niet aanmaken.");
 
   const admin = createAdminClient();
-  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
-    redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`,
-  });
+  const redirectTo = `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`;
+  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, { redirectTo });
 
   if (inviteError || !invited?.user) {
     await supabase.from("team_members").delete().eq("id", member.id);
@@ -77,6 +76,14 @@ export async function inviteTeamMember(formData: FormData) {
   }
 
   revalidatePath("/personeel");
+
+  // De uitnodigingsmail wordt hierboven al automatisch verstuurd, maar
+  // die kan onderweg "verbruikt" raken door e-mailbeveiliging die links
+  // vooraf scant — dus meteen ook een eigen link teruggeven die de
+  // eigenaar zelf kan kopiëren en appen/sms'en, als betrouwbaar
+  // alternatief i.p.v. te moeten afwachten of de mail aankomt.
+  const { data: link } = await admin.auth.admin.generateLink({ type: "invite", email, options: { redirectTo } });
+  return link?.properties?.action_link ?? "";
 }
 
 // Opnieuw uitnodigen als de vorige link is verlopen — zonder het teamlid
