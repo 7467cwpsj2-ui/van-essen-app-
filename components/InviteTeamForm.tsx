@@ -70,8 +70,8 @@ export function InviteTeamForm() {
       {error && <div className="login-error">{error}</div>}
       {inviteLink && (
         <div className="hint-bar small">
-          Uitnodigingsmail is verstuurd. Komt die niet aan (bijv. door e-mailbeveiliging die de link al opent)? Stuur dan deze
-          link zelf door, bijvoorbeeld via WhatsApp:
+          Teamlid toegevoegd. Er wordt geen automatische e-mail meer verstuurd (die liep vast door e-mailbeveiliging) — stuur
+          deze link zelf door, bijvoorbeeld via WhatsApp of sms:
           <div style={{ marginTop: 6, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 8 }}>
             <input value={inviteLink} readOnly onFocus={(e) => e.target.select()} style={{ minWidth: 220 }} />
             <button type="button" className="btn-ghost" onClick={copyLink}>
