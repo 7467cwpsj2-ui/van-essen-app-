@@ -39,7 +39,7 @@ export async function addSelfAsStaff() {
   revalidatePath("/dashboard");
 }
 
-export async function inviteTeamMember(formData: FormData): Promise<string> {
+export async function inviteTeamMember(formData: FormData) {
   await requireOwner();
   const name = String(formData.get("name") || "").trim();
   const email = String(formData.get("email") || "").trim();
@@ -56,34 +56,33 @@ export async function inviteTeamMember(formData: FormData): Promise<string> {
     .single();
   if (memberError || !member) throw new Error(memberError?.message || "Kon teamlid niet aanmaken.");
 
+  // Zelfde aanpak als inviteClient (die betrouwbaar werkt): Supabase
+  // verstuurt hier zelf de uitnodigingsmail. Komt die een keer niet aan
+  // (bijv. door e-mailbeveiliging die de link al opent), dan staat er
+  // onder dit teamlid in de lijst hieronder altijd een knop om zelf een
+  // nieuwe link aan te maken en handmatig door te sturen — zie
+  // resendTeamInvite.
   const admin = createAdminClient();
-  const redirectTo = `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`;
-  // generateLink i.p.v. inviteUserByEmail: die laatste verstuurt zelf al
-  // een e-mail, en een link daarna nóg een keer apart aanmaken voor dit
-  // formulier liep tegen Supabase's ingebouwde e-mail-ratelimiet aan
-  // (twee auth-mails vlak na elkaar voor hetzelfde adres) — waardoor de
-  // link soms stil mislukte en er niks te kopiëren viel. generateLink
-  // verstuurt zelf geen mail, dus dat conflict is er nu niet meer; de
-  // link staat altijd meteen klaar om te kopiëren en zelf te versturen.
-  const { data: linkData, error: linkError } = await admin.auth.admin.generateLink({ type: "invite", email, options: { redirectTo } });
+  const { data: invited, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email, {
+    redirectTo: `${siteUrl()}/auth/callback?next=${encodeURIComponent("/account/wachtwoord?onboarding=1")}`,
+  });
 
-  if (linkError || !linkData?.user) {
+  if (inviteError || !invited?.user) {
     await supabase.from("team_members").delete().eq("id", member.id);
-    throw new Error(linkError?.message || "Uitnodigen mislukt.");
+    throw new Error(inviteError?.message || "Uitnodigen mislukt.");
   }
 
   const { error: profileError } = await admin
     .from("profiles")
-    .insert({ id: linkData.user.id, role: "team", name, team_member_id: member.id });
+    .insert({ id: invited.user.id, role: "team", name, team_member_id: member.id });
 
   if (profileError) {
-    await admin.auth.admin.deleteUser(linkData.user.id);
+    await admin.auth.admin.deleteUser(invited.user.id);
     await supabase.from("team_members").delete().eq("id", member.id);
     throw new Error(profileError.message);
   }
 
   revalidatePath("/personeel");
-  return linkData.properties.action_link;
 }
 
 // Op elk moment een nieuwe inloglink kunnen aanmaken voor een teamlid —
