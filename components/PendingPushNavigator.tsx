@@ -64,9 +64,18 @@ export function PendingPushNavigator() {
     };
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", onVisible);
+    // iOS gooit de JS-context van een geïnstalleerde app op het
+    // beginscherm er bij het naar de achtergrond gaan vaak al snel uit
+    // (geen echte "pauze" zoals in een gewone browsertab) — bij terug
+    // naar voren via een pushmelding is dat dan feitelijk een verse
+    // laadbeurt, waarbij "focus"/"visibilitychange" soms niet (op tijd)
+    // afgaan. "pageshow" is de gangbare, betrouwbaardere aanvulling
+    // hiervoor in Safari/WebKit, ook bij een bfcache-restore.
+    window.addEventListener("pageshow", consume);
     return () => {
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", onVisible);
+      window.removeEventListener("pageshow", consume);
     };
   }, [router]);
 

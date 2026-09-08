@@ -216,14 +216,20 @@ self.addEventListener("notificationclick", (event) => {
       const clientList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
+          // navigate() geeft de genavigeerde WindowClient terug als
+          // nieuw object — de oorspronkelijke `client` blijft daarna
+          // verwijzen naar de oude pagina, dus .focus() moet op dat
+          // teruggegeven object aangeroepen worden, anders komt de
+          // pagina wel op de voorgrond maar op de oude/verkeerde plek.
+          let target = client;
           try {
-            await client.navigate(url);
+            target = await client.navigate(url);
           } catch {
             // WindowClient.navigate() wordt niet overal ondersteund —
             // de bewaarde pending-navigatie hierboven vangt dit op
             // zodra de pagina zelf weer aandacht krijgt.
           }
-          return client.focus();
+          return (target || client).focus();
         }
       }
       if (self.clients.openWindow) return self.clients.openWindow(url);
