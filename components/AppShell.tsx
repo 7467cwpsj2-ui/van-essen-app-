@@ -111,7 +111,7 @@ export function AppShell({
   return (
     <div className="app-shell">
       <div className="mobile-bar">
-        <Link href="/dashboard" onClick={() => setSidebarOpen(false)}>
+        <Link href="/dashboard" className="mobile-bar-brand" onClick={() => setSidebarOpen(false)}>
           <Brandmark />
         </Link>
         <ThemeToggle />

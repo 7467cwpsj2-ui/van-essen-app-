@@ -3920,7 +3920,10 @@ a.dash-panel-row:hover {
   .mobile-bar {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    /* Nu er nog maar één knop (thema) in de normale flow staat, duwt
+       flex-end die naar rechts — het logo wordt hieronder los
+       gecentreerd, onafhankelijk van hoe breed die knop is. */
+    justify-content: flex-end;
     background: var(--panel);
     border-bottom: 2px solid transparent;
     /* Een dunne merklijn i.p.v. een vlakke grijze rand — dit is de balk
@@ -3934,6 +3937,12 @@ a.dash-panel-row:hover {
        is gemaakt voor zwevende kaarten, niet voor een vaste balk over de
        volledige breedte, waar dezelfde schaduw als een zware band oogt. */
     box-shadow: 0 2px 6px -3px color-mix(in srgb, var(--brand) 20%, rgba(17, 17, 17, 0.1));
+  }
+  .mobile-bar-brand {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
   }
   .mobile-bar button {
     display: flex;
