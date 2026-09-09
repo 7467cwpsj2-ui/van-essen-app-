@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Bell,
   CalendarRange,
   Calculator,
   ClipboardList,
@@ -78,6 +79,23 @@ export function AppShell({
   const toggleGroup = (status: string) => setCollapsed((prev) => ({ ...prev, [status]: !prev[status] }));
 
   const roleLabel = { eigenaar: "Eigenaar", team: "Team", klant: "Klant" }[role];
+
+  // Vaste kern van 2-4 meest gebruikte plekken, voor de tabbalk onderin
+  // op mobiel — daarnaast blijft de volledige zijbalk via "Menu"
+  // bereikbaar, dit is puur een snelkoppeling voor het dagelijkse werk.
+  const planningHref =
+    role === "eigenaar" || (role === "team" && canSeePlanningOverzicht)
+      ? "/planning-overzicht"
+      : hasOwnPlanning
+        ? "/mijn-planning"
+        : null;
+  const tabs: { href: string; label: string; icon: typeof LayoutDashboard; badge?: number }[] = [
+    { href: "/dashboard", label: "Start", icon: LayoutDashboard },
+    ...(role === "eigenaar" || role === "team" ? [{ href: "/uren", label: "Uren", icon: Clock }] : []),
+    ...(planningHref ? [{ href: planningHref, label: "Planning", icon: CalendarRange }] : []),
+    { href: "/meldingen", label: "Meldingen", icon: Bell, badge: notifications.unreadCount },
+  ];
+  const isTabActive = (href: string) => pathname === href || pathname.startsWith(href + "/");
 
   // Lichte trilling bij elke tik op een knop/link, app-breed — alleen
   // voelbaar op toestellen die de Vibration API ondersteunen.
@@ -324,6 +342,26 @@ export function AppShell({
         <PushPrompt />
         {children}
       </main>
+
+      <nav className="bottom-tabbar">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = isTabActive(tab.href);
+          return (
+            <Link key={tab.href} href={tab.href} className={"bottom-tab" + (active ? " active" : "")}>
+              <span className="bottom-tab-icon">
+                <Icon size={20} />
+                {!!tab.badge && <span className="bottom-tab-badge">{tab.badge > 9 ? "9+" : tab.badge}</span>}
+              </span>
+              {tab.label}
+            </Link>
+          );
+        })}
+        <button type="button" className={"bottom-tab" + (sidebarOpen ? " active" : "")} onClick={() => setSidebarOpen((v) => !v)}>
+          <span className="bottom-tab-icon">{sidebarOpen ? <X size={20} /> : <Menu size={20} />}</span>
+          Menu
+        </button>
+      </nav>
     </div>
   );
 }
