@@ -43,6 +43,11 @@ export function BottomSheetSwipeHandler() {
 
     const onTouchMove = (e: TouchEvent) => {
       if (!dragging || !card) return;
+      // Voorkomt dat de pagina áchter de sheet meebeweegt/stuitert
+      // (iOS' eigen "rubber band"-gedrag) zolang er gesleept wordt —
+      // vereist een niet-passieve listener, anders wordt preventDefault
+      // genegeerd.
+      e.preventDefault();
       currentY = e.touches[0].clientY;
       const delta = Math.max(0, currentY - startY);
       card.style.transform = `translateY(${delta}px)`;
@@ -68,7 +73,7 @@ export function BottomSheetSwipeHandler() {
     };
 
     document.addEventListener("touchstart", onTouchStart, { passive: true });
-    document.addEventListener("touchmove", onTouchMove, { passive: true });
+    document.addEventListener("touchmove", onTouchMove, { passive: false });
     document.addEventListener("touchend", onTouchEnd);
     document.addEventListener("touchcancel", reset);
     return () => {
