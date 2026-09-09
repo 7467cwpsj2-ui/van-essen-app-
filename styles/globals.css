@@ -167,7 +167,7 @@ textarea {
   background: var(--bg);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 9px 11px;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
   font-size: 12.5px;
 }
@@ -287,6 +287,15 @@ textarea {
 .access-panel,
 .login-shell {
   animation: fadeInUp 0.45s var(--ease-premium);
+}
+
+@keyframes sheetUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 @keyframes shimmer {
@@ -1566,11 +1575,11 @@ a:has(> .brandmark) {
 .add-form {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 12px;
+  border-radius: var(--radius-md);
+  padding: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 .invoice-drop {
   display: flex;
@@ -1667,13 +1676,13 @@ a:has(> .brandmark) {
 .add-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 8px;
+  gap: 10px 12px;
   align-items: center;
 }
 .field-with-label {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 5px;
 }
 .field-label {
   font-size: 10.5px;
@@ -4064,6 +4073,31 @@ a.dash-panel-row:hover {
      eigen regel i.p.v. dat ze rechts buiten beeld vallen. */
   .task-row {
     flex-wrap: wrap;
+  }
+  /* Pop-ups op mobiel als "sheet" van onderen laten opschuiven i.p.v.
+     een in het midden zwevend venster — voelt vertrouwder aan op een
+     telefoon (zoals bijna elke native app dit doet) en is makkelijker
+     met de duim te bereiken dan iets in het midden van het scherm. */
+  .sig-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .modal-card {
+    width: 100%;
+    max-width: none;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    max-height: 88vh;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    animation: sheetUp 0.3s var(--ease-premium);
+  }
+  .modal-card::before {
+    content: "";
+    display: block;
+    width: 36px;
+    height: 4px;
+    border-radius: 2px;
+    background: var(--border-strong);
+    margin: -8px auto 4px;
   }
 }
 
