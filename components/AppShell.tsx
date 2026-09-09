@@ -26,6 +26,7 @@ import {
 import { AppBadgeUpdater } from "@/components/AppBadgeUpdater";
 import { Brandmark } from "@/components/Brandmark";
 import { NotificationBell } from "@/components/NotificationBell";
+import { BottomSheetSwipeHandler } from "@/components/BottomSheetSwipeHandler";
 import { PendingPushNavigator } from "@/components/PendingPushNavigator";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import { PushPrompt } from "@/components/PushPrompt";
@@ -331,6 +332,7 @@ export function AppShell({
 
       <main className="main">
         <AppBadgeUpdater count={badgeCount} />
+        <BottomSheetSwipeHandler />
         <PendingPushNavigator />
         <UpdateChecker />
         <PushPrompt />

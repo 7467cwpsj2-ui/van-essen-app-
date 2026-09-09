@@ -4097,6 +4097,7 @@ a.dash-panel-row:hover {
     max-width: none;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     max-height: 88vh;
+    overflow-y: auto;
     padding-bottom: calc(20px + env(safe-area-inset-bottom));
     animation: sheetUp 0.3s var(--ease-premium);
   }
