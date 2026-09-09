@@ -162,11 +162,11 @@ export function HoursOverviewPanel({
         </div>
       )}
 
-      <div className="calc-line calc-line-strong">
-        <span>
-          Totaal — {range.label.toLowerCase()} ({fmtShort(range.from)} – {fmtShort(range.to)})
-        </span>
-        <span className="mono">{fmtHours(total)}</span>
+      <div className="hours-total-hero">
+        <div className="hours-total-hero-label">
+          {range.label} · {fmtShort(range.from)} – {fmtShort(range.to)}
+        </div>
+        <div className="hours-total-hero-value">{fmtHours(total)}</div>
       </div>
 
       {groups.length === 0 ? (

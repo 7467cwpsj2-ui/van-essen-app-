@@ -150,8 +150,7 @@ export function UrenPicker({
       </div>
       {(todayProjects.length > 0 || todayJobs.length > 0) && canQuickAdd && (
         <div className="hint-bar small">
-          De knoppen 4u/6u/8u zetten uren op <b>vandaag</b>. Andere datum of ander aantal? Kies &quot;Anders…&quot; — dat opent het
-          volledige overzicht, waar je ook elke registratie nog kunt aanpassen of verwijderen.
+          Tik 4u/6u/8u voor <b>vandaag</b>, of &quot;Anders…&quot; voor een andere datum of aantal.
         </div>
       )}
       {todayProjects.length === 0 && todayJobs.length === 0 ? (
