@@ -134,7 +134,15 @@ export default async function UrenTopLevelPage({
               coverPhotoUrl: p.coverPhotoUrl,
               planningColor: p.planning_color,
             }))}
-            quickJobs={quickJobs.map((j) => ({ id: j.id, title: j.title, start_date: j.start_date, end_date: j.end_date, done: j.done }))}
+            quickJobs={quickJobs.map((j) => ({
+              id: j.id,
+              title: j.title,
+              start_date: j.start_date,
+              end_date: j.end_date,
+              done: j.done,
+              assignee_team_member_ids: j.assignee_team_member_ids,
+              day_assignments: j.day_assignments,
+            }))}
             selectedProjectId={selectedProject?.id ?? null}
             selectedJobId={selectedJob?.id ?? null}
             canQuickAdd={!!myStaffId}

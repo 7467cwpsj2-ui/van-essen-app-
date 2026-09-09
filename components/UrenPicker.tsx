@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, ChevronDown, Hammer, Search, X } from "lucide-react";
 import { createHourEntry } from "@/lib/actions/hours";
 import { ProjectThumb } from "@/components/ProjectThumb";
+import type { QuickJobDayAssignment } from "@/types/database";
 
 const STATUS_LABEL: Record<string, string> = {
   gepland: "Gepland",
@@ -27,6 +28,8 @@ interface PickerJob {
   start_date: string;
   end_date: string;
   done: boolean;
+  assignee_team_member_ids: string[];
+  day_assignments: QuickJobDayAssignment[] | null;
 }
 
 export function UrenPicker({
@@ -51,12 +54,23 @@ export function UrenPicker({
   const [justAdded, setJustAdded] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
-  // Alleen een klus die vandaag daadwerkelijk loopt (en een lopend
-  // project, dat heeft geen dag-precisie) is relevant voor "snel uren
-  // van vandaag toevoegen" — alle andere (toekomstige, afgeronde,
-  // geplande) klussen/projecten zouden hier alleen maar drie knopjes
-  // per regel aan afleiding toevoegen zonder ooit bruikbaar te zijn.
-  const isJobToday = (j: PickerJob) => !j.done && j.start_date <= todayIso && j.end_date >= todayIso;
+  // Een klus telt hier alleen als "vandaag" als deze ingelogde persoon
+  // er ook echt voor is ingepland op de datum van vandaag — niet zomaar
+  // elke lopende klus in die periode. Bij een dag-voor-dag bezetting is
+  // de toewijzing van precies vandaag leidend; zonder dag-voor-dag
+  // bezetting geldt de algemene toewijzing voor de hele looptijd.
+  // Projecten hebben geen dag-precisie, dus die blijven gewoon
+  // "lopend" = vandaag, net als in de rest van de app.
+  const isAssignedToday = (j: PickerJob) => {
+    if (!currentTeamMemberId) return false;
+    if (j.day_assignments && j.day_assignments.length > 0) {
+      const today = j.day_assignments.find((d) => d.date === todayIso);
+      return !!today && today.team_member_ids.includes(currentTeamMemberId);
+    }
+    return j.assignee_team_member_ids.includes(currentTeamMemberId);
+  };
+  const isJobToday = (j: PickerJob) =>
+    !j.done && j.start_date <= todayIso && j.end_date >= todayIso && isAssignedToday(j);
 
   const todayProjects = projects.filter((p) => p.status === "lopend");
   const todayJobs = quickJobs.filter(isJobToday);
