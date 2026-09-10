@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { canSeeSubsidies, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { signedUrlMap } from "@/lib/storage";
 import { SubsidyCheckPanel } from "@/components/SubsidyCheckPanel";
 import { SubsidyProgress } from "@/components/SubsidyProgress";
 import { SubsidyApplicationCard } from "@/components/SubsidyApplicationCard";
@@ -30,10 +31,19 @@ export default async function SubsidiePage({ params }: { params: { id: string } 
 
   const itemRows = (items ?? []) as SubsidyCheckItem[];
   const photoRows = (photos ?? []) as SubsidyCheckItemPhoto[];
+  const signedUrlByPath = await signedUrlMap(
+    supabase,
+    "project-files",
+    photoRows.map((ph) => ph.file_path)
+  );
   const photosByItem: Record<string, { id: string; url: string | null; fileType: SubsidyCheckItemPhoto["file_type"]; caption: string | null }[]> = {};
   for (const ph of photoRows) {
-    const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(ph.file_path, 3600);
-    (photosByItem[ph.check_item_id] ??= []).push({ id: ph.id, url: signed?.signedUrl ?? null, fileType: ph.file_type, caption: ph.caption });
+    (photosByItem[ph.check_item_id] ??= []).push({
+      id: ph.id,
+      url: signedUrlByPath.get(ph.file_path) ?? null,
+      fileType: ph.file_type,
+      caption: ph.caption,
+    });
   }
   const itemsWithoutAttachmentCount = itemRows.filter((it) => (photosByItem[it.id] ?? []).length === 0).length;
 
