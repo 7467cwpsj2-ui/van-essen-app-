@@ -4032,6 +4032,12 @@ a.dash-panel-row:hover {
     border-top: 1px solid var(--border);
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     box-shadow: 0 -2px 10px -6px rgba(17, 17, 17, 0.12);
+    transition: transform 0.2s var(--ease-premium);
+  }
+  /* Anders duwt het toetsenbord deze vaste balk gewoon mee omhoog, waar
+     hij dan los boven het toetsenbord blijft hangen. */
+  .bottom-tabbar.keyboard-open {
+    transform: translateY(100%);
   }
   .bottom-tab {
     flex: 1;

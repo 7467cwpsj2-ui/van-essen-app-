@@ -109,6 +109,22 @@ export function AppShell({
     return () => document.removeEventListener("pointerdown", onPointerDown);
   }, []);
 
+  // Op mobiel duwt het toetsenbord de vaste tabbalk onderin anders
+  // gewoon mee omhoog, waar hij dan los boven het toetsenbord blijft
+  // hangen — niet nodig en oogt rommelig. visualViewport geeft het
+  // zichtbare (dus door het toetsenbord verkleinde) stuk scherm; wordt
+  // dat merkbaar kleiner dan het venster zelf, staat het toetsenbord
+  // open en schuift de tabbalk zichzelf weg tot het weer dichtgaat.
+  const [keyboardOpen, setKeyboardOpen] = useState(false);
+  useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    const onResize = () => setKeyboardOpen(window.innerHeight - vv.height > 150);
+    vv.addEventListener("resize", onResize);
+    onResize();
+    return () => vv.removeEventListener("resize", onResize);
+  }, []);
+
   return (
     <div className="app-shell">
       <div className="mobile-bar">
@@ -339,7 +355,7 @@ export function AppShell({
         {children}
       </main>
 
-      <nav className="bottom-tabbar">
+      <nav className={"bottom-tabbar" + (keyboardOpen ? " keyboard-open" : "")}>
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = isTabActive(tab.href);
