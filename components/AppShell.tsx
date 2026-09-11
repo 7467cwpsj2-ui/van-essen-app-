@@ -111,18 +111,45 @@ export function AppShell({
 
   // Op mobiel duwt het toetsenbord de vaste tabbalk onderin anders
   // gewoon mee omhoog, waar hij dan los boven het toetsenbord blijft
-  // hangen — niet nodig en oogt rommelig. visualViewport geeft het
-  // zichtbare (dus door het toetsenbord verkleinde) stuk scherm; wordt
-  // dat merkbaar kleiner dan het venster zelf, staat het toetsenbord
-  // open en schuift de tabbalk zichzelf weg tot het weer dichtgaat.
+  // hangen — niet nodig en oogt rommelig. visualViewport-resize bleek
+  // in de geïnstalleerde app (standalone PWA op iOS) niet betrouwbaar:
+  // daar schuift het layout-viewport soms gewoon mee, waardoor er nooit
+  // een meetbaar verschil ontstaat. Focus op een tekstveld is het
+  // rechtstreekse signaal dat het toetsenbord open moet staan, dus
+  // daarop wordt nu gestuurd; een korte vertraging bij het wegvallen
+  // voorkomt geflicker als de focus binnen de balk zelf verspringt.
   const [keyboardOpen, setKeyboardOpen] = useState(false);
   useEffect(() => {
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const onResize = () => setKeyboardOpen(window.innerHeight - vv.height > 150);
-    vv.addEventListener("resize", onResize);
-    onResize();
-    return () => vv.removeEventListener("resize", onResize);
+    let hideTimer: ReturnType<typeof setTimeout> | null = null;
+    const isTextInput = (el: EventTarget | null) => {
+      if (!(el instanceof HTMLElement)) return false;
+      if (el.isContentEditable) return true;
+      if (el.tagName === "TEXTAREA") return true;
+      if (el.tagName === "INPUT") {
+        const type = (el as HTMLInputElement).type;
+        return !["checkbox", "radio", "button", "submit", "reset", "file", "range", "color", "image"].includes(type);
+      }
+      return false;
+    };
+    const onFocusIn = (e: FocusEvent) => {
+      if (!isTextInput(e.target)) return;
+      if (hideTimer) {
+        clearTimeout(hideTimer);
+        hideTimer = null;
+      }
+      setKeyboardOpen(true);
+    };
+    const onFocusOut = (e: FocusEvent) => {
+      if (!isTextInput(e.target)) return;
+      hideTimer = setTimeout(() => setKeyboardOpen(false), 150);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+      if (hideTimer) clearTimeout(hideTimer);
+    };
   }, []);
 
   return (
