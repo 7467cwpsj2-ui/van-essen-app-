@@ -4033,11 +4033,18 @@ a.dash-panel-row:hover {
     padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
     box-shadow: 0 -2px 10px -6px rgba(17, 17, 17, 0.12);
     transition: transform 0.2s var(--ease-premium);
+    /* iOS Safari laat een position:fixed element tijdens het scrollen
+       soms los van de viewport (het "drift" mee met de inhoud tot het
+       scrollen stopt) als het niet op zijn eigen GPU-laag staat — vandaar
+       hier bewust altijd een 3D-transform, ook in rust. */
+    transform: translate3d(0, 0, 0);
+    -webkit-backface-visibility: hidden;
+    will-change: transform;
   }
   /* Anders duwt het toetsenbord deze vaste balk gewoon mee omhoog, waar
      hij dan los boven het toetsenbord blijft hangen. */
   .bottom-tabbar.keyboard-open {
-    transform: translateY(100%);
+    transform: translate3d(0, 100%, 0);
   }
   .bottom-tab {
     flex: 1;
