@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { FileText, Plus, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
+import { FileText, Plus, Receipt, TrendingDown, TrendingUp, Trash2 } from "lucide-react";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Lightbox } from "@/components/Lightbox";
 import { FileCaptureButtons } from "@/components/FileCaptureButtons";
@@ -200,10 +200,27 @@ export function ExtraWorkPanel({
   // opleveren dat niet meer klopt (appels en peren), dus per btw-soort
   // een eigen totaal — en als een project maar één soort gebruikt (het
   // gebruikelijke geval), verschijnt de andere sectie simpelweg niet.
-  const sumAkkoord = (type: ExtraWorkType, vatType: ExtraWorkVatType) =>
-    items.filter((w) => w.type === type && w.status === "akkoord" && w.vat_type === vatType).reduce((s, w) => s + Number(w.amount), 0);
-  const vatSections: { vatType: ExtraWorkVatType; meerwerk: number; minderwerk: number }[] = (["excl", "incl"] as const)
-    .map((vatType) => ({ vatType, meerwerk: sumAkkoord("meerwerk", vatType), minderwerk: sumAkkoord("minderwerk", vatType) }))
+  const sumAkkoord = (type: ExtraWorkType, vatType: ExtraWorkVatType, invoicedOnly = false) =>
+    items
+      .filter((w) => w.type === type && w.status === "akkoord" && w.vat_type === vatType && (!invoicedOnly || w.invoiced))
+      .reduce((s, w) => s + Number(w.amount), 0);
+  const vatSections: {
+    vatType: ExtraWorkVatType;
+    meerwerk: number;
+    minderwerk: number;
+    // "Gefactureerd" is puur of de factuur de deur uit is, geen uitspraak
+    // over of het geld al binnen is — dus "nog te factureren", niet "nog
+    // niet betaald".
+    nettoInvoiced: number;
+    hasInvoiced: boolean;
+  }[] = (["excl", "incl"] as const)
+    .map((vatType) => ({
+      vatType,
+      meerwerk: sumAkkoord("meerwerk", vatType),
+      minderwerk: sumAkkoord("minderwerk", vatType),
+      nettoInvoiced: sumAkkoord("meerwerk", vatType, true) - sumAkkoord("minderwerk", vatType, true),
+      hasInvoiced: items.some((w) => w.status === "akkoord" && w.vat_type === vatType && w.invoiced),
+    }))
     .filter(({ vatType }) => items.some((w) => w.status === "akkoord" && w.vat_type === vatType));
 
   return (
@@ -229,7 +246,7 @@ export function ExtraWorkPanel({
           </div>
         </div>
       ) : (
-        vatSections.map(({ vatType, meerwerk, minderwerk }) => (
+        vatSections.map(({ vatType, meerwerk, minderwerk, nettoInvoiced, hasInvoiced }) => (
           <div key={vatType} className="netto-bar">
             <div className="netto-item">
               <TrendingUp size={14} /> Meerwerk (akkoord, {VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(meerwerk)}</b>
@@ -237,6 +254,16 @@ export function ExtraWorkPanel({
             <div className="netto-item">
               <TrendingDown size={14} /> Minderwerk (akkoord, {VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(minderwerk)}</b>
             </div>
+            {hasInvoiced && (
+              <>
+                <div className="netto-item">
+                  <Receipt size={14} /> Al gefactureerd ({VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(nettoInvoiced)}</b>
+                </div>
+                <div className="netto-item">
+                  Nog te factureren ({VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(meerwerk - minderwerk - nettoInvoiced)}</b>
+                </div>
+              </>
+            )}
             <div className="netto-item netto-total">
               Netto bij te betalen ({VAT_TYPE_LABEL[vatType]}) <b>{fmtEuro(meerwerk - minderwerk)}</b>
             </div>
