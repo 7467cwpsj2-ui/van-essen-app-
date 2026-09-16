@@ -355,7 +355,7 @@ export function ExtraWorkPanel({
               </div>
               {role === "eigenaar" ? (
                 <select
-                  className="status-select"
+                  className={"status-select work-status-select-" + w.status}
                   value={w.status}
                   disabled={busy}
                   onChange={(e) => handleOwnerStatusChange(w.id, e.target.value as ExtraWorkStatus)}

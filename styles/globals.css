@@ -951,6 +951,27 @@ a:has(> .brandmark) {
   font-size: 12px;
   font-family: var(--font-body);
 }
+/* Meer-/minderwerk: dezelfde kleuren als de klant-stamp (§ .stamp-*),
+   zodat de status ook in de bewerkbare eigenaar-weergave in één
+   oogopslag te zien is, zonder de tekst te hoeven lezen. */
+.work-status-select-open {
+  color: var(--brand-dim);
+  background: var(--brand-soft);
+  border-color: transparent;
+  font-weight: 600;
+}
+.work-status-select-akkoord {
+  color: #1c7a4f;
+  background: rgba(35, 147, 95, 0.14);
+  border-color: transparent;
+  font-weight: 600;
+}
+.work-status-select-afgewezen {
+  color: #a4362c;
+  background: rgba(200, 68, 58, 0.13);
+  border-color: transparent;
+  font-weight: 600;
+}
 
 .address-card {
   display: flex;
