@@ -265,8 +265,11 @@ export async function getNotifications(): Promise<NotificationsSummary> {
 // ingelogde gebruiker toegang toe heeft.
 export const getOpenTaskCount = cache(async (): Promise<number> => {
   const supabase = createClient();
-  const { count } = await supabase.from("tasks").select("id", { count: "exact", head: true }).eq("done", false);
-  return count ?? 0;
+  const [{ count: projectCount }, { count: generalCount }] = await Promise.all([
+    supabase.from("tasks").select("id", { count: "exact", head: true }).eq("done", false),
+    supabase.from("general_tasks").select("id", { count: "exact", head: true }).eq("done", false),
+  ]);
+  return (projectCount ?? 0) + (generalCount ?? 0);
 });
 
 export interface DashboardExtras {

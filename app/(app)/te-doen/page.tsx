@@ -3,22 +3,30 @@ import { ArrowRight } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { PlanningPanel } from "@/components/PlanningPanel";
-import type { Task, TeamMember } from "@/types/database";
+import { GeneralTasksPanel } from "@/components/GeneralTasksPanel";
+import type { GeneralTask, Task, TeamMember } from "@/types/database";
 
 export default async function AlleTeDoenPage() {
   const current = await requireUser();
   if (!canSeeModule(current, "planning")) {
     return <div className="empty-hint">Je hebt geen toegang tot deze module.</div>;
   }
+  // Algemene (niet-project-gebonden) taken zijn puur intern — de klant
+  // heeft daar geen rol in, net als bij assignee_type 'eigenaar'.
+  const isStaff = current.profile.role === "eigenaar" || current.profile.role === "team";
 
   const supabase = createClient();
-  const [{ data: projects }, { data: teamMembers }] = await Promise.all([
+  const [{ data: projects }, { data: teamMembers }, { data: generalTasksData }] = await Promise.all([
     supabase.from("projects").select("id,name,delivery_signed_at").order("name"),
     supabase.from("team_members").select("*").order("name"),
+    isStaff
+      ? supabase.from("general_tasks").select("*").eq("done", false).order("due_date", { ascending: true, nullsFirst: false })
+      : Promise.resolve({ data: [] as GeneralTask[] }),
   ]);
 
   const teamMemberOptions = ((teamMembers ?? []) as TeamMember[]).map((m) => ({ id: m.id, name: m.name, member_type: m.member_type }));
   const projectIds = (projects ?? []).map((p) => p.id);
+  const generalTasks = (generalTasksData ?? []) as GeneralTask[];
 
   const { data: allTasks } =
     projectIds.length > 0
@@ -41,8 +49,19 @@ export default async function AlleTeDoenPage() {
       <h1 className="page-title">
         Alle openstaande te doen
       </h1>
+      {isStaff && (
+        <div className="overview-group">
+          <div className="overview-group-head">Algemeen</div>
+          <GeneralTasksPanel
+            role={current.profile.role}
+            currentTeamMemberId={current.profile.team_member_id}
+            tasks={generalTasks}
+            teamMembers={teamMemberOptions}
+          />
+        </div>
+      )}
       {withOpenItems.length === 0 ? (
-        <div className="empty-hint">Nergens meer iets te doen.</div>
+        !isStaff && <div className="empty-hint">Nergens meer iets te doen.</div>
       ) : (
         withOpenItems.map(({ project, tasks }) => (
           <div key={project.id} className="overview-group">

@@ -219,6 +219,22 @@ export interface Task {
   created_at: string;
 }
 
+// Los van een project — algemene interne herinneringen/actiepunten,
+// geen klant-variant (zie migratie 0070).
+export type GeneralTaskAssigneeType = Exclude<TaskAssigneeType, "klant">;
+
+export interface GeneralTask {
+  id: string;
+  title: string;
+  assignee_type: GeneralTaskAssigneeType;
+  assignee_team_member_ids: string[];
+  due_date: string | null;
+  done: boolean;
+  done_by: string | null;
+  done_at: string | null;
+  created_at: string;
+}
+
 export type FileType = "image" | "pdf";
 
 export interface Drawing {

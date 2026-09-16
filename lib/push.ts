@@ -178,6 +178,14 @@ export async function getProjectParticipantUserIds(projectId: string, excludeUse
   return Array.from(new Set([...internal, ...clientIds]));
 }
 
+// Alle personeel: eigenaar + elk teamlid — voor taken die niet aan één
+// project of specifiek persoon vastzitten (algemene te-doen).
+export async function getAllStaffUserIds(excludeUserId?: string | null): Promise<string[]> {
+  const admin = createAdminClient();
+  const { data } = await admin.from("profiles").select("id").in("role", ["eigenaar", "team"]);
+  return (data ?? []).map((p) => p.id as string).filter((id) => id !== excludeUserId);
+}
+
 export async function getProjectName(projectId: string): Promise<string> {
   const admin = createAdminClient();
   const { data } = await admin.from("projects").select("name").eq("id", projectId).single();
