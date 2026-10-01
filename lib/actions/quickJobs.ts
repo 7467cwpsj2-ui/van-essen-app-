@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireOwner, requirePlanningEditAccess } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getTeamMemberUserIds, sendPushToUsers } from "@/lib/push";
 import { workingDaysBetween } from "@/lib/workingDays";
 import type { DayPart, QuickJobDayAssignment } from "@/types/database";
 
@@ -30,7 +31,7 @@ export async function createQuickJob(data: {
   kind?: "klus" | "kantoor" | "verlof";
   daypart?: DayPart;
 }) {
-  await requireOwner();
+  const current = await requireOwner();
   if (!data.title.trim() || !data.start || !data.end) throw new Error("Titel, startdatum en einddatum zijn verplicht.");
   const dayAssignments = data.dayAssignments && data.dayAssignments.length > 0 ? data.dayAssignments : null;
   const memberIds = summarize(dayAssignments, data.assigneeTeamMemberIds);
@@ -50,6 +51,22 @@ export async function createQuickJob(data: {
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
   revalidatePath("/dashboard");
+
+  // Alleen de eigenaar kan een klus aanmaken, dus hemzelf hierover
+  // pushen heeft geen nut — wel de mensen die hij er net op inplant,
+  // die hadden tot nu toe geen enkele manier om dit te weten te komen
+  // zonder zelf de planning te checken.
+  if (memberIds.length > 0) {
+    const lists = await Promise.all(memberIds.map((id) => getTeamMemberUserIds(id, current.id)));
+    const recipients = Array.from(new Set(lists.flat()));
+    if (recipients.length) {
+      await sendPushToUsers(recipients, {
+        title: "Nieuwe klus ingepland",
+        body: data.title.trim(),
+        url: "/mijn-planning",
+      });
+    }
+  }
 }
 
 export async function updateQuickJob(

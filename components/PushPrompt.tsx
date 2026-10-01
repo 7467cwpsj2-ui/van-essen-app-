@@ -2,18 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { Bell } from "lucide-react";
-import { subscribeToPush } from "@/lib/actions/push";
+import { enablePushOnThisDevice } from "@/lib/pushClient";
 
 const VAPID_PUBLIC_KEY = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
-  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
-  const rawData = atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; i++) outputArray[i] = rawData.charCodeAt(i);
-  return outputArray;
-}
 
 export function PushPrompt() {
   const [visible, setVisible] = useState(false);
@@ -28,30 +19,15 @@ export function PushPrompt() {
   }, []);
 
   const enable = async () => {
-    if (!VAPID_PUBLIC_KEY) return;
     setBusy(true);
-    try {
-      const permission = await Notification.requestPermission();
-      if (permission !== "granted") {
-        setVisible(false);
-        return;
-      }
-      await navigator.serviceWorker.register("/sw.js");
-      const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-      const json = subscription.toJSON();
-      if (json.endpoint && json.keys?.p256dh && json.keys?.auth) {
-        await subscribeToPush({ endpoint: json.endpoint, keys: { p256dh: json.keys.p256dh, auth: json.keys.auth } });
-      }
-      setVisible(false);
-    } catch {
-      setVisible(false);
-    } finally {
-      setBusy(false);
-    }
+    const result = await enablePushOnThisDevice();
+    setBusy(false);
+    setVisible(false);
+    // Bewust geen alert op mislukken hier — dit is een ongevraagde banner,
+    // storend om 'm met een foutmelding te onderbreken. Wie het zeker wil
+    // weten kan het statusblok op de accountpagina raadplegen, die toont
+    // precies waarom het niet lukte en laat het opnieuw proberen.
+    if (!result.ok) console.error("[push-prompt] aanzetten mislukt:", result.error);
   };
 
   const dismiss = () => {

@@ -2,6 +2,18 @@
 
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { sendPushToUsers } from "@/lib/push";
+
+// Zelf-diagnose: stuur een melding naar je eigen toestel, zodat je
+// zonder te wachten op een echte gebeurtenis (chatbericht, foto, …)
+// meteen weet of pushen op dit toestel daadwerkelijk aankomt.
+export async function sendTestPush() {
+  const current = await requireUser();
+  await sendPushToUsers([current.id], {
+    title: "Testmelding",
+    body: "Gelukt — pushmeldingen werken op dit toestel.",
+  });
+}
 
 export async function subscribeToPush(subscription: { endpoint: string; keys: { p256dh: string; auth: string } }) {
   const current = await requireUser();

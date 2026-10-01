@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnerUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
 
 export async function createPhase(
   projectId: string,
@@ -57,12 +58,12 @@ export async function updatePhaseDates(
   phaseId: string,
   data: { start: string; end: string; assignee?: string | null; assigneeTeamMemberIds?: string[] }
 ) {
-  await requireUser();
+  const current = await requireUser();
   if (!data.start || !data.end) throw new Error("Startdatum en einddatum zijn verplicht.");
   const supabase = createClient();
 
-  const { data: current } = await supabase.from("schedule_phases").select("end_date").eq("id", phaseId).single();
-  const oldEnd = current?.end_date as string | undefined;
+  const { data: existingPhase } = await supabase.from("schedule_phases").select("title,end_date").eq("id", phaseId).single();
+  const oldEnd = existingPhase?.end_date as string | undefined;
 
   const update: Record<string, unknown> = { start_date: data.start, end_date: data.end };
   if (data.assigneeTeamMemberIds !== undefined) {
@@ -96,6 +97,18 @@ export async function updatePhaseDates(
   revalidatePath(`/projects/${projectId}/bouwplanning`);
   revalidatePath(`/projects/${projectId}/planning`);
   revalidatePath("/planning-overzicht");
+
+  if (current.profile.role !== "eigenaar") {
+    const recipients = await getOwnerUserIds(current.id);
+    if (recipients.length) {
+      const projectName = await getProjectName(projectId);
+      await sendPushToUsers(recipients, {
+        title: `Bouwplanning aangepast — ${projectName}`,
+        body: existingPhase?.title ? `${existingPhase.title} is verschoven.` : "Een fase is verschoven.",
+        url: `/projects/${projectId}/bouwplanning`,
+      });
+    }
+  }
 }
 
 export async function updatePhaseColor(projectId: string, phaseId: string, color: string | null) {

@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { siteUrl } from "@/lib/siteUrl";
 import { CalendarFeedCard } from "@/components/CalendarFeedCard";
+import { PushStatusCard } from "@/components/PushStatusCard";
 
 export default async function AccountPage() {
   const current = await requireUser();
@@ -34,6 +35,8 @@ export default async function AccountPage() {
           <KeyRound size={14} /> Wachtwoord wijzigen
         </Link>
       </div>
+
+      <PushStatusCard />
 
       {myStaffId && <CalendarFeedCard initialUrl={calendarFeedUrl} />}
     </div>

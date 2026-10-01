@@ -4,6 +4,7 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
+import { getOwnerUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
 import { siteUrl } from "@/lib/siteUrl";
 import type { FileType, WarrantyType, WarrantyUnit } from "@/types/database";
 
@@ -107,10 +108,22 @@ export async function revokeDossierShareLink(projectId: string) {
 }
 
 export async function signDelivery(projectId: string, signaturePath: string) {
-  await requireUser();
+  const current = await requireUser();
   const supabase = createClient();
   const { error } = await supabase.rpc("sign_delivery", { p_project_id: projectId, p_signature_path: signaturePath });
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/dossier`);
   revalidatePath("/dashboard");
+
+  if (current.profile.role !== "eigenaar") {
+    const recipients = await getOwnerUserIds(current.id);
+    if (recipients.length) {
+      const projectName = await getProjectName(projectId);
+      await sendPushToUsers(recipients, {
+        title: `Opleverdossier ondertekend — ${projectName}`,
+        body: `${current.profile.name} heeft het opleverdossier ondertekend.`,
+        url: `/projects/${projectId}/dossier`,
+      });
+    }
+  }
 }
