@@ -4057,7 +4057,11 @@ a.dash-panel-row:hover {
     /* iOS Safari laat een position:fixed element tijdens het scrollen
        soms los van de viewport (het "drift" mee met de inhoud tot het
        scrollen stopt) als het niet op zijn eigen GPU-laag staat — vandaar
-       hier bewust altijd een 3D-transform, ook in rust. */
+       hier bewust altijd een 3D-transform, ook in rust. Op zware pagina's
+       (bijv. de bouwplanning-Gantt, met veel eigen sticky elementen)
+       bleek dit alléén niet genoeg; zie AppShell.tsx voor de aanvullende
+       fix (de balk als portal rechtstreeks aan <body> hangen, buiten elke
+       tussenliggende grid/stacking-context om). */
     transform: translate3d(0, 0, 0);
     -webkit-backface-visibility: hidden;
     will-change: transform;

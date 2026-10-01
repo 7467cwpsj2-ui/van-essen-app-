@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -152,7 +153,40 @@ export function AppShell({
     };
   }, []);
 
+  // De tabbalk los aan <body> hangen i.p.v. 'm binnen .app-shell's grid
+  // te laten zitten — op zware pagina's (bijv. de bouwplanning-Gantt,
+  // met veel eigen position:sticky-rijen) bleek position:fixed binnen de
+  // grid alsnog los te kunnen raken van de viewport tijdens scrollen op
+  // iOS. Als rechtstreeks kind van body, buiten elke tussenliggende
+  // grid/stacking-context om, heeft WebKit daar geen vat meer op. Pas na
+  // mounten (useEffect) omdat document.body er tijdens SSR niet is.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const tabbarNav = (
+    <nav className={"bottom-tabbar" + (keyboardOpen ? " keyboard-open" : "")}>
+      {tabs.map((tab) => {
+        const Icon = tab.icon;
+        const active = isTabActive(tab.href);
+        return (
+          <Link key={tab.href} href={tab.href} className={"bottom-tab" + (active ? " active" : "")}>
+            <span className="bottom-tab-icon">
+              <Icon size={20} />
+              {!!tab.badge && <span className="bottom-tab-badge">{tab.badge > 9 ? "9+" : tab.badge}</span>}
+            </span>
+            {tab.label}
+          </Link>
+        );
+      })}
+      <button type="button" className={"bottom-tab" + (sidebarOpen ? " active" : "")} onClick={() => setSidebarOpen((v) => !v)}>
+        <span className="bottom-tab-icon">{sidebarOpen ? <X size={20} /> : <Menu size={20} />}</span>
+        Menu
+      </button>
+    </nav>
+  );
+
   return (
+    <>
     <div className="app-shell">
       <div className="mobile-bar">
         <Link href="/dashboard" className="mobile-bar-brand" onClick={() => setSidebarOpen(false)}>
@@ -382,25 +416,9 @@ export function AppShell({
         {children}
       </main>
 
-      <nav className={"bottom-tabbar" + (keyboardOpen ? " keyboard-open" : "")}>
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const active = isTabActive(tab.href);
-          return (
-            <Link key={tab.href} href={tab.href} className={"bottom-tab" + (active ? " active" : "")}>
-              <span className="bottom-tab-icon">
-                <Icon size={20} />
-                {!!tab.badge && <span className="bottom-tab-badge">{tab.badge > 9 ? "9+" : tab.badge}</span>}
-              </span>
-              {tab.label}
-            </Link>
-          );
-        })}
-        <button type="button" className={"bottom-tab" + (sidebarOpen ? " active" : "")} onClick={() => setSidebarOpen((v) => !v)}>
-          <span className="bottom-tab-icon">{sidebarOpen ? <X size={20} /> : <Menu size={20} />}</span>
-          Menu
-        </button>
-      </nav>
+      {!mounted && tabbarNav}
     </div>
+    {mounted && createPortal(tabbarNav, document.body)}
+    </>
   );
 }
