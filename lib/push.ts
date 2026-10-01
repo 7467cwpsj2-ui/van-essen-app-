@@ -38,14 +38,26 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
     await admin
       .from("notifications")
       .insert(userIds.map((user_id) => ({ user_id, title: payload.title, body: payload.body, url: payload.url ?? null })));
-  } catch {
+  } catch (err) {
     // meldingencentrum is best-effort, mag verzenden van push nooit blokkeren
+    // — maar wél loggen, anders is een stille fout hier onvindbaar.
+    console.error("[push] kon meldingencentrum-rij niet opslaan:", err);
   }
 
-  if (!VAPID_PUBLIC || !VAPID_PRIVATE) return;
+  if (!VAPID_PUBLIC || !VAPID_PRIVATE) {
+    console.error("[push] VAPID_PUBLIC_KEY/VAPID_PRIVATE_KEY ontbreken — push wordt overgeslagen.");
+    return;
+  }
   try {
-    const { data: subs } = await admin.from("push_subscriptions").select("*").in("user_id", userIds);
-    if (!subs?.length) return;
+    const { data: subs, error: subsError } = await admin.from("push_subscriptions").select("*").in("user_id", userIds);
+    if (subsError) {
+      console.error("[push] kon push_subscriptions niet ophalen:", subsError.message);
+      return;
+    }
+    if (!subs?.length) {
+      console.error(`[push] geen push_subscriptions gevonden voor ${userIds.length} ontvanger(s) — niemand heeft push aanstaan op dit toestel.`);
+      return;
+    }
 
     // De badge op het app-icoon moet ook reageren als de app dicht is —
     // dat kan alleen de service worker zelf, op het moment dat de push
@@ -66,13 +78,18 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload) {
         } catch (err) {
           const statusCode = (err as { statusCode?: number })?.statusCode;
           if (statusCode === 404 || statusCode === 410) {
+            console.error(`[push] abonnement ${sub.id} is verlopen (${statusCode}), wordt verwijderd.`);
             await admin.from("push_subscriptions").delete().eq("id", sub.id as string);
+          } else {
+            console.error(`[push] versturen naar abonnement ${sub.id} mislukt (status ${statusCode ?? "?"}):`, err);
           }
         }
       })
     );
-  } catch {
-    // Pushmeldingen zijn best-effort — nooit de eigenlijke actie breken.
+  } catch (err) {
+    // Pushmeldingen zijn best-effort — nooit de eigenlijke actie breken,
+    // maar wél loggen zodat dit soort fouten niet onvindbaar blijven.
+    console.error("[push] onverwachte fout bij versturen:", err);
   }
 }
 
