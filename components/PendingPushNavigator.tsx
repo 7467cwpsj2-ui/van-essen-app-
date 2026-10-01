@@ -79,5 +79,21 @@ export function PendingPushNavigator() {
     };
   }, [router]);
 
+  // Tegenhanger van de postMessage() die de service worker nu ook
+  // stuurt bij een klik op een melding (naast rememberPendingNav) — dit
+  // is het enige pad dat werkt als de app al open én al in beeld was:
+  // dan verandert er niets aan de zichtbaarheid, dus hierboven gaat
+  // geen van de visibilitychange/focus/pageshow-listeners af.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.data && event.data.type === "PUSH_NAVIGATE" && typeof event.data.url === "string") {
+        router.push(event.data.url);
+      }
+    };
+    navigator.serviceWorker.addEventListener("message", onMessage);
+    return () => navigator.serviceWorker.removeEventListener("message", onMessage);
+  }, [router]);
+
   return null;
 }

@@ -216,6 +216,16 @@ self.addEventListener("notificationclick", (event) => {
       const clientList = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of clientList) {
         if (client.url.includes(self.location.origin) && "focus" in client) {
+          // Rechtstreeks bericht naar de pagina zelf — dit is het enige
+          // betrouwbare pad als de app al open én al in beeld was: dan
+          // verandert er niets aan de zichtbaarheid (geen focus/
+          // visibilitychange/pageshow), dus de bewaarde pending-navigatie
+          // hieronder zou anders nooit meer uitgelezen worden.
+          try {
+            client.postMessage({ type: "PUSH_NAVIGATE", url });
+          } catch {
+            // negeren — de bewaarde pending-navigatie is dan het vangnet
+          }
           // navigate() geeft de genavigeerde WindowClient terug als
           // nieuw object — de oorspronkelijke `client` blijft daarna
           // verwijzen naar de oude pagina, dus .focus() moet op dat

@@ -6,12 +6,15 @@ import { sendPushToUsers } from "@/lib/push";
 
 // Zelf-diagnose: stuur een melding naar je eigen toestel, zodat je
 // zonder te wachten op een echte gebeurtenis (chatbericht, foto, …)
-// meteen weet of pushen op dit toestel daadwerkelijk aankomt.
+// meteen weet of pushen op dit toestel daadwerkelijk aankomt — én of
+// een tik erop naar de juiste pagina stuurt (vandaar een concreet,
+// herkenbaar doel i.p.v. de standaard dashboard-pagina).
 export async function sendTestPush() {
   const current = await requireUser();
   await sendPushToUsers([current.id], {
     title: "Testmelding",
-    body: "Gelukt — pushmeldingen werken op dit toestel.",
+    body: "Tik hierop — je hoort nu bij 'Mijn account' uit te komen.",
+    url: "/account",
   });
 }
 
