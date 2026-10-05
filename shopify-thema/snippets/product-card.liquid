@@ -1,0 +1,19 @@
+<a class="card" href="{{ card_product.url }}">
+  <div class="ph">
+    {%- if card_product.featured_media -%}
+      {%- assign card_alt = card_product.featured_media.alt | default: card_product.title -%}
+      {{ card_product.featured_media | image_url: width: 800 | image_tag: widths: '300, 500, 800', sizes: '(min-width: 900px) 33vw, 50vw', loading: 'lazy', alt: card_alt }}
+    {%- else -%}
+      <img width="800" height="1000" src="{{ 'studio.jpg' | asset_url }}" alt="{{ card_product.title | escape }}" loading="lazy">
+    {%- endif -%}
+  </div>
+  <h3>{{ card_product.title }}</h3>
+  <span class="p">
+    {%- if card_product.price_varies -%}
+      {%- assign min_price = card_product.price_min | money -%}
+      {{ 'products.product.from_price' | t: price: min_price }}
+    {%- else -%}
+      {{ card_product.price | money }}
+    {%- endif -%}
+  </span>
+</a>

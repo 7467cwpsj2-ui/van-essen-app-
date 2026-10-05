@@ -1,0 +1,36 @@
+{% layout none %}
+<!doctype html>
+<html lang="{{ request.locale.iso_code }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ 'gift_cards.title' | t }} &ndash; {{ shop.name }}</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Jost:wght@300;400;500&display=swap">
+    <style>
+      :root {
+        --bg: {{ settings.color_background }}; --surface: {{ settings.color_surface }}; --ink: {{ settings.color_text }};
+        --muted: {{ settings.color_muted }}; --line: {{ settings.color_line }}; --bronze: {{ settings.color_accent }}; --stage: {{ settings.color_stage }};
+      }
+    </style>
+    {{ 'theme.css' | asset_url | stylesheet_tag }}
+    {{ content_for_header }}
+  </head>
+  <body>
+    <main class="password-page">
+      <div>
+        <span class="logo">{{ shop.name }}</span>
+        <h1 style="font-size:40px">{{ 'gift_cards.title' | t }}</h1>
+        <p class="price" style="margin-top:16px">{{ gift_card.initial_value | money }}</p>
+        {%- if gift_card.expired or gift_card.enabled == false -%}
+          <p style="color:var(--muted)">{{ 'gift_cards.expired' | t }}</p>
+        {%- endif -%}
+        <p class="label" style="margin-top:24px">{{ 'gift_cards.code' | t }}</p>
+        <p style="font-size:22px;letter-spacing:.12em">{{ gift_card.code | format_code }}</p>
+        {%- if gift_card.balance != gift_card.initial_value -%}
+          <p style="color:var(--muted)">{{ 'gift_cards.balance' | t }}: {{ gift_card.balance | money }}</p>
+        {%- endif -%}
+        <p style="margin-top:32px"><a class="btn btn-primary" href="{{ shop.url }}">{{ 'gift_cards.shop' | t }}</a></p>
+      </div>
+    </main>
+  </body>
+</html>

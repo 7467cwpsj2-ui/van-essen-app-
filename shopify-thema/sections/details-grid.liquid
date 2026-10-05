@@ -1,0 +1,50 @@
+<section class="band">
+  <div class="wrap">
+    {%- if section.settings.eyebrow != blank -%}<span class="label eyebrow">{{ section.settings.eyebrow }}</span>{%- endif -%}
+    <h2>{{ section.settings.heading }}{% if section.settings.heading_italic != blank %} <em>{{ section.settings.heading_italic }}</em>{% endif %}</h2>
+    <div class="details-grid">
+      {%- for block in section.blocks -%}
+        <figure {{ block.shopify_attributes }}>
+          <div class="ph">{% render 'image', image: block.settings.image, fallback: block.settings.fallback, alt: block.settings.heading, sizes: '(min-width: 900px) 25vw, 50vw' %}</div>
+          <figcaption><b>{{ block.settings.heading }}</b><span>{{ block.settings.text }}</span></figcaption>
+        </figure>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+
+{% schema %}
+{
+  "name": "Detailfoto's",
+  "tag": "div",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Bovenschrift", "default": "Vakmanschap" },
+    { "type": "text", "id": "heading", "label": "Kop", "default": "Tot in" },
+    { "type": "text", "id": "heading_italic", "label": "Kop, cursief deel", "default": "het kleinste detail" }
+  ],
+  "blocks": [
+    {
+      "type": "detail",
+      "name": "Detail",
+      "limit": 8,
+      "settings": [
+        { "type": "image_picker", "id": "image", "label": "Afbeelding" },
+        { "type": "text", "id": "fallback", "label": "Voorbeeldfoto (bestandsnaam)", "info": "Wordt gebruikt zolang er geen afbeelding is gekozen." },
+        { "type": "text", "id": "heading", "label": "Kop", "default": "Detail" },
+        { "type": "text", "id": "text", "label": "Tekst" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Detailfoto's",
+      "blocks": [
+        { "type": "detail", "settings": { "heading": "De roller", "fallback": "roller-close.jpg", "text": "Glad en zacht, draait vrij in een stevige beugel." } },
+        { "type": "detail", "settings": { "heading": "Het scharnier", "fallback": "scharnier.jpg", "text": "Klapt in tot reisformaat en klikt vast bij gebruik." } },
+        { "type": "detail", "settings": { "heading": "De grip", "fallback": "grip-hand.jpg", "text": "Matte, getextureerde vlakken die ook nat niet glijden." } },
+        { "type": "detail", "settings": { "heading": "Het ophangoog", "fallback": "oog.jpg", "text": "Aan een haakje laten drogen na gebruik." } }
+      ]
+    }
+  ]
+}
+{% endschema %}

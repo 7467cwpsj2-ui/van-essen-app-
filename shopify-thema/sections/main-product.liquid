@@ -1,0 +1,357 @@
+{%- liquid
+  assign current_variant = product.selected_or_first_available_variant
+  assign fallback_photos = 'studio.jpg,flatlay.jpg,rug-vrouw.jpg,rug-man.jpg,roller-zij.jpg,been-creme.jpg,studio-schuin.jpg,scharnier.jpg,grip-marmer.jpg' | split: ','
+-%}
+
+<div class="wrap" data-product-section>
+  {%- if section.settings.show_breadcrumbs -%}
+    <nav class="crumbs label" aria-label="Kruimelpad">
+      <a href="{{ routes.root_url }}">Home</a>
+      {%- if collection -%} &nbsp;/&nbsp; <a href="{{ collection.url }}">{{ collection.title }}</a>{%- endif -%}
+      &nbsp;/&nbsp; {{ product.title }}
+    </nav>
+  {%- endif -%}
+
+  <div class="product" id="product">
+    <div class="gallery">
+      {%- liquid
+        assign first_media = current_variant.featured_media | default: product.featured_media
+      -%}
+      <div class="stage">
+        {%- if first_media -%}
+          {%- liquid
+            assign main_class = 'main'
+            if first_media.preview_image.aspect_ratio >= 0.66
+              assign main_class = 'main cover'
+            endif
+          -%}
+          <img class="blur" width="800" height="1000" src="{{ first_media.preview_image | image_url: width: 300 }}" alt="" aria-hidden="true">
+          {{ first_media.preview_image | image_url: width: 1400 | image_tag: class: main_class, widths: '600, 900, 1200, 1400', sizes: '(min-width: 900px) 55vw, 100vw', alt: first_media.alt, loading: 'eager', fetchpriority: 'high' }}
+        {%- else -%}
+          <img class="blur" width="800" height="1000" src="{{ fallback_photos.first | asset_url }}" alt="" aria-hidden="true">
+          <img class="main" width="800" height="1000" src="{{ fallback_photos.first | asset_url }}" alt="{{ product.title | escape }}">
+        {%- endif -%}
+        {%- if product.media.size > 1 or product.media.size == 0 -%}
+          <button type="button" class="nav prev" aria-label="Vorige foto">‹</button>
+          <button type="button" class="nav next" aria-label="Volgende foto">›</button>
+        {%- endif -%}
+        <span class="cap label" {% unless section.settings.show_captions %}hidden{% endunless %}></span>
+      </div>
+
+      <div class="thumbs">
+        {%- if product.media.size > 0 -%}
+          {%- for media in product.media -%}
+            {%- liquid
+              assign fit = 'contain'
+              if media.preview_image.aspect_ratio >= 0.66
+                assign fit = 'cover'
+              endif
+              assign is_current = false
+              if media.id == first_media.id
+                assign is_current = true
+              endif
+            -%}
+            <button type="button" class="thumb ph"
+              aria-pressed="{{ is_current }}"
+              aria-label="{{ media.alt | default: product.title | escape }}"
+              data-media-id="{{ media.id }}"
+              data-src="{{ media.preview_image | image_url: width: 1400 }}"
+              data-srcset="{{ media.preview_image | image_url: width: 700 }} 700w, {{ media.preview_image | image_url: width: 1400 }} 1400w"
+              data-alt="{{ media.alt | escape }}"
+              data-cap="{% if section.settings.show_captions %}{{ media.alt | escape }}{% endif %}"
+              data-fit="{{ fit }}">
+              {{ media.preview_image | image_url: width: 200 | image_tag: loading: 'lazy', alt: '' }}
+            </button>
+          {%- endfor -%}
+        {%- else -%}
+          {%- for photo in fallback_photos -%}
+            <button type="button" class="thumb ph" aria-pressed="{% if forloop.first %}true{% else %}false{% endif %}"
+              aria-label="Foto {{ forloop.index }}"
+              data-src="{{ photo | asset_url }}" data-alt="{{ product.title | escape }}"
+              data-fit="{% if photo contains 'studio.jpg' or photo contains 'flatlay' or photo contains 'schuin' %}contain{% else %}cover{% endif %}">
+              <img width="800" height="1000" src="{{ photo | asset_url }}" alt="" loading="lazy">
+            </button>
+          {%- endfor -%}
+        {%- endif -%}
+      </div>
+    </div>
+
+    <div class="buy">
+      {%- for block in section.blocks -%}
+        {%- case block.type -%}
+          {%- when '@app' -%}
+            {% render block %}
+
+          {%- when 'text' -%}
+            <span class="label eyebrow" {{ block.shopify_attributes }}>{{ block.settings.text }}</span>
+
+          {%- when 'title' -%}
+            {%- liquid
+              assign title_html = product.title | escape
+              if block.settings.italic_part != blank and product.title contains block.settings.italic_part
+                assign italic_html = '<em>' | append: block.settings.italic_part | append: '</em>'
+                assign title_html = title_html | replace: block.settings.italic_part, italic_html
+              endif
+            -%}
+            <h1 {{ block.shopify_attributes }}>{{ title_html }}</h1>
+
+          {%- when 'lede' -%}
+            <div class="lede" {{ block.shopify_attributes }}>
+              {%- if block.settings.text != blank -%}
+                {{ block.settings.text }}
+              {%- else -%}
+                <p>{{ product.description | strip_html | truncatewords: 40 }}</p>
+              {%- endif -%}
+            </div>
+
+          {%- when 'price' -%}
+            <div {{ block.shopify_attributes }}>
+              <div class="price-row">
+                <span class="price" data-price>{{ current_variant.price | money }}</span>
+                <span class="compare" data-compare {% unless current_variant.compare_at_price > current_variant.price %}hidden{% endunless %}>{{ current_variant.compare_at_price | money }}</span>
+              </div>
+            </div>
+            <div class="tax">
+              {%- if cart.taxes_included -%}{{ 'products.product.taxes_included' | t }}{%- endif -%}
+              {%- if shop.shipping_policy.body != blank %} <a href="{{ shop.shipping_policy.url }}">{{ 'products.product.shipping_link' | t }}</a>{% endif -%}
+            </div>
+
+          {%- when 'variant_picker' -%}
+            {%- unless product.has_only_default_variant -%}
+              {%- liquid
+                assign swatch_names = block.settings.swatch_option_names | downcase | split: ','
+                assign color_lines = block.settings.swatch_colors | newline_to_br | split: '<br />'
+                assign soon_lines = block.settings.soon_colors | newline_to_br | split: '<br />'
+                assign desc_lines = block.settings.row_descriptions | newline_to_br | split: '<br />'
+              -%}
+              <div class="options" {{ block.shopify_attributes }} style="display:grid;gap:28px">
+                {%- for option in product.options_with_values -%}
+                  {%- liquid
+                    assign option_index = forloop.index0
+                    assign option_name_lc = option.name | downcase | strip
+                    assign is_swatch = false
+                    for n in swatch_names
+                      assign n_clean = n | strip
+                      if n_clean == option_name_lc
+                        assign is_swatch = true
+                      endif
+                    endfor
+                  -%}
+                  <fieldset class="option" data-option>
+                    <legend class="opt-label label"><span>{{ option.name }}</span><span class="value">{{ option.selected_value }}</span></legend>
+
+                    {%- if is_swatch -%}
+                      <div class="swatches">
+                        {%- for value in option.values -%}
+                          {%- liquid
+                            assign swatch_color = ''
+                            for line in color_lines
+                              assign pair = line | strip | split: ':'
+                              assign pair_name = pair.first | strip | downcase
+                              assign value_lc = value | downcase
+                              if pair_name == value_lc
+                                assign swatch_color = pair.last | strip
+                              endif
+                            endfor
+                          -%}
+                          <label class="swatch" style="--c: {{ swatch_color | default: 'var(--stage)' }}" title="{{ value | escape }}">
+                            <input type="radio" name="option-{{ section.id }}-{{ option_index }}" value="{{ value | escape }}" {% if option.selected_value == value %}checked{% endif %}>
+                            <span class="visually-hidden">{{ value }}</span>
+                          </label>
+                        {%- endfor -%}
+                        {%- for line in soon_lines -%}
+                          {%- assign pair = line | strip | split: ':' -%}
+                          {%- if pair.size == 2 -%}
+                            <span class="swatch is-soon" style="--c: {{ pair.last | strip }}" title="{{ pair.first | strip }} · {{ 'products.product.coming_soon' | t }}">
+                              <span class="visually-hidden">{{ pair.first | strip }}, {{ 'products.product.coming_soon' | t }}</span>
+                            </span>
+                          {%- endif -%}
+                        {%- endfor -%}
+                      </div>
+                    {%- else -%}
+                      <div class="rows">
+                        {%- for value in option.values -%}
+                          {%- liquid
+                            assign row_desc = ''
+                            for line in desc_lines
+                              assign pair = line | strip | split: ':'
+                              assign pair_name = pair.first | strip | downcase
+                              assign value_lc = value | downcase
+                              if pair_name == value_lc and pair.size > 1
+                                assign row_desc = line | strip | remove_first: pair.first | remove_first: ':' | strip
+                              endif
+                            endfor
+                            assign row_price = ''
+                            for v in product.variants
+                              if v.options[option_index] == value
+                                assign row_price = v.price | money
+                                break
+                              endif
+                            endfor
+                          -%}
+                          <label class="row-opt">
+                            <input type="radio" name="option-{{ section.id }}-{{ option_index }}" value="{{ value | escape }}" {% if option.selected_value == value %}checked{% endif %}>
+                            <span class="radio"></span>
+                            <span><span class="name">{{ value }}</span>{% if row_desc != blank %}<small>{{ row_desc }}</small>{% endif %}</span>
+                            <span class="bp">{{ row_price }}</span>
+                          </label>
+                        {%- endfor -%}
+                      </div>
+                    {%- endif -%}
+                  </fieldset>
+                {%- endfor -%}
+              </div>
+            {%- endunless -%}
+
+          {%- when 'buy_buttons' -%}
+            <div {{ block.shopify_attributes }} style="display:grid;gap:12px">
+              {%- form 'product', product, data-product-form: '', novalidate: 'novalidate' -%}
+                <input type="hidden" name="id" value="{{ current_variant.id }}">
+                <div class="actions">
+                  <div class="qty">
+                    <button type="button" data-qty="-1" aria-label="{{ 'products.product.decrease' | t }}">−</button>
+                    <label class="visually-hidden" for="Qty-{{ section.id }}">{{ 'products.product.quantity' | t }}</label>
+                    <input id="Qty-{{ section.id }}" type="number" name="quantity" value="1" min="1" inputmode="numeric">
+                    <button type="button" data-qty="1" aria-label="{{ 'products.product.increase' | t }}">+</button>
+                  </div>
+                  <button type="submit" name="add" class="btn btn-primary" data-add-button {% unless current_variant.available %}disabled{% endunless %}>
+                    {%- if current_variant.available -%}{{ 'products.product.add_to_cart' | t }}{%- else -%}{{ 'products.product.sold_out' | t }}{%- endif -%}
+                  </button>
+                </div>
+                <p class="form-error" data-form-error hidden></p>
+                {%- if block.settings.show_dynamic_checkout -%}
+                  <div style="margin-top:12px">{{ form | payment_button }}</div>
+                {%- endif -%}
+              {%- endform -%}
+            </div>
+
+          {%- when 'promise' -%}
+            {%- liquid
+              assign promise_count = 0
+              if block.settings.item_1 != blank
+                assign promise_count = promise_count | plus: 1
+              endif
+              if block.settings.item_2 != blank
+                assign promise_count = promise_count | plus: 1
+              endif
+              if block.settings.item_3 != blank
+                assign promise_count = promise_count | plus: 1
+              endif
+            -%}
+            <div class="promise" style="--cols: {{ promise_count | at_least: 1 }}" {{ block.shopify_attributes }}>
+              {%- if block.settings.item_1 != blank -%}<div>{{ block.settings.item_1 }}</div>{%- endif -%}
+              {%- if block.settings.item_2 != blank -%}<div>{{ block.settings.item_2 }}</div>{%- endif -%}
+              {%- if block.settings.item_3 != blank -%}<div>{{ block.settings.item_3 }}</div>{%- endif -%}
+            </div>
+
+          {%- when 'collapsible' -%}
+            <details {% if block.settings.open %}open{% endif %} {{ block.shopify_attributes }}>
+              <summary class="label">{{ block.settings.heading }}</summary>
+              <div class="content rte">
+                {%- if block.settings.use_description -%}
+                  {{ product.description }}
+                {%- else -%}
+                  {{ block.settings.content }}
+                {%- endif -%}
+              </div>
+            </details>
+        {%- endcase -%}
+      {%- endfor -%}
+    </div>
+  </div>
+
+  <div class="sticky-buy">
+    <span class="p" data-sticky-price>{{ current_variant.price | money }}</span>
+    <button type="button" class="btn btn-primary" data-sticky-add {% unless current_variant.available %}disabled{% endunless %}>{{ 'products.product.add_to_cart' | t }}</button>
+  </div>
+
+  <script type="application/json" data-product-json>{{ product | json }}</script>
+</div>
+
+{% schema %}
+{
+  "name": "Product",
+  "tag": "section",
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "show_breadcrumbs",
+      "label": "Kruimelpad tonen",
+      "default": true
+    },
+    {
+      "type": "checkbox",
+      "id": "show_captions",
+      "label": "Alt-tekst als onderschrift bij foto's",
+      "default": false
+    }
+  ],
+  "blocks": [
+    { "type": "@app" },
+    {
+      "type": "text",
+      "name": "Bovenschrift",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "text", "label": "Tekst", "default": "Zon & huidverzorging" }
+      ]
+    },
+    {
+      "type": "title",
+      "name": "Titel",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "italic_part", "label": "Cursief deel van de titel", "info": "Bijv. 'No. 1'. Dit deel van de producttitel wordt cursief gezet.", "default": "No. 1" }
+      ]
+    },
+    {
+      "type": "lede",
+      "name": "Intro",
+      "limit": 1,
+      "settings": [
+        { "type": "richtext", "id": "text", "label": "Tekst", "info": "Leeg = begin van de productbeschrijving." }
+      ]
+    },
+    { "type": "price", "name": "Prijs", "limit": 1, "settings": [] },
+    {
+      "type": "variant_picker",
+      "name": "Variantkeuze",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "swatch_option_names", "label": "Opties als kleurbolletjes", "default": "Kleur,Color", "info": "Komma-gescheiden optienamen." },
+        { "type": "textarea", "id": "swatch_colors", "label": "Kleurcodes", "default": "Onyx:#1b1b1b\nSteen:#8d8a85\nRosé:#dcb0b8\nKobalt:#2b4a9a", "info": "Eén per regel: Naam:#hex" },
+        { "type": "textarea", "id": "soon_colors", "label": "Binnenkort-kleuren", "default": "Steen:#8d8a85\nRosé:#dcb0b8\nKobalt:#2b4a9a", "info": "Doorgestreept getoond, niet te kiezen. Eén per regel: Naam:#hex" },
+        { "type": "textarea", "id": "row_descriptions", "label": "Uitleg per optiewaarde", "default": "Enkel:Eén applicator\nDuo:Voor thuis en op reis\nFamilie:Drie stuks, in één geschenkdoos", "info": "Eén per regel: Waarde:Uitleg" }
+      ]
+    },
+    {
+      "type": "buy_buttons",
+      "name": "Koopknoppen",
+      "limit": 1,
+      "settings": [
+        { "type": "checkbox", "id": "show_dynamic_checkout", "label": "Snelle betaalknoppen tonen", "default": true }
+      ]
+    },
+    {
+      "type": "promise",
+      "name": "Beloftes",
+      "limit": 1,
+      "settings": [
+        { "type": "text", "id": "item_1", "label": "Belofte 1", "default": "Verzonden binnen 1 werkdag" },
+        { "type": "text", "id": "item_2", "label": "Belofte 2", "default": "30 dagen retour" },
+        { "type": "text", "id": "item_3", "label": "Belofte 3", "default": "Geschenkverpakking mogelijk" }
+      ]
+    },
+    {
+      "type": "collapsible",
+      "name": "Uitklapblok",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Kop", "default": "Details" },
+        { "type": "checkbox", "id": "use_description", "label": "Productbeschrijving tonen", "default": false },
+        { "type": "richtext", "id": "content", "label": "Inhoud" },
+        { "type": "checkbox", "id": "open", "label": "Standaard open", "default": false }
+      ]
+    }
+  ]
+}
+{% endschema %}

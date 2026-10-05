@@ -1,0 +1,4 @@
+Handle,Title,Body (HTML),Vendor,Type,Tags,Published,Option1 Name,Option1 Value,Option2 Name,Option2 Value,Variant SKU,Variant Grams,Variant Inventory Tracker,Variant Inventory Policy,Variant Fulfillment Service,Variant Price,Variant Compare At Price,Variant Requires Shipping,Variant Taxable,Status
+applicator-no-1,De Applicator No. 1,"<ul><li>Inklapbare steel met scharnier</li><li>Zachte, gladde roller die vrij meedraait</li><li>Matzwarte grip met ophangoog</li><li>Voor zonnebrand, zelfbruiner, after-sun en lotion</li></ul>",Solenne,Huidverzorging,"zon, rug, applicator",TRUE,Kleur,Onyx,Set,Enkel,SOL-APP-ONYX-1,0,,deny,manual,29.00,,TRUE,TRUE,active
+applicator-no-1,,,,,,,,Onyx,,Duo,SOL-APP-ONYX-2,0,,deny,manual,49.00,,TRUE,TRUE,
+applicator-no-1,,,,,,,,Onyx,,Familie,SOL-APP-ONYX-3,0,,deny,manual,69.00,,TRUE,TRUE,

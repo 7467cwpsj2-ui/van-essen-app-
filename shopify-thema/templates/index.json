@@ -1,0 +1,182 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero",
+      "settings": {}
+    },
+    "manifest": {
+      "type": "manifest",
+      "settings": {}
+    },
+    "ritual": {
+      "type": "ritual",
+      "settings": {},
+      "blocks": {
+        "s1": {
+          "type": "step",
+          "settings": {
+            "heading": "Uitklappen",
+            "fallback": "scharnier-marmer.jpg",
+            "text": "Klik de steel uit tot hij vastzit. Ingeklapt past hij in elke tas."
+          }
+        },
+        "s2": {
+          "type": "step",
+          "settings": {
+            "heading": "Aanbrengen",
+            "fallback": "roller-marmer.jpg",
+            "text": "Doe een paar druppels zonnebrand of lotion op de roller."
+          }
+        },
+        "s3": {
+          "type": "step",
+          "settings": {
+            "heading": "Rollen",
+            "fallback": "been-creme.jpg",
+            "text": "Rol in lange halen van boven naar beneden. Spoel de roller daarna af."
+          }
+        }
+      },
+      "block_order": [
+        "s1",
+        "s2",
+        "s3"
+      ]
+    },
+    "details": {
+      "type": "details-grid",
+      "settings": {},
+      "blocks": {
+        "d1": {
+          "type": "detail",
+          "settings": {
+            "heading": "De roller",
+            "fallback": "roller-close.jpg",
+            "text": "Glad en zacht, draait vrij in een stevige beugel."
+          }
+        },
+        "d2": {
+          "type": "detail",
+          "settings": {
+            "heading": "Het scharnier",
+            "fallback": "scharnier.jpg",
+            "text": "Klapt in tot reisformaat en klikt vast bij gebruik."
+          }
+        },
+        "d3": {
+          "type": "detail",
+          "settings": {
+            "heading": "De grip",
+            "fallback": "grip-hand.jpg",
+            "text": "Matte, getextureerde vlakken die ook nat niet glijden."
+          }
+        },
+        "d4": {
+          "type": "detail",
+          "settings": {
+            "heading": "Het ophangoog",
+            "fallback": "oog.jpg",
+            "text": "Aan een haakje laten drogen na gebruik."
+          }
+        }
+      },
+      "block_order": [
+        "d1",
+        "d2",
+        "d3",
+        "d4"
+      ]
+    },
+    "reviews": {
+      "type": "testimonials",
+      "settings": {},
+      "blocks": {
+        "r1": {
+          "type": "review",
+          "settings": {
+            "quote": "Op vakantie hoef ik niemand meer te vragen. Klapt mooi klein in.",
+            "author": "Voorbeeld · Onyx",
+            "rating": 5
+          }
+        },
+        "r2": {
+          "type": "review",
+          "settings": {
+            "quote": "Mijn zelfbruiner zit eindelijk egaal op mijn rug.",
+            "author": "Voorbeeld · Onyx",
+            "rating": 5
+          }
+        },
+        "r3": {
+          "type": "review",
+          "settings": {
+            "quote": "Voor mijn vader, die zijn schouders slecht kan draaien. Hij smeert nu zelf.",
+            "author": "Voorbeeld · Duo",
+            "rating": 5
+          }
+        }
+      },
+      "block_order": [
+        "r1",
+        "r2",
+        "r3"
+      ]
+    },
+    "faq": {
+      "type": "faq",
+      "settings": {},
+      "blocks": {
+        "q1": {
+          "type": "question",
+          "settings": {
+            "question": "Hoe maak ik de roller schoon?",
+            "answer": "<p>Spoel de roller na gebruik af met lauw water en hang de applicator aan het ophangoog te drogen.</p>"
+          }
+        },
+        "q2": {
+          "type": "question",
+          "settings": {
+            "question": "Werkt het ook met olie?",
+            "answer": "<p>Het werkt het best met crème en lotion. Met olie gebruik je een kleine hoeveelheid, zodat er niets afdruipt.</p>"
+          }
+        },
+        "q3": {
+          "type": "question",
+          "settings": {
+            "question": "Mag hij mee in de handbagage?",
+            "answer": "<p>Ja. Ingeklapt neemt hij weinig ruimte in en er zitten geen scherpe delen aan.</p>"
+          }
+        },
+        "q4": {
+          "type": "question",
+          "settings": {
+            "question": "Komen er meer kleuren?",
+            "answer": "<p>Steen, Rosé en Kobalt volgen binnenkort. Meld je aan voor de nieuwsbrief om het als eerste te horen.</p>"
+          }
+        },
+        "q5": {
+          "type": "question",
+          "settings": {
+            "question": "Kan ik hem als cadeau laten inpakken?",
+            "answer": "<p>Ja. Zet in het opmerkingenveld van je winkelwagen de tekst voor het kaartje, dan pakken we hem in.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5"
+      ]
+    }
+  },
+  "order": [
+    "hero",
+    "manifest",
+    "ritual",
+    "details",
+    "reviews",
+    "faq"
+  ]
+}

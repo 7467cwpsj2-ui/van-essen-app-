@@ -1,0 +1,10 @@
+<div class="wrap" style="text-align:center;padding-block:120px">
+  <span class="label" style="color:var(--bronze)">404</span>
+  <h1 style="font-size:clamp(36px,5vw,60px);margin-top:16px">{{ 'general.not_found' | t }}</h1>
+  <p style="color:var(--muted)">{{ 'general.not_found_text' | t }}</p>
+  <a class="btn btn-primary" href="{{ routes.root_url }}">{{ 'general.back_home' | t }}</a>
+</div>
+
+{% schema %}
+{ "name": "404", "tag": "section", "settings": [] }
+{% endschema %}

@@ -1,0 +1,80 @@
+[
+  {
+    "name": "theme_info",
+    "theme_name": "Solenne",
+    "theme_version": "1.0.0",
+    "theme_author": "Solenne",
+    "theme_documentation_url": "https://help.shopify.com/manual/online-store/themes",
+    "theme_support_url": "https://help.shopify.com"
+  },
+  {
+    "name": "Kleuren",
+    "settings": [
+      {
+        "type": "color",
+        "id": "color_background",
+        "label": "Achtergrond",
+        "default": "#f3f1ee"
+      },
+      {
+        "type": "color",
+        "id": "color_surface",
+        "label": "Vlakken",
+        "default": "#fbfaf8"
+      },
+      {
+        "type": "color",
+        "id": "color_text",
+        "label": "Tekst",
+        "default": "#1c1a18"
+      },
+      {
+        "type": "color",
+        "id": "color_muted",
+        "label": "Gedempte tekst",
+        "default": "#77716a"
+      },
+      {
+        "type": "color",
+        "id": "color_line",
+        "label": "Lijnen",
+        "default": "#dcd7d0"
+      },
+      {
+        "type": "color",
+        "id": "color_accent",
+        "label": "Accent (brons)",
+        "default": "#8c6a43"
+      },
+      {
+        "type": "color",
+        "id": "color_stage",
+        "label": "Fotoachtergrond",
+        "default": "#e7e3dd"
+      }
+    ]
+  },
+  {
+    "name": "Winkelwagen",
+    "settings": [
+      {
+        "type": "number",
+        "id": "free_shipping_threshold",
+        "label": "Gratis verzending vanaf (in hele euro's)",
+        "info": "Toont een voortgangsbalk in de winkelwagen. 0 = uit. Stel de echte verzendregel in onder Instellingen > Verzending.",
+        "default": 50
+      }
+    ]
+  },
+  {
+    "name": "Favicon",
+    "settings": [
+      {
+        "type": "image_picker",
+        "id": "favicon",
+        "label": "Favicon",
+        "info": "32 × 32 px"
+      }
+    ]
+  }
+]

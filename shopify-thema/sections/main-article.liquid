@@ -1,0 +1,14 @@
+<article class="wrap">
+  <div class="page-head">
+    <span class="label" style="color:var(--bronze)">{{ article.published_at | date: format: 'date' }}</span>
+    <h1 style="margin-top:12px">{{ article.title }}</h1>
+  </div>
+  {%- if article.image -%}
+    <div class="ph" style="margin-bottom:48px">{{ article.image | image_url: width: 1600 | image_tag: widths: '600, 1000, 1600', sizes: '100vw' }}</div>
+  {%- endif -%}
+  <div class="rte page-body">{{ article.content }}</div>
+</article>
+
+{% schema %}
+{ "name": "Artikel", "tag": "section", "settings": [] }
+{% endschema %}

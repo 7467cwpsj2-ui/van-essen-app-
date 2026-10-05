@@ -1,0 +1,16 @@
+{%- comment -%}
+  Toont een gekozen afbeelding, of anders een voorbeeldfoto uit de thema-assets.
+  Gebruik: {% render 'image', image: section.settings.image, fallback: 'rug-man.jpg', alt: 'Tekst', sizes: '50vw' %}
+{%- endcomment -%}
+{%- liquid
+  assign img_alt = alt | default: image.alt | default: ''
+  assign img_sizes = sizes | default: '(min-width: 900px) 50vw, 100vw'
+  assign img_loading = loading | default: 'lazy'
+-%}
+{%- if image != blank -%}
+  {{ image | image_url: width: 1600 | image_tag: widths: '400, 600, 800, 1100, 1600', sizes: img_sizes, alt: img_alt, loading: img_loading }}
+{%- elsif fallback != blank -%}
+  <img width="800" height="1000" src="{{ fallback | asset_url }}" alt="{{ img_alt | escape }}" loading="{{ img_loading }}">
+{%- else -%}
+  {{ 'image' | placeholder_svg_tag: 'placeholder-svg' }}
+{%- endif -%}

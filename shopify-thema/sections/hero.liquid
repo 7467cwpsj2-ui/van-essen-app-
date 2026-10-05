@@ -1,0 +1,39 @@
+<div class="wrap">
+  <div class="hero">
+    <div>
+      {%- if section.settings.eyebrow != blank -%}<span class="label eyebrow">{{ section.settings.eyebrow }}</span>{%- endif -%}
+      <h1>{{ section.settings.heading }}{% if section.settings.heading_italic != blank %} <em>{{ section.settings.heading_italic }}</em>{% endif %}</h1>
+      {%- if section.settings.text != blank -%}<p>{{ section.settings.text }}</p>{%- endif -%}
+      {%- liquid
+        assign button_url = section.settings.button_link
+        if button_url == blank and section.settings.product != blank
+          assign button_url = section.settings.product.url
+        endif
+      -%}
+      {%- if section.settings.button_label != blank -%}
+        <a class="btn btn-primary" href="{{ button_url | default: routes.all_products_collection_url }}">{{ section.settings.button_label }}</a>
+      {%- endif -%}
+    </div>
+    <div class="ph">
+      {% render 'image', image: section.settings.image, fallback: 'rug-man.jpg', alt: section.settings.heading, loading: 'eager' %}
+    </div>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Openingsbeeld",
+  "tag": "section",
+  "settings": [
+    { "type": "text", "id": "eyebrow", "label": "Bovenschrift", "default": "Zon & huidverzorging" },
+    { "type": "text", "id": "heading", "label": "Kop", "default": "Je hele rug," },
+    { "type": "text", "id": "heading_italic", "label": "Kop, cursief deel", "default": "zonder hulp" },
+    { "type": "textarea", "id": "text", "label": "Tekst", "default": "De Applicator No. 1 brengt zonnebrand, zelfbruiner en lotion gelijkmatig aan, tot tussen je schouderbladen." },
+    { "type": "text", "id": "button_label", "label": "Knoptekst", "default": "Ontdek de applicator" },
+    { "type": "product", "id": "product", "label": "Product voor de knop" },
+    { "type": "url", "id": "button_link", "label": "Of een andere link" },
+    { "type": "image_picker", "id": "image", "label": "Afbeelding", "info": "Leeg = voorbeeldfoto uit het thema." }
+  ],
+  "presets": [{ "name": "Openingsbeeld" }]
+}
+{% endschema %}

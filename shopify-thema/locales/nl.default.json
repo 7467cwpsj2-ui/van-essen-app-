@@ -1,0 +1,71 @@
+{
+  "general": {
+    "skip_to_content": "Naar de inhoud",
+    "menu": "Menu",
+    "close": "Sluiten",
+    "search": "Zoeken",
+    "search_placeholder": "Waar ben je naar op zoek?",
+    "account": "Account",
+    "previous": "Vorige",
+    "next": "Volgende",
+    "not_found": "Deze pagina bestaat niet",
+    "not_found_text": "De link klopt niet meer of de pagina is verplaatst.",
+    "back_home": "Naar de homepage",
+    "no_results": "Geen resultaten voor “{{ terms }}”.",
+    "password": "Wachtwoord",
+    "enter": "Binnenkomen"
+  },
+  "products": {
+    "product": {
+      "add_to_cart": "In de tas",
+      "sold_out": "Uitverkocht",
+      "unavailable": "Niet beschikbaar",
+      "quantity": "Aantal",
+      "increase": "Meer",
+      "decrease": "Minder",
+      "taxes_included": "Inclusief btw.",
+      "shipping_link": "Verzendkosten",
+      "coming_soon": "binnenkort",
+      "from_price": "Vanaf {{ price }}"
+    }
+  },
+  "cart": {
+    "title": "Je tas",
+    "bag": "Tas",
+    "empty": "Je tas is nog leeg",
+    "remove": "Verwijderen",
+    "subtotal": "Subtotaal",
+    "total": "Totaal",
+    "product": "Product",
+    "taxes_note": "Inclusief btw. Verzendkosten zie je bij het afrekenen.",
+    "checkout": "Afrekenen",
+    "view_cart": "Bekijk tas",
+    "update": "Bijwerken",
+    "continue": "Verder winkelen",
+    "note": "Tekst voor het cadeaukaartje of opmerking",
+    "shipping_left": "Nog [amount] tot gratis verzending",
+    "shipping_free": "Je bestelling wordt gratis verzonden",
+    "error": "Er ging iets mis. Probeer het opnieuw."
+  },
+  "collections": {
+    "label": "Collectie",
+    "all": "Alle collecties",
+    "empty": "Er staan nog geen producten in deze collectie.",
+    "product_count": {
+      "one": "{{ count }} product",
+      "other": "{{ count }} producten"
+    }
+  },
+  "newsletter": {
+    "email": "E-mailadres",
+    "submit": "Aanmelden",
+    "success": "Bedankt, je bent aangemeld."
+  },
+  "gift_cards": {
+    "title": "Je cadeaubon",
+    "code": "Code",
+    "balance": "Saldo",
+    "expired": "Deze cadeaubon is verlopen",
+    "shop": "Naar de winkel"
+  }
+}

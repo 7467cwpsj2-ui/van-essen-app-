@@ -1,0 +1,78 @@
+<header class="site">
+  <div class="wrap">
+    <button type="button" class="menu-btn label" id="MenuToggle" aria-controls="MobileNav" aria-expanded="false">{{ 'general.menu' | t }}</button>
+    <nav class="main" aria-label="{{ 'general.menu' | t }}">
+      {%- for link in section.settings.menu.links -%}
+        <a href="{{ link.url }}" {% if link.current %}aria-current="page"{% endif %}>{{ link.title }}</a>
+      {%- endfor -%}
+    </nav>
+
+    <a class="logo" href="{{ routes.root_url }}">
+      {%- if section.settings.logo != blank -%}
+        {%- assign logo_style = 'height:' | append: section.settings.logo_height | append: 'px;width:auto' -%}
+        {{ section.settings.logo | image_url: height: 120 | image_tag: alt: shop.name, style: logo_style }}
+      {%- else -%}
+        {{ shop.name }}
+      {%- endif -%}
+    </a>
+
+    <div class="header-icons">
+      {%- if section.settings.show_search -%}
+        <a class="label" href="{{ routes.search_url }}">{{ 'general.search' | t }}</a>
+      {%- endif -%}
+      {%- if shop.customer_accounts_enabled and section.settings.show_account -%}
+        <a class="label" href="{{ routes.account_url }}">{{ 'general.account' | t }}</a>
+      {%- endif -%}
+      <a class="cart-btn label" href="{{ routes.cart_url }}" data-open-cart>{{ 'cart.bag' | t }} <span data-cart-count>({{ cart.item_count }})</span></a>
+    </div>
+  </div>
+  <nav class="mobile-nav wrap" id="MobileNav" hidden aria-label="{{ 'general.menu' | t }}">
+    <ul>
+      {%- for link in section.settings.menu.links -%}
+        <li><a href="{{ link.url }}">{{ link.title }}</a></li>
+      {%- endfor -%}
+    </ul>
+  </nav>
+</header>
+
+{% schema %}
+{
+  "name": "Header",
+  "settings": [
+    {
+      "type": "image_picker",
+      "id": "logo",
+      "label": "Logo",
+      "info": "Laat leeg om de winkelnaam als woordmerk te tonen."
+    },
+    {
+      "type": "range",
+      "id": "logo_height",
+      "label": "Logohoogte",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "default": 36
+    },
+    {
+      "type": "link_list",
+      "id": "menu",
+      "label": "Menu",
+      "default": "main-menu"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_search",
+      "label": "Zoeken tonen",
+      "default": false
+    },
+    {
+      "type": "checkbox",
+      "id": "show_account",
+      "label": "Account tonen",
+      "default": false
+    }
+  ]
+}
+{% endschema %}

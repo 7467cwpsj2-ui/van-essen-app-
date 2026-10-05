@@ -1,0 +1,15 @@
+{
+  "current": "Default",
+  "presets": {
+    "Default": {
+      "color_background": "#f3f1ee",
+      "color_surface": "#fbfaf8",
+      "color_text": "#1c1a18",
+      "color_muted": "#77716a",
+      "color_line": "#dcd7d0",
+      "color_accent": "#8c6a43",
+      "color_stage": "#e7e3dd",
+      "free_shipping_threshold": 50
+    }
+  }
+}

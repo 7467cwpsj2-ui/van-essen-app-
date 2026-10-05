@@ -1,0 +1,68 @@
+<div class="wrap cart-page">
+  <div class="page-head"><h1>{{ 'cart.title' | t }}</h1></div>
+
+  {%- if cart.item_count > 0 -%}
+    <form action="{{ routes.cart_url }}" method="post" novalidate>
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th colspan="2" class="label">{{ 'cart.product' | t }}</th>
+            <th class="label">{{ 'products.product.quantity' | t }}</th>
+            <th class="label" style="text-align:right">{{ 'cart.total' | t }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {%- for item in cart.items -%}
+            <tr>
+              <td>
+                <a class="ph" href="{{ item.url }}" style="display:block">
+                  {%- if item.image -%}
+                    {{ item.image | image_url: width: 200 | image_tag: loading: 'lazy', alt: item.product.title }}
+                  {%- endif -%}
+                </a>
+              </td>
+              <td>
+                <a class="t" href="{{ item.url }}">{{ item.product.title }}</a>
+                {%- unless item.product.has_only_default_variant -%}<small>{{ item.variant.title }}</small>{%- endunless -%}
+                <small>{{ item.final_price | money }}</small>
+                <a class="link" style="font-size:13px;color:var(--muted)" href="{{ item.url_to_remove }}">{{ 'cart.remove' | t }}</a>
+              </td>
+              <td>
+                <label class="visually-hidden" for="Updates-{{ forloop.index }}">{{ 'products.product.quantity' | t }}</label>
+                <input id="Updates-{{ forloop.index }}" type="number" name="updates[]" value="{{ item.quantity }}" min="0">
+              </td>
+              <td style="text-align:right">{{ item.final_line_price | money }}</td>
+            </tr>
+          {%- endfor -%}
+        </tbody>
+      </table>
+
+      <div class="cart-foot">
+        {%- if section.settings.show_note -%}
+          <label class="label" for="CartNote">{{ 'cart.note' | t }}</label>
+          <textarea id="CartNote" name="note">{{ cart.note }}</textarea>
+        {%- endif -%}
+        <span class="label">{{ 'cart.subtotal' | t }}</span>
+        <span class="sum">{{ cart.total_price | money }}</span>
+        <small>{{ 'cart.taxes_note' | t }}</small>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+          <button type="submit" name="update" class="btn btn-ghost">{{ 'cart.update' | t }}</button>
+          <button type="submit" name="checkout" class="btn btn-primary">{{ 'cart.checkout' | t }}</button>
+        </div>
+      </div>
+    </form>
+  {%- else -%}
+    <p class="empty">{{ 'cart.empty' | t }}</p>
+    <p style="text-align:center"><a class="btn btn-primary" href="{{ routes.all_products_collection_url }}">{{ 'cart.continue' | t }}</a></p>
+  {%- endif -%}
+</div>
+
+{% schema %}
+{
+  "name": "Winkelwagen",
+  "tag": "section",
+  "settings": [
+    { "type": "checkbox", "id": "show_note", "label": "Opmerkingveld tonen", "info": "Bijv. voor de tekst op het cadeaukaartje.", "default": true }
+  ]
+}
+{% endschema %}

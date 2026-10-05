@@ -1,0 +1,22 @@
+<div class="wrap">
+  <div class="page-head"><h1>{{ 'collections.all' | t }}</h1></div>
+  <div class="grid">
+    {%- for c in collections -%}
+      <a class="card" href="{{ c.url }}">
+        <div class="ph">
+          {%- if c.featured_image -%}
+            {{ c.featured_image | image_url: width: 800 | image_tag: loading: 'lazy', sizes: '(min-width: 900px) 33vw, 50vw', widths: '300, 500, 800' }}
+          {%- else -%}
+            <img width="800" height="1000" src="{{ 'flatlay.jpg' | asset_url }}" alt="" loading="lazy">
+          {%- endif -%}
+        </div>
+        <h3>{{ c.title }}</h3>
+        <span class="p">{{ 'collections.product_count' | t: count: c.products_count }}</span>
+      </a>
+    {%- endfor -%}
+  </div>
+</div>
+
+{% schema %}
+{ "name": "Collectielijst", "tag": "section", "settings": [] }
+{% endschema %}
