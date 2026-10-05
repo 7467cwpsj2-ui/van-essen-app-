@@ -1,333 +1,342 @@
 <title>RugRol webshop</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=Jost:wght@300;400;500&display=swap">
 <style>
-  /* Layout: Shopify-achtige productpagina — galerij links, koopblok rechts (gestapeld op mobiel), daarna uitleg, reviews en FAQ */
+  /* Layout: rustige, redactionele productpagina — veel witruimte, haarlijnen, galerij links en koopblok rechts (gestapeld op mobiel) */
   :root {
-    --bg: #f6f9fa;
-    --surface: #ffffff;
-    --ink: #10293a;
-    --muted: #5b707d;
-    --line: #dbe4e8;
-    --sun: #ffb627;
-    --sun-ink: #3a2700;
-    --sea: #1d6f80;
-    --sea-soft: #e3f1f3;
-    --sale: #c8323f;
-    --ok: #1f8a4c;
-    --foam: #fbfaf5;
-    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
-    --body: "Figtree", "Segoe UI", system-ui, -apple-system, sans-serif;
-    --product: #1d1f22;
+    --bg: #f3f1ee;
+    --surface: #fbfaf8;
+    --ink: #1c1a18;
+    --muted: #77716a;
+    --line: #dcd7d0;
+    --bronze: #8c6a43;
+    --stage: #e7e3dd;
+    --stage-hi: #fbfaf8;
+    --stage-ink: #77716a;
+    --foam: #f8f6f1;
+    --display: "Bodoni Moda", "Didot", "Bodoni 72", Georgia, serif;
+    --body: "Jost", "Futura", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    --product: #1b1b1b;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
-      --bg: #0c1a23; --surface: #13252f; --ink: #e8f0f3; --muted: #9db1bc; --line: #24404d;
-      --sun: #ffc04d; --sun-ink: #2a1c00; --sea: #5cc3d4; --sea-soft: #173a45; --sale: #ff6b77; --ok: #4fd08a; --foam: #e9e6dc;
+      --bg: #141312; --surface: #1b1a18; --ink: #ece7e0; --muted: #a29a90; --line: #34302c;
+      --bronze: #c9a479; --stage: #d8d2c9; --stage-hi: #f1eee9; --stage-ink: #6c655c; --foam: #e9e5dc;
       color-scheme: dark;
     }
   }
   :root[data-theme="dark"] {
-    --bg: #0c1a23; --surface: #13252f; --ink: #e8f0f3; --muted: #9db1bc; --line: #24404d;
-    --sun: #ffc04d; --sun-ink: #2a1c00; --sea: #5cc3d4; --sea-soft: #173a45; --sale: #ff6b77; --ok: #4fd08a; --foam: #e9e6dc;
+    --bg: #141312; --surface: #1b1a18; --ink: #ece7e0; --muted: #a29a90; --line: #34302c;
+    --bronze: #c9a479; --stage: #22201e; --foam: #e9e5dc;
     color-scheme: dark;
   }
 
   * { box-sizing: border-box; }
-  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-size: 16px; line-height: 1.55; }
-  h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; margin: 0; }
+  body { background: var(--bg); color: var(--ink); font-family: var(--body); font-weight: 300; font-size: 16px; line-height: 1.7; letter-spacing: .01em; }
+  h1, h2, h3 { font-family: var(--display); font-weight: 400; line-height: 1.08; text-wrap: balance; margin: 0; }
+  em { font-style: italic; }
   button { font: inherit; color: inherit; cursor: pointer; }
-  :focus-visible { outline: 3px solid var(--sea); outline-offset: 2px; }
-  .wrap { max-width: 1140px; margin: 0 auto; padding-inline: 16px; }
+  :focus-visible { outline: 1px solid var(--bronze); outline-offset: 3px; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding-inline: 16px; }
+  @media (min-width: 700px) { .wrap { padding-inline: 40px; } }
 
-  .announce { background: var(--ink); color: var(--bg); text-align: center; font-size: 13px; font-weight: 600; padding: 8px 16px; letter-spacing: .02em; }
+  .label { font-size: 11px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; }
 
-  header.site { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: var(--surface); border-bottom: 1px solid var(--line); }
-  header.site .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; height: 64px; }
-  .logo { font-family: var(--display); font-weight: 800; font-size: 24px; letter-spacing: -.02em; display: flex; align-items: center; gap: 8px; }
-  .logo .dot { width: 18px; height: 18px; border-radius: 50%; background: var(--sun); box-shadow: 0 0 0 4px color-mix(in srgb, var(--sun) 30%, transparent); }
-  nav.main { display: flex; gap: 24px; font-weight: 500; color: var(--muted); }
+  .announce { background: var(--ink); color: var(--bg); text-align: center; padding: 9px 16px; }
+
+  header.site { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 20; background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  header.site .wrap { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; height: 72px; }
+  nav.main { grid-column: 1; }
+  .logo { grid-column: 2; font-family: var(--display); font-size: 26px; letter-spacing: .32em; text-transform: uppercase; padding-left: .32em; }
+  nav.main { display: flex; gap: 28px; color: var(--muted); }
   nav.main a { color: inherit; text-decoration: none; }
   nav.main a:hover { color: var(--ink); }
-  .cart-btn { position: relative; background: none; border: 0; padding: 8px; border-radius: 8px; display: flex; }
-  .cart-btn svg { width: 26px; height: 26px; }
-  .cart-count { position: absolute; top: 0; right: -2px; min-width: 20px; height: 20px; border-radius: 10px; background: var(--sun); color: var(--sun-ink); font-size: 12px; font-weight: 700; display: grid; place-items: center; padding-inline: 5px; }
-  .cart-count[data-n="0"] { display: none; }
+  .cart-btn { grid-column: 3; justify-self: end; background: none; border: 0; padding: 8px 0; display: flex; gap: 6px; align-items: center; }
+  .cart-btn span { font-variant-numeric: tabular-nums; }
 
-  .crumbs { font-size: 13px; color: var(--muted); padding-block: 16px; }
+  .crumbs { color: var(--muted); padding-block: 28px; }
 
   /* Product */
-  .product { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 48px; align-items: start; padding-bottom: 56px; }
-  .gallery { position: sticky; top: 88px; display: grid; gap: 12px; }
-  .stage { aspect-ratio: 1; max-width: 100%; background: var(--sea-soft); border-radius: 20px; display: grid; place-items: center; overflow: hidden; position: relative; }
-  .stage svg { width: 82%; height: 82%; }
-  .stage .tag { position: absolute; top: 16px; left: 16px; background: var(--sale); color: #fff; font-weight: 700; font-size: 13px; padding: 4px 10px; border-radius: 6px; }
-  .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
-  .thumb { aspect-ratio: 1; background: var(--sea-soft); border: 2px solid transparent; border-radius: 12px; padding: 6px; display: grid; place-items: center; }
-  .thumb[aria-pressed="true"] { border-color: var(--ink); }
+  .product { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: 72px; align-items: start; padding-bottom: 96px; }
+  .gallery { position: sticky; top: 100px; display: grid; gap: 14px; }
+  .stage { aspect-ratio: 4 / 5; max-width: 100%; background: radial-gradient(120% 80% at 50% 35%, var(--stage-hi), var(--stage) 70%); display: grid; place-items: center; overflow: hidden; position: relative; }
+  .stage svg { width: 70%; height: 78%; filter: drop-shadow(0 30px 30px rgba(30, 20, 10, .14)); }
+  .stage .cap { position: absolute; left: 20px; bottom: 18px; color: var(--stage-ink); }
+  .thumbs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .thumb { aspect-ratio: 4 / 5; background: var(--stage); border: 0; border-bottom: 1px solid transparent; padding: 10px; display: grid; place-items: center; opacity: .55; transition: opacity .2s; }
+  .thumb:hover { opacity: .85; }
+  .thumb[aria-pressed="true"] { opacity: 1; border-bottom-color: var(--ink); }
   .thumb svg { width: 100%; height: 100%; }
 
-  .buy { display: grid; gap: 20px; min-width: 0; }
-  .vendor { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--sea); }
-  .buy h1 { font-size: clamp(30px, 4.4vw, 44px); font-weight: 800; letter-spacing: -.02em; }
-  .rating { display: flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
-  .stars { color: var(--sun); letter-spacing: 2px; font-size: 16px; }
-  .price-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 12px; }
-  .price { font-family: var(--display); font-weight: 800; font-size: 34px; font-variant-numeric: tabular-nums; }
-  .compare { color: var(--muted); text-decoration: line-through; font-size: 18px; }
-  .save { background: color-mix(in srgb, var(--sale) 14%, transparent); color: var(--sale); font-weight: 700; font-size: 13px; padding: 3px 10px; border-radius: 999px; }
-  .tax { font-size: 13px; color: var(--muted); margin-top: -14px; }
-  .lede { margin: 0; color: var(--muted); max-width: 60ch; }
+  .buy { display: grid; gap: 28px; min-width: 0; padding-top: 8px; }
+  .buy .label { color: var(--bronze); }
+  .buy h1 { font-size: clamp(38px, 4.6vw, 56px); letter-spacing: -.01em; margin-top: 12px; }
+  .buy h1 em { color: var(--muted); }
+  .price-row { display: flex; align-items: baseline; gap: 14px; border-top: 1px solid var(--line); padding-top: 22px; }
+  .price { font-family: var(--display); font-size: 28px; font-variant-numeric: tabular-nums; }
+  .per { color: var(--muted); font-size: 14px; }
+  .tax { font-size: 13px; color: var(--muted); margin-top: -20px; }
+  .lede { margin: 0; color: var(--muted); max-width: 46ch; font-size: 17px; }
 
-  .opt-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; }
-  .opt-label span { font-weight: 400; color: var(--muted); }
-  .swatches { display: flex; gap: 10px; flex-wrap: wrap; }
-  .swatch { width: 40px; height: 40px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line); background: var(--c); }
-  .swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--ink); }
+  .opt-label { display: flex; justify-content: space-between; margin-bottom: 14px; }
+  .opt-label span:nth-child(2) { color: var(--muted); letter-spacing: .08em; text-transform: none; font-size: 14px; font-weight: 300; }
+  .swatches { display: flex; gap: 16px; flex-wrap: wrap; }
+  .swatch { width: 34px; height: 34px; border-radius: 50%; border: 0; background: var(--c); outline: 1px solid var(--line); outline-offset: 4px; }
+  .swatch[aria-checked="true"] { outline-color: var(--ink); }
 
-  .bundles { display: grid; gap: 10px; }
-  .bundle { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; padding: 14px 16px; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); text-align: left; }
-  .bundle[aria-checked="true"] { border-color: var(--ink); background: var(--sea-soft); }
-  .bundle .radio { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--muted); }
-  .bundle[aria-checked="true"] .radio { border: 5px solid var(--ink); }
-  .bundle b { display: block; }
-  .bundle small { color: var(--muted); }
-  .bundle .bp { font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
-  .bundle .badge { display: inline-block; background: var(--sun); color: var(--sun-ink); font-size: 11px; font-weight: 700; padding: 1px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 1px; }
+  .bundles { display: grid; border-top: 1px solid var(--line); }
+  .bundle { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 16px; padding: 18px 2px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; }
+  .bundle .radio { width: 14px; height: 14px; border-radius: 50%; border: 1px solid var(--muted); }
+  .bundle[aria-checked="true"] .radio { border-color: var(--ink); box-shadow: inset 0 0 0 3px var(--bg), inset 0 0 0 7px var(--ink); }
+  .bundle b { display: block; font-weight: 400; }
+  .bundle small { color: var(--muted); font-size: 13px; }
+  .bundle .bp { font-variant-numeric: tabular-nums; }
 
   .actions { display: grid; grid-template-columns: auto 1fr; gap: 12px; }
-  .qty { display: flex; align-items: center; border: 1.5px solid var(--line); border-radius: 12px; background: var(--surface); }
-  .qty button { background: none; border: 0; width: 44px; height: 52px; font-size: 20px; }
-  .qty output { width: 28px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
-  .btn { border: 0; border-radius: 12px; height: 54px; font-weight: 700; font-size: 16px; padding-inline: 20px; }
+  .qty { display: flex; align-items: center; border: 1px solid var(--line); }
+  .qty button { background: none; border: 0; width: 44px; height: 56px; font-size: 18px; color: var(--muted); }
+  .qty output { width: 24px; text-align: center; font-variant-numeric: tabular-nums; }
+  .btn { border: 0; height: 58px; padding-inline: 24px; font-size: 12px; font-weight: 500; letter-spacing: .24em; text-transform: uppercase; transition: background .2s, color .2s; }
   .btn-primary { background: var(--ink); color: var(--bg); }
-  .btn-primary:hover { opacity: .9; }
-  .btn-sun { background: var(--sun); color: var(--sun-ink); width: 100%; }
-  .btn-sun:hover { filter: brightness(1.05); }
+  .btn-primary:hover { background: var(--bronze); }
+  .btn-ghost { background: none; color: var(--ink); border: 1px solid var(--ink); width: 100%; }
+  .btn-ghost:hover { background: var(--ink); color: var(--bg); }
 
-  .trust { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 13px; color: var(--muted); }
-  .trust div { display: flex; gap: 8px; align-items: flex-start; }
-  .trust svg { flex: none; width: 18px; height: 18px; color: var(--sea); margin-top: 1px; }
+  .promise { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--line); border: 1px solid var(--line); text-align: center; }
+  .promise div { background: var(--bg); padding: 14px 8px; font-size: 13px; color: var(--muted); line-height: 1.4; }
 
   details { border-top: 1px solid var(--line); }
   details:last-of-type { border-bottom: 1px solid var(--line); }
-  summary { list-style: none; cursor: pointer; padding: 16px 0; font-weight: 600; display: flex; justify-content: space-between; }
+  summary { list-style: none; cursor: pointer; padding: 18px 0; display: flex; justify-content: space-between; align-items: center; }
   summary::-webkit-details-marker { display: none; }
-  summary::after { content: "+"; font-size: 22px; line-height: 1; color: var(--muted); }
-  details[open] summary::after { content: "–"; }
-  details .content { padding-bottom: 16px; color: var(--muted); }
-  details ul { margin: 0; padding-left: 20px; }
+  summary::after { content: ""; width: 9px; height: 9px; border-right: 1px solid var(--muted); border-bottom: 1px solid var(--muted); transform: rotate(45deg) translateY(-3px); transition: transform .2s; }
+  details[open] summary::after { transform: rotate(-135deg); }
+  details .content { padding-bottom: 20px; color: var(--muted); max-width: 60ch; }
+  details ul { margin: 0; padding-left: 18px; }
 
   /* Secties */
-  section.band { padding-block: 64px; border-top: 1px solid var(--line); }
-  .eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--sea); margin-bottom: 10px; }
-  section.band h2 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 800; letter-spacing: -.015em; max-width: 22ch; }
+  section.band { padding-block: 112px; border-top: 1px solid var(--line); }
+  section.band .label { color: var(--bronze); display: block; margin-bottom: 20px; }
+  section.band h2 { font-size: clamp(32px, 4.2vw, 52px); max-width: 18ch; }
+  section.band h2 em { color: var(--muted); }
 
-  .problem { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
-  .problem p { color: var(--muted); max-width: 55ch; }
-  .zones { background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 24px; }
-  .zones svg { width: 100%; height: auto; display: block; max-width: 340px; margin: 0 auto; }
-  .zones figcaption { font-size: 13px; color: var(--muted); text-align: center; margin-top: 8px; }
+  .manifest { text-align: center; }
+  .manifest h2 { margin-inline: auto; max-width: 22ch; }
+  .manifest p { max-width: 52ch; margin: 28px auto 0; color: var(--muted); font-size: 17px; }
 
-  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 32px; }
-  .step { display: grid; gap: 10px; align-content: start; }
-  .step .n { width: 40px; height: 40px; border-radius: 50%; background: var(--sun); color: var(--sun-ink); font-family: var(--display); font-weight: 800; display: grid; place-items: center; font-size: 18px; }
-  .step h3 { font-size: 20px; }
+  .split { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+  .split p { color: var(--muted); max-width: 46ch; }
+  .plate { background: var(--stage); aspect-ratio: 1; max-width: 100%; display: grid; place-items: center; }
+  .plate svg { width: 70%; height: 70%; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 64px; }
+  .step { border-top: 1px solid var(--ink); padding-top: 22px; display: grid; gap: 12px; align-content: start; }
+  .step .n { font-family: var(--display); font-style: italic; font-size: 22px; color: var(--bronze); }
+  .step h3 { font-size: 26px; }
   .step p { margin: 0; color: var(--muted); }
 
-  .uses { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
-  .uses span { border: 1.5px solid var(--line); background: var(--surface); padding: 8px 14px; border-radius: 999px; font-weight: 600; font-size: 14px; }
+  .specs { display: grid; grid-template-columns: repeat(4, 1fr); margin-top: 64px; border-top: 1px solid var(--line); }
+  .specs div { padding: 24px 20px 0 0; display: grid; gap: 6px; }
+  .specs dt { color: var(--muted); }
+  .specs dd { margin: 0; font-family: var(--display); font-size: 20px; }
 
   .reviews-head { display: flex; justify-content: space-between; align-items: end; flex-wrap: wrap; gap: 16px; }
-  .demo-note { font-size: 13px; color: var(--sale); font-weight: 600; }
-  .reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 28px; }
-  .review { background: var(--surface); border: 1px solid var(--line); border-radius: 16px; padding: 20px; display: grid; gap: 8px; align-content: start; }
-  .review p { margin: 0; }
-  .review .who { font-size: 13px; color: var(--muted); }
+  .demo-note { font-size: 13px; color: var(--bronze); font-style: italic; }
+  .reviews { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 56px; }
+  .review { display: grid; gap: 16px; align-content: start; }
+  .review blockquote { margin: 0; font-family: var(--display); font-size: 22px; line-height: 1.35; }
+  .review .who { color: var(--muted); }
+  .stars { color: var(--bronze); letter-spacing: 4px; font-size: 12px; }
 
-  .faq { max-width: 760px; margin-top: 24px; }
+  .faq { max-width: 760px; margin-top: 48px; }
 
-  footer { background: var(--ink); color: var(--bg); padding-block: 48px 32px; margin-top: 0; }
-  footer .cols { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 32px; }
-  footer h4 { margin: 0 0 10px; font-size: 14px; }
-  footer p, footer li { font-size: 14px; opacity: .75; }
-  footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
-  footer .news { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
-  footer input { flex: 1 1 180px; min-width: 0; height: 44px; border-radius: 10px; border: 1px solid color-mix(in srgb, var(--bg) 30%, transparent); background: transparent; color: var(--bg); padding-inline: 12px; font: inherit; }
-  footer input::placeholder { color: color-mix(in srgb, var(--bg) 60%, transparent); }
-  footer .news button { height: 44px; border-radius: 10px; border: 0; background: var(--sun); color: var(--sun-ink); font-weight: 700; padding-inline: 16px; }
-  footer .legal { margin-top: 32px; padding-top: 20px; border-top: 1px solid color-mix(in srgb, var(--bg) 20%, transparent); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; font-size: 13px; opacity: .7; }
-  .pay { display: flex; gap: 6px; flex-wrap: wrap; }
-  .pay span { border: 1px solid color-mix(in srgb, var(--bg) 35%, transparent); border-radius: 4px; padding: 1px 6px; font-size: 11px; font-weight: 700; }
+  footer { border-top: 1px solid var(--line); padding-block: 80px 36px; }
+  footer .cols { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 48px; }
+  footer h4 { margin: 0 0 16px; color: var(--muted); }
+  footer p { color: var(--muted); max-width: 40ch; }
+  footer ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+  footer .news { display: flex; gap: 0; margin-top: 20px; border-bottom: 1px solid var(--ink); max-width: 420px; }
+  footer input { flex: 1; min-width: 0; height: 48px; border: 0; background: transparent; color: var(--ink); font: inherit; padding: 0; }
+  footer input::placeholder { color: var(--muted); }
+  footer .news button { background: none; border: 0; }
+  footer .legal { margin-top: 64px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; color: var(--muted); }
+  footer .bigmark { font-family: var(--display); font-size: clamp(64px, 14vw, 200px); letter-spacing: .2em; text-transform: uppercase; text-align: center; color: var(--line); line-height: 1; margin-top: 56px; overflow: hidden; white-space: nowrap; }
 
   /* Winkelwagen-lade */
-  .scrim { position: fixed; inset: 0; background: rgba(5, 15, 20, .45); z-index: 40; }
-  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(420px, 100%); background: var(--surface); z-index: 50; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 20px) 20px calc(env(safe-area-inset-bottom, 0px) + 20px); gap: 16px; box-shadow: -12px 0 40px rgba(0,0,0,.18); transform: translateX(0); transition: transform .25s ease; }
+  .scrim { position: fixed; inset: 0; background: rgba(20, 16, 12, .4); z-index: 40; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--bg); z-index: 50; display: flex; flex-direction: column; padding: calc(env(safe-area-inset-top, 0px) + 28px) 28px calc(env(safe-area-inset-bottom, 0px) + 28px); gap: 20px; transition: transform .35s cubic-bezier(.2, .7, .2, 1); }
   .drawer[hidden] { display: flex !important; transform: translateX(105%); visibility: hidden; }
-  .drawer-head { display: flex; justify-content: space-between; align-items: center; }
-  .drawer-head h2 { font-size: 22px; }
-  .x { background: none; border: 0; font-size: 26px; line-height: 1; padding: 4px 8px; }
-  .ship-bar { background: var(--sea-soft); border-radius: 12px; padding: 12px 14px; font-size: 14px; display: grid; gap: 8px; }
-  .meter { height: 6px; border-radius: 3px; background: var(--line); overflow: hidden; }
-  .meter i { display: block; height: 100%; background: var(--ok); width: 0; transition: width .3s; }
-  .lines { flex: 1; overflow-y: auto; display: grid; gap: 14px; align-content: start; }
-  .line { display: grid; grid-template-columns: 64px 1fr auto; gap: 12px; align-items: center; }
-  .line .pic { width: 64px; height: 64px; border-radius: 10px; background: var(--sea-soft); padding: 4px; }
+  .drawer-head { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+  .drawer-head h2 { font-size: 28px; }
+  .x { background: none; border: 0; padding: 4px 0; }
+  .ship-bar { display: grid; gap: 10px; font-size: 14px; color: var(--muted); }
+  .meter { height: 1px; background: var(--line); }
+  .meter i { display: block; height: 1px; background: var(--ink); width: 0; transition: width .4s; }
+  .lines { flex: 1; overflow-y: auto; display: grid; gap: 20px; align-content: start; }
+  .line { display: grid; grid-template-columns: 72px 1fr auto; gap: 16px; align-items: center; }
+  .line .pic { width: 72px; height: 90px; background: var(--stage); padding: 8px; }
   .line .pic svg { width: 100%; height: 100%; }
-  .line small { color: var(--muted); display: block; }
-  .line .rm { background: none; border: 0; color: var(--muted); font-size: 13px; text-decoration: underline; padding: 0; }
-  .empty { color: var(--muted); text-align: center; padding-block: 40px; }
-  .totals { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 12px; }
-  .totals .row { display: flex; justify-content: space-between; font-weight: 700; font-size: 18px; font-variant-numeric: tabular-nums; }
+  .line b { font-weight: 400; font-family: var(--display); font-size: 18px; }
+  .line small { color: var(--muted); display: block; font-size: 13px; }
+  .line .rm { background: none; border: 0; color: var(--muted); font-size: 12px; text-decoration: underline; text-underline-offset: 3px; padding: 0; margin-top: 4px; }
+  .line .lp { font-variant-numeric: tabular-nums; }
+  .empty { color: var(--muted); text-align: center; padding-block: 48px; font-family: var(--display); font-style: italic; font-size: 20px; }
+  .totals { border-top: 1px solid var(--line); padding-top: 18px; display: grid; gap: 14px; }
+  .totals .row { display: flex; justify-content: space-between; font-variant-numeric: tabular-nums; }
   .totals small { color: var(--muted); }
-  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 12px 18px; border-radius: 10px; font-weight: 600; font-size: 14px; z-index: 60; max-width: calc(100% - 32px); }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .toast { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 24px); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 14px 22px; font-size: 14px; z-index: 60; max-width: calc(100% - 32px); }
 
   /* Mobiele koopbalk */
-  .sticky-buy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--surface); border-top: 1px solid var(--line); padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px); display: none; align-items: center; gap: 12px; }
-  .sticky-buy .p { font-weight: 800; font-family: var(--display); font-size: 20px; font-variant-numeric: tabular-nums; }
-  .sticky-buy .btn { flex: 1; height: 48px; }
+  .sticky-buy { position: fixed; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--bg); border-top: 1px solid var(--line); padding: 10px 16px calc(env(safe-area-inset-bottom, 0px) + 10px); display: none; align-items: center; gap: 16px; }
+  .sticky-buy .p { font-family: var(--display); font-size: 22px; font-variant-numeric: tabular-nums; }
+  .sticky-buy .btn { flex: 1; height: 50px; }
 
-  @media (max-width: 860px) {
+  @media (max-width: 900px) {
     nav.main { display: none; }
-    .product, .problem { grid-template-columns: 1fr; gap: 28px; }
+    header.site .wrap { grid-template-columns: 1fr auto 1fr; }
+    .product, .split { grid-template-columns: 1fr; gap: 40px; }
     .gallery { position: static; }
-    .steps, .reviews { grid-template-columns: 1fr; }
+    .steps, .reviews { grid-template-columns: 1fr; gap: 40px; }
+    .specs { grid-template-columns: 1fr 1fr; row-gap: 20px; }
+    section.band { padding-block: 72px; }
     footer .cols { grid-template-columns: 1fr 1fr; }
     footer .cols > :first-child { grid-column: 1 / -1; }
     .sticky-buy { display: flex; }
     body { padding-bottom: 72px; }
   }
   @media (max-width: 420px) {
-    .trust { grid-template-columns: 1fr; }
+    .logo { font-size: 22px; letter-spacing: .24em; }
+    .promise { grid-template-columns: 1fr; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .drawer, .meter i { transition: none; }
+    .drawer, .meter i, .thumb { transition: none; }
   }
 </style>
 
 <!-- Productillustratie, hergebruikt via <use> -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
+    <linearGradient id="foamShade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff"/><stop offset=".55" stop-color="#f1eee7"/><stop offset="1" stop-color="#d9d4ca"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".35" stop-color="#fff" stop-opacity=".22"/><stop offset=".5" stop-color="#fff" stop-opacity="0"/>
+    </linearGradient>
     <symbol id="applicator" viewBox="0 0 200 320">
-      <rect x="38" y="18" width="124" height="52" rx="24" fill="var(--foam)" stroke="color-mix(in srgb, var(--product) 35%, #9aa)" stroke-width="2"/>
-      <path d="M48 30 Q100 22 152 30" stroke="#d9d5c8" stroke-width="2" fill="none"/>
-      <path d="M48 44 Q100 37 152 44" stroke="#d9d5c8" stroke-width="2" fill="none"/>
-      <path d="M48 58 Q100 51 152 58" stroke="#d9d5c8" stroke-width="2" fill="none"/>
+      <rect x="38" y="18" width="124" height="52" rx="24" fill="url(#foamShade)"/>
       <rect x="30" y="22" width="12" height="44" rx="5" fill="var(--product)"/>
       <rect x="158" y="22" width="12" height="44" rx="5" fill="var(--product)"/>
       <path d="M58 70 L142 70 L108 128 L92 128 Z" fill="var(--product)"/>
-      <path d="M80 80 L120 80 L102 112 L98 112 Z" fill="var(--bg)"/>
+      <path d="M80 80 L120 80 L102 112 L98 112 Z" fill="var(--stage)"/>
       <rect x="88" y="124" width="24" height="76" rx="8" fill="var(--product)"/>
-      <rect x="84" y="196" width="32" height="14" rx="4" fill="color-mix(in srgb, var(--product) 80%, #fff)"/>
-      <circle cx="100" cy="203" r="3" fill="var(--bg)" opacity=".7"/>
+      <rect x="84" y="196" width="32" height="14" rx="3" fill="#b8956a"/>
       <rect x="86" y="208" width="28" height="98" rx="12" fill="var(--product)"/>
-      <g stroke="color-mix(in srgb, var(--product) 70%, #fff)" stroke-width="2">
-        <line x1="92" y1="226" x2="108" y2="226"/><line x1="92" y1="234" x2="108" y2="234"/>
-        <line x1="92" y1="242" x2="108" y2="242"/><line x1="92" y1="250" x2="108" y2="250"/>
-        <line x1="92" y1="258" x2="108" y2="258"/><line x1="92" y1="266" x2="108" y2="266"/>
-        <line x1="92" y1="274" x2="108" y2="274"/>
-      </g>
-      <circle cx="100" cy="294" r="5" fill="var(--bg)"/>
+      <circle cx="100" cy="294" r="4.5" fill="var(--stage)"/>
     </symbol>
     <symbol id="folded" viewBox="0 0 200 320">
-      <g transform="translate(0 70)">
-        <rect x="38" y="18" width="124" height="52" rx="24" fill="var(--foam)" stroke="color-mix(in srgb, var(--product) 35%, #9aa)" stroke-width="2"/>
+      <g transform="translate(0 60)">
+        <rect x="38" y="18" width="124" height="52" rx="24" fill="url(#foamShade)"/>
         <rect x="30" y="22" width="12" height="44" rx="5" fill="var(--product)"/>
         <rect x="158" y="22" width="12" height="44" rx="5" fill="var(--product)"/>
         <path d="M58 70 L142 70 L108 128 L92 128 Z" fill="var(--product)"/>
-        <path d="M80 80 L120 80 L102 112 L98 112 Z" fill="var(--bg)"/>
+        <path d="M80 80 L120 80 L102 112 L98 112 Z" fill="var(--stage)"/>
         <rect x="88" y="124" width="24" height="44" rx="8" fill="var(--product)"/>
-        <rect x="84" y="164" width="32" height="14" rx="4" fill="color-mix(in srgb, var(--product) 80%, #fff)"/>
+        <rect x="84" y="164" width="32" height="14" rx="3" fill="#b8956a"/>
         <rect x="114" y="100" width="28" height="78" rx="12" fill="var(--product)" opacity=".85" transform="rotate(-8 128 170)"/>
       </g>
-      <path d="M150 60 a40 40 0 0 1 10 60" stroke="var(--sea)" stroke-width="3" fill="none" stroke-linecap="round"/>
-      <path d="M154 116 l6 6 l3 -9" stroke="var(--sea)" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     </symbol>
-    <symbol id="inuse" viewBox="0 0 200 320">
-      <path d="M40 300 C40 200 50 150 70 130 C80 120 90 112 100 112 C110 112 120 120 130 130 C150 150 160 200 160 300 Z" fill="color-mix(in srgb, var(--sun) 35%, #e8c6a8)"/>
-      <circle cx="100" cy="82" r="30" fill="color-mix(in srgb, var(--sun) 35%, #e8c6a8)"/>
-      <path d="M100 150 L100 290" stroke="color-mix(in srgb, var(--sun-ink) 25%, #e8c6a8)" stroke-width="2" opacity=".5"/>
-      <ellipse cx="88" cy="210" rx="28" ry="18" fill="var(--foam)" opacity=".85"/>
-      <g transform="translate(60 168) rotate(-28) scale(.45)">
-        <use href="#applicator"/>
+    <symbol id="detail" viewBox="0 0 200 320">
+      <g transform="translate(-100 -10) scale(2)">
+        <rect x="38" y="18" width="124" height="52" rx="24" fill="url(#foamShade)"/>
+        <rect x="30" y="22" width="12" height="44" rx="5" fill="var(--product)"/>
+        <rect x="158" y="22" width="12" height="44" rx="5" fill="var(--product)"/>
+        <path d="M58 70 L142 70 L108 128 L92 128 Z" fill="var(--product)"/>
+        <path d="M80 80 L120 80 L102 112 L98 112 Z" fill="var(--stage)"/>
       </g>
+    </symbol>
+    <symbol id="silhouette" viewBox="0 0 200 320">
+      <path d="M40 320 C40 210 52 160 72 140 C82 130 92 124 100 124 C108 124 118 130 128 140 C148 160 160 210 160 320 Z" fill="#cfb8a2"/>
+      <rect x="88" y="78" width="24" height="52" rx="10" fill="#cfb8a2"/>
+      <ellipse cx="100" cy="66" rx="28" ry="32" fill="#cfb8a2"/>
+      <path d="M72 58 C72 30 128 30 128 58 C122 44 78 44 72 58 Z" fill="#5a4636"/>
+      <circle cx="100" cy="34" r="12" fill="#5a4636"/>
+      <path d="M100 160 L100 300" stroke="#b79f89" stroke-width="1.5"/>
+      <ellipse cx="90" cy="214" rx="24" ry="14" fill="#fff" opacity=".55"/>
+      <g transform="translate(66 178) rotate(-26) scale(.42)"><use href="#applicator"/></g>
     </symbol>
   </defs>
 </svg>
 
-<div class="announce">Gratis verzending vanaf €25 · Voor 23:00 besteld, morgen in huis</div>
+<div class="announce label">Gratis verzending vanaf €50 &nbsp;·&nbsp; Geschenkverpakking op aanvraag</div>
 
 <header class="site">
   <div class="wrap">
-    <div class="logo"><span class="dot"></span>RugRol</div>
     <nav class="main" aria-label="Hoofdmenu">
       <a href="#product">Shop</a>
-      <a href="#hoe">Hoe werkt het</a>
-      <a href="#reviews">Reviews</a>
-      <a href="#faq">Vragen</a>
+      <a href="#ritueel">Ritueel</a>
+      <a href="#faq">Service</a>
     </nav>
-    <button class="cart-btn" id="openCart" aria-label="Winkelwagen openen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4h2l2.4 11.2a2 2 0 0 0 2 1.6h7.7a2 2 0 0 0 2-1.5L21 8H6"/><circle cx="10" cy="20" r="1.3"/><circle cx="17" cy="20" r="1.3"/></svg>
-      <span class="cart-count" id="cartCount" data-n="0">0</span>
-    </button>
+    <div class="logo">Rugrol</div>
+    <button class="cart-btn label" id="openCart" aria-label="Winkelwagen openen">Tas <span id="cartCount">(0)</span></button>
   </div>
 </header>
 
 <main>
   <div class="wrap">
-    <div class="crumbs">Home / Zomer / RugRol Applicator</div>
+    <div class="crumbs label">Home &nbsp;/&nbsp; Zon &amp; huid &nbsp;/&nbsp; Applicator</div>
 
     <div class="product" id="product">
       <div class="gallery">
         <div class="stage" id="stage">
-          <span class="tag">−33%</span>
           <svg viewBox="0 0 200 320" role="img" aria-label="RugRol applicator"><use id="stageUse" href="#applicator"/></svg>
+          <span class="cap label" id="stageCap">Uitgeklapt</span>
         </div>
         <div class="thumbs" id="thumbs">
-          <button class="thumb" aria-pressed="true" data-view="applicator" aria-label="Uitgeklapt"><svg viewBox="0 0 200 320"><use href="#applicator"/></svg></button>
-          <button class="thumb" aria-pressed="false" data-view="folded" aria-label="Ingeklapt"><svg viewBox="0 0 200 320"><use href="#folded"/></svg></button>
-          <button class="thumb" aria-pressed="false" data-view="inuse" aria-label="In gebruik"><svg viewBox="0 0 200 320"><use href="#inuse"/></svg></button>
-          <button class="thumb" aria-pressed="false" data-view="applicator" data-rot="1" aria-label="Detail roller"><svg viewBox="40 10 120 120"><use href="#applicator"/></svg></button>
+          <button class="thumb" aria-pressed="true" data-view="applicator" data-cap="Uitgeklapt" aria-label="Uitgeklapt"><svg viewBox="0 0 200 320"><use href="#applicator"/></svg></button>
+          <button class="thumb" aria-pressed="false" data-view="folded" data-cap="Ingeklapt" aria-label="Ingeklapt"><svg viewBox="0 0 200 320"><use href="#folded"/></svg></button>
+          <button class="thumb" aria-pressed="false" data-view="detail" data-cap="Schuimroller" aria-label="Detail roller"><svg viewBox="0 0 200 320"><use href="#detail"/></svg></button>
+          <button class="thumb" aria-pressed="false" data-view="silhouette" data-cap="In gebruik" aria-label="In gebruik"><svg viewBox="0 0 200 320"><use href="#silhouette"/></svg></button>
         </div>
       </div>
 
       <div class="buy">
         <div>
-          <div class="vendor">RugRol</div>
-          <h1>RugRol Applicator</h1>
+          <span class="label">Zon &amp; huidverzorging</span>
+          <h1>De Applicator <em>No.&nbsp;1</em></h1>
         </div>
-        <div class="rating"><span class="stars">★★★★★</span> 5,0 · voorbeeldscore</div>
 
-        <div class="price-row">
-          <span class="price" id="price">€19,95</span>
-          <span class="compare" id="compare">€29,95</span>
-          <span class="save" id="save">Bespaar €10,00</span>
-        </div>
-        <div class="tax">Inclusief btw. Verzendkosten worden berekend bij het afrekenen.</div>
-
-        <p class="lede">Smeer zonnebrand, zelfbruiner of bodylotion zelf op je hele rug. De zachte schuimroller verdeelt de crème gelijkmatig, en de lange steel klapt in tot tasformaat.</p>
+        <p class="lede">Een lange, inklapbare steel met een zachte schuimroller. Zo verzorg je zelf je hele rug, van zonnebrand tot zelfbruiner, zonder vlekken en zonder hulp.</p>
 
         <div>
-          <div class="opt-label">Kleur: <span id="colorName">Zwart</span></div>
+          <div class="price-row">
+            <span class="price" id="price">€29</span>
+            <span class="per" id="per">per stuk</span>
+          </div>
+        </div>
+        <div class="tax">Inclusief btw.</div>
+
+        <div>
+          <div class="opt-label label"><span>Kleur</span><span id="colorName">Onyx</span></div>
           <div class="swatches" role="radiogroup" aria-label="Kleur" id="swatches">
-            <button class="swatch" role="radio" aria-checked="true" data-name="Zwart" style="--c:#1d1f22" aria-label="Zwart"></button>
-            <button class="swatch" role="radio" aria-checked="false" data-name="Grijs" style="--c:#8a9399" aria-label="Grijs"></button>
-            <button class="swatch" role="radio" aria-checked="false" data-name="Roze" style="--c:#f2a7c3" aria-label="Roze"></button>
-            <button class="swatch" role="radio" aria-checked="false" data-name="Blauw" style="--c:#2f55d4" aria-label="Blauw"></button>
+            <button class="swatch" role="radio" aria-checked="true" data-name="Onyx" style="--c:#1b1b1b" aria-label="Onyx"></button>
+            <button class="swatch" role="radio" aria-checked="false" data-name="Steen" style="--c:#8d8a85" aria-label="Steen"></button>
+            <button class="swatch" role="radio" aria-checked="false" data-name="Rosé" style="--c:#dcb0b8" aria-label="Rosé"></button>
+            <button class="swatch" role="radio" aria-checked="false" data-name="Kobalt" style="--c:#2b4a9a" aria-label="Kobalt"></button>
           </div>
         </div>
 
         <div>
-          <div class="opt-label">Aantal</div>
-          <div class="bundles" role="radiogroup" aria-label="Bundel" id="bundles">
-            <button class="bundle" role="radio" aria-checked="true" data-n="1" data-price="19.95" data-compare="29.95">
-              <span class="radio"></span><span><b>1 stuk</b><small>Voor jezelf</small></span><span class="bp">€19,95</span>
+          <div class="opt-label label"><span>Set</span></div>
+          <div class="bundles" role="radiogroup" aria-label="Set" id="bundles">
+            <button class="bundle" role="radio" aria-checked="true" data-n="1" data-name="Enkel" data-price="29">
+              <span class="radio"></span><span><b>Enkel</b><small>Eén applicator</small></span><span class="bp">€29</span>
             </button>
-            <button class="bundle" role="radio" aria-checked="false" data-n="2" data-price="34.95" data-compare="59.90">
-              <span class="radio"></span><span><b>2 stuks <span class="badge">Populair</span></b><small>Eén voor thuis, één in de strandtas</small></span><span class="bp">€34,95</span>
+            <button class="bundle" role="radio" aria-checked="false" data-n="2" data-name="Duo" data-price="49">
+              <span class="radio"></span><span><b>Duo</b><small>Voor thuis en op reis</small></span><span class="bp">€49</span>
             </button>
-            <button class="bundle" role="radio" aria-checked="false" data-n="3" data-price="47.95" data-compare="89.85">
-              <span class="radio"></span><span><b>3 stuks</b><small>Voor het hele gezin</small></span><span class="bp">€47,95</span>
+            <button class="bundle" role="radio" aria-checked="false" data-n="3" data-name="Familie" data-price="69">
+              <span class="radio"></span><span><b>Familie</b><small>Drie stuks, in één geschenkdoos</small></span><span class="bp">€69</span>
             </button>
           </div>
         </div>
@@ -338,72 +347,68 @@
             <output id="qty">1</output>
             <button id="plus" aria-label="Meer">+</button>
           </div>
-          <button class="btn btn-primary" id="addBtn">In winkelwagen</button>
+          <button class="btn btn-primary" id="addBtn">In de tas</button>
         </div>
-        <button class="btn btn-sun" id="buyNow">Direct afrekenen met iDEAL</button>
+        <button class="btn btn-ghost" id="buyNow">Direct afrekenen</button>
 
-        <div class="trust">
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17" r="2"/><circle cx="17" cy="17" r="2"/></svg>Morgen in huis in NL en BE</div>
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>30 dagen gratis retour</div>
-          <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>Veilig betalen</div>
+        <div class="promise">
+          <div>Verzonden binnen<br>1 werkdag</div>
+          <div>30 dagen<br>retour</div>
+          <div>Geschenk&shy;verpakking<br>mogelijk</div>
         </div>
 
         <div>
           <details open>
-            <summary>Productdetails</summary>
+            <summary class="label">Details</summary>
             <div class="content"><ul>
-              <li>Lange steel met scharnier, klapt in tot reisformaat</li>
+              <li>Inklapbare steel met scharnier</li>
               <li>Zachte, wasbare schuimroller</li>
-              <li>Antislip-grip met ribbels, ophangoogje onderaan</li>
-              <li>Werkt met zonnebrand, zelfbruiner, after-sun en lotion</li>
-              <li>Kleuren: zwart, grijs, roze en blauw</li>
+              <li>Mat afgewerkte grip met ophangoogje</li>
+              <li>Voor zonnebrand, zelfbruiner, after-sun en lotion</li>
             </ul></div>
           </details>
           <details>
-            <summary>Verzending</summary>
-            <div class="content">Op werkdagen voor 23:00 besteld, de volgende dag geleverd via PostNL. Gratis vanaf €25, daaronder €3,95.</div>
+            <summary class="label">Verzending</summary>
+            <div class="content">Bestellingen worden binnen één werkdag verzonden. Gratis vanaf €50, daaronder €4,95.</div>
           </details>
           <details>
-            <summary>Retourneren</summary>
-            <div class="content">Niet tevreden? Stuur het product binnen 30 dagen terug en je krijgt je geld terug.</div>
+            <summary class="label">Retour</summary>
+            <div class="content">Je hebt 30 dagen bedenktijd. Stuur het product ongebruikt terug en je krijgt het volledige bedrag terug.</div>
           </details>
         </div>
       </div>
     </div>
   </div>
 
-  <section class="band">
-    <div class="wrap problem">
-      <div>
-        <div class="eyebrow">Het probleem</div>
-        <h2>Die ene plek tussen je schouderbladen</h2>
-        <p>Elke zomer hetzelfde: je smeert je hele lichaam in, behalve het midden van je rug. Precies daar verbrand je het eerst. Met RugRol kom je overal zelf bij, zonder hulp en zonder vette handen.</p>
-      </div>
-      <figure class="zones" style="margin:0">
-        <svg viewBox="0 0 300 240" role="img" aria-label="Rug met de zone die je zonder hulpmiddel niet bereikt">
-          <path d="M60 240 C60 150 80 95 110 80 C125 72 140 68 150 68 C160 68 175 72 190 80 C220 95 240 150 240 240 Z" fill="color-mix(in srgb, var(--sun) 30%, #e8c6a8)"/>
-          <circle cx="150" cy="40" r="26" fill="color-mix(in srgb, var(--sun) 30%, #e8c6a8)"/>
-          <ellipse cx="150" cy="140" rx="46" ry="40" fill="var(--sale)" opacity=".35"/>
-          <ellipse cx="150" cy="140" rx="46" ry="40" fill="none" stroke="var(--sale)" stroke-width="2" stroke-dasharray="5 5"/>
-          <text x="150" y="145" text-anchor="middle" font-size="13" font-weight="700" fill="var(--ink)" font-family="Figtree, sans-serif">onbereikbaar</text>
-        </svg>
-        <figcaption>De rode zone haal je met je handen bijna nooit</figcaption>
-      </figure>
+  <section class="band manifest">
+    <div class="wrap">
+      <span class="label">Waarom</span>
+      <h2>Verzorging tot op de <em>laatste centimeter</em></h2>
+      <p>De plek tussen je schouderbladen is de plek die je het vaakst vergeet, en het eerst verbrandt. Wij maakten één doordacht gereedschap dat die plek binnen bereik brengt.</p>
     </div>
   </section>
 
-  <section class="band" id="hoe">
+  <section class="band" id="ritueel">
     <div class="wrap">
-      <div class="eyebrow">Hoe werkt het</div>
-      <h2>In drie stappen ingesmeerd</h2>
+      <div class="split">
+        <div class="plate"><svg viewBox="0 0 200 320" role="img" aria-label="Applicator in gebruik op de rug"><use href="#silhouette"/></svg></div>
+        <div>
+          <span class="label">Het ritueel</span>
+          <h2>Drie bewegingen, <em>één gelijkmatige laag</em></h2>
+          <p>De schuimroller neemt de crème op en geeft hem in een dunne, egale laag weer af. Geen strepen, geen vette handen.</p>
+        </div>
+      </div>
       <div class="steps">
-        <div class="step"><div class="n">1</div><h3>Klap uit</h3><p>Klik de steel uit tot hij vastzit. Ingeklapt past hij in elke strandtas.</p></div>
-        <div class="step"><div class="n">2</div><h3>Crème op de roller</h3><p>Doe een paar knijpjes zonnebrand of lotion op de schuimroller.</p></div>
-        <div class="step"><div class="n">3</div><h3>Rol over je rug</h3><p>Rol van boven naar beneden en van links naar rechts. Spoel de roller na gebruik af.</p></div>
+        <div class="step"><span class="n">i.</span><h3>Uitklappen</h3><p>Klik de steel uit tot hij vastzit. Ingeklapt past hij in elke tas.</p></div>
+        <div class="step"><span class="n">ii.</span><h3>Aanbrengen</h3><p>Doe een paar druppels zonnebrand of lotion op de roller.</p></div>
+        <div class="step"><span class="n">iii.</span><h3>Rollen</h3><p>Rol in lange halen van boven naar beneden. Spoel de roller daarna af.</p></div>
       </div>
-      <div class="uses">
-        <span>Zonnebrand</span><span>Zelfbruiner</span><span>After-sun</span><span>Bodylotion</span><span>Verzorgende crème</span>
-      </div>
+      <dl class="specs">
+        <div><dt class="label">Roller</dt><dd>Zacht schuim</dd></div>
+        <div><dt class="label">Steel</dt><dd>Inklapbaar</dd></div>
+        <div><dt class="label">Kleuren</dt><dd>Vier tinten</dd></div>
+        <div><dt class="label">Onderhoud</dt><dd>Afspoelen</dd></div>
+      </dl>
     </div>
   </section>
 
@@ -411,28 +416,28 @@
     <div class="wrap">
       <div class="reviews-head">
         <div>
-          <div class="eyebrow">Reviews</div>
-          <h2>Wat klanten zeggen</h2>
+          <span class="label">Ervaringen</span>
+          <h2>In hun <em>eigen woorden</em></h2>
         </div>
-        <div class="demo-note">Voorbeeldteksten — vervang door echte reviews (bijv. via Judge.me)</div>
+        <div class="demo-note">Voorbeeldteksten, vervang door echte reviews</div>
       </div>
       <div class="reviews">
-        <div class="review"><span class="stars">★★★★★</span><p><b>Eindelijk zelf mijn rug</b></p><p>Op vakantie niet meer steeds iemand hoeven vragen. Klapt mooi klein in.</p><span class="who">Voorbeeldklant · Zwart</span></div>
-        <div class="review"><span class="stars">★★★★★</span><p><b>Gelijkmatige zelfbruiner</b></p><p>Geen strepen meer op mijn rug. De roller is makkelijk schoon te spoelen.</p><span class="who">Voorbeeldklant · Roze</span></div>
-        <div class="review"><span class="stars">★★★★☆</span><p><b>Handig voor mijn vader</b></p><p>Hij kan zijn schouders slecht draaien en smeert nu zelf zijn crème in.</p><span class="who">Voorbeeldklant · Blauw</span></div>
+        <div class="review"><span class="stars">★★★★★</span><blockquote>“Op vakantie hoef ik niemand meer te vragen. Klapt mooi klein in.”</blockquote><span class="who label">Voorbeeld · Onyx</span></div>
+        <div class="review"><span class="stars">★★★★★</span><blockquote>“Mijn zelfbruiner zit eindelijk egaal op mijn rug.”</blockquote><span class="who label">Voorbeeld · Rosé</span></div>
+        <div class="review"><span class="stars">★★★★★</span><blockquote>“Voor mijn vader, die zijn schouders slecht kan draaien. Hij smeert nu zelf.”</blockquote><span class="who label">Voorbeeld · Kobalt</span></div>
       </div>
     </div>
   </section>
 
   <section class="band" id="faq">
     <div class="wrap">
-      <div class="eyebrow">Vragen</div>
-      <h2>Veelgestelde vragen</h2>
+      <span class="label">Service</span>
+      <h2>Veelgestelde <em>vragen</em></h2>
       <div class="faq">
-        <details><summary>Kan ik de roller schoonmaken?</summary><div class="content">Ja. Spoel de schuimroller na gebruik af met lauw water en laat hem aan de lucht drogen.</div></details>
-        <details><summary>Werkt het ook met spray of olie?</summary><div class="content">Het werkt het best met crème en lotion. Dunne olie trekt sneller in het schuim, dus gebruik daar iets meer van.</div></details>
-        <details><summary>Mag hij mee in de handbagage?</summary><div class="content">Ja, ingeklapt neemt hij weinig ruimte in en er zitten geen scherpe delen aan.</div></details>
-        <details><summary>Hoe snel wordt mijn bestelling verzonden?</summary><div class="content">Op werkdagen voor 23:00 besteld, de volgende dag in huis in Nederland en België.</div></details>
+        <details><summary>Hoe maak ik de roller schoon?</summary><div class="content">Spoel de schuimroller na gebruik af met lauw water en laat hem aan de lucht drogen.</div></details>
+        <details><summary>Werkt het ook met olie?</summary><div class="content">Het werkt het best met crème en lotion. Olie trekt sneller in het schuim, dus gebruik daar iets meer van.</div></details>
+        <details><summary>Mag hij mee in de handbagage?</summary><div class="content">Ja. Ingeklapt neemt hij weinig ruimte in en er zitten geen scherpe delen aan.</div></details>
+        <details><summary>Kan ik hem als cadeau laten inpakken?</summary><div class="content">Ja, geef het aan bij het afrekenen. We voegen dan een kaartje met jouw tekst toe.</div></details>
       </div>
     </div>
   </section>
@@ -442,55 +447,54 @@
   <div class="wrap">
     <div class="cols">
       <div>
-        <div class="logo"><span class="dot"></span>RugRol</div>
-        <p>Nooit meer verbrand tussen je schouderbladen. Schrijf je in voor 10% korting op je eerste bestelling.</p>
+        <h4 class="label">Nieuwsbrief</h4>
+        <p>Als eerste weten wanneer er nieuwe kleuren zijn. Geen spam, alleen wat de moeite waard is.</p>
         <form class="news" id="news">
-          <input id="email" type="email" placeholder="Je e-mailadres" aria-label="E-mailadres" required>
-          <button type="submit">Inschrijven</button>
+          <input id="email" type="email" placeholder="E-mailadres" aria-label="E-mailadres" required>
+          <button type="submit" class="label">Aanmelden</button>
         </form>
       </div>
       <div>
-        <h4>Klantenservice</h4>
-        <ul><li>Contact</li><li>Verzending</li><li>Retourneren</li><li>Track &amp; trace</li></ul>
+        <h4 class="label">Service</h4>
+        <ul><li>Contact</li><li>Verzending</li><li>Retour</li><li>Bestelling volgen</li></ul>
       </div>
       <div>
-        <h4>Info</h4>
-        <ul><li>Over ons</li><li>Algemene voorwaarden</li><li>Privacybeleid</li></ul>
+        <h4 class="label">Huis</h4>
+        <ul><li>Over ons</li><li>Voorwaarden</li><li>Privacy</li></ul>
       </div>
     </div>
-    <div class="legal">
-      <span>© 2026 RugRol · voorbeeldwinkel</span>
-      <div class="pay"><span>iDEAL</span><span>Bancontact</span><span>VISA</span><span>Mastercard</span><span>PayPal</span><span>Klarna</span></div>
+    <div class="bigmark" aria-hidden="true">Rugrol</div>
+    <div class="legal label">
+      <span>© 2026 Rugrol · voorbeeldwinkel</span>
+      <span>iDEAL · Bancontact · Visa · Mastercard · PayPal</span>
     </div>
   </div>
 </footer>
 
 <div class="sticky-buy">
-  <span class="p" id="stickyPrice">€19,95</span>
-  <button class="btn btn-primary" id="stickyAdd">In winkelwagen</button>
+  <span class="p" id="stickyPrice">€29</span>
+  <button class="btn btn-primary" id="stickyAdd">In de tas</button>
 </div>
 
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" hidden aria-label="Winkelwagen">
-  <div class="drawer-head"><h2>Winkelwagen</h2><button class="x" id="closeCart" aria-label="Sluiten">×</button></div>
-  <div class="ship-bar"><span id="shipText">Nog €25,00 tot gratis verzending</span><div class="meter"><i id="shipMeter"></i></div></div>
+  <div class="drawer-head"><h2>Je tas</h2><button class="x label" id="closeCart">Sluiten</button></div>
+  <div class="ship-bar"><span id="shipText">Nog €50 tot gratis verzending</span><div class="meter"><i id="shipMeter"></i></div></div>
   <div class="lines" id="lines"></div>
   <div class="totals">
-    <div class="row"><span>Subtotaal</span><span id="subtotal">€0,00</span></div>
-    <small>Btw inbegrepen. Verzendkosten worden berekend bij het afrekenen.</small>
+    <div class="row"><span class="label">Subtotaal</span><span id="subtotal">€0</span></div>
+    <small>Inclusief btw. Verzendkosten zie je bij het afrekenen.</small>
     <button class="btn btn-primary" id="checkout">Afrekenen</button>
   </div>
 </aside>
 <div class="toast" id="toast" hidden></div>
 
 <script>
-  const FREE_SHIP = 25;
-  const colors = { Zwart: "#1d1f22", Grijs: "#8a9399", Roze: "#f2a7c3", Blauw: "#2f55d4" };
-  const state = { color: "Zwart", bundle: { n: 1, price: 19.95, compare: 29.95 }, qty: 1, cart: [] };
+  const FREE_SHIP = 50;
+  const colors = { Onyx: "#1b1b1b", Steen: "#8d8a85", "Rosé": "#dcb0b8", Kobalt: "#2b4a9a" };
+  const state = { color: "Onyx", bundle: { n: 1, name: "Enkel", price: 29 }, qty: 1, cart: [] };
   const $ = (id) => document.getElementById(id);
-  const eur = (v) => "€" + v.toFixed(2).replace(".", ",");
-
-  function setProductColor(hex) { document.documentElement.style.setProperty("--product", hex); }
+  const eur = (v) => "€" + (Number.isInteger(v) ? v : v.toFixed(2).replace(".", ","));
 
   // Kleur
   $("swatches").addEventListener("click", (e) => {
@@ -498,23 +502,18 @@
     document.querySelectorAll(".swatch").forEach((s) => s.setAttribute("aria-checked", s === b));
     state.color = b.dataset.name;
     $("colorName").textContent = state.color;
-    setProductColor(colors[state.color]);
+    document.documentElement.style.setProperty("--product", colors[state.color]);
   });
 
-  // Bundel
+  // Set
   $("bundles").addEventListener("click", (e) => {
     const b = e.target.closest(".bundle"); if (!b) return;
     document.querySelectorAll(".bundle").forEach((s) => s.setAttribute("aria-checked", s === b));
-    state.bundle = { n: +b.dataset.n, price: +b.dataset.price, compare: +b.dataset.compare };
-    renderPrice();
+    state.bundle = { n: +b.dataset.n, name: b.dataset.name, price: +b.dataset.price };
+    $("price").textContent = eur(state.bundle.price);
+    $("per").textContent = state.bundle.n === 1 ? "per stuk" : state.bundle.n + " stuks, " + eur(Math.round(state.bundle.price / state.bundle.n * 100) / 100) + " per stuk";
+    $("stickyPrice").textContent = eur(state.bundle.price);
   });
-  function renderPrice() {
-    const { price, compare } = state.bundle;
-    $("price").textContent = eur(price);
-    $("compare").textContent = eur(compare);
-    $("save").textContent = "Bespaar " + eur(compare - price);
-    $("stickyPrice").textContent = eur(price);
-  }
 
   // Hoeveelheid
   $("minus").onclick = () => { state.qty = Math.max(1, state.qty - 1); $("qty").textContent = state.qty; };
@@ -525,7 +524,7 @@
     const t = e.target.closest(".thumb"); if (!t) return;
     document.querySelectorAll(".thumb").forEach((s) => s.setAttribute("aria-pressed", s === t));
     $("stageUse").setAttribute("href", "#" + t.dataset.view);
-    $("stage").querySelector("svg").setAttribute("viewBox", t.dataset.rot ? "40 10 120 120" : "0 0 200 320");
+    $("stageCap").textContent = t.dataset.cap;
   });
 
   // Winkelwagen
@@ -533,26 +532,26 @@
     const key = state.color + "|" + state.bundle.n;
     const found = state.cart.find((l) => l.key === key);
     if (found) found.qty += state.qty;
-    else state.cart.push({ key, color: state.color, n: state.bundle.n, price: state.bundle.price, qty: state.qty });
+    else state.cart.push({ key, color: state.color, set: state.bundle.name, price: state.bundle.price, qty: state.qty });
     renderCart();
-    if (openAfter) openCart(); else toast("Toegevoegd aan winkelwagen");
+    if (openAfter) openCart();
   }
   function renderCart() {
     const lines = $("lines");
     const count = state.cart.reduce((a, l) => a + l.qty, 0);
     const sub = state.cart.reduce((a, l) => a + l.qty * l.price, 0);
-    $("cartCount").textContent = count; $("cartCount").dataset.n = count;
+    $("cartCount").textContent = "(" + count + ")";
     $("subtotal").textContent = eur(sub);
     const left = Math.max(0, FREE_SHIP - sub);
     $("shipText").textContent = left > 0 ? "Nog " + eur(left) + " tot gratis verzending" : "Je bestelling wordt gratis verzonden";
     $("shipMeter").style.width = Math.min(100, (sub / FREE_SHIP) * 100) + "%";
     $("checkout").disabled = count === 0;
-    if (!state.cart.length) { lines.innerHTML = '<div class="empty">Je winkelwagen is leeg.</div>'; return; }
+    if (!state.cart.length) { lines.innerHTML = '<div class="empty">Je tas is nog leeg</div>'; return; }
     lines.innerHTML = state.cart.map((l, i) => `
       <div class="line">
         <div class="pic" style="--product:${colors[l.color]}"><svg viewBox="0 0 200 320"><use href="#applicator"/></svg></div>
-        <div><b>RugRol Applicator</b><small>${l.color} · ${l.n} stuk${l.n > 1 ? "s" : ""} · ${l.qty}×</small><button class="rm" data-i="${i}">Verwijderen</button></div>
-        <b>${eur(l.price * l.qty)}</b>
+        <div><b>Applicator No. 1</b><small>${l.color} · ${l.set} · ${l.qty}×</small><button class="rm" data-i="${i}">Verwijderen</button></div>
+        <span class="lp">${eur(l.price * l.qty)}</span>
       </div>`).join("");
   }
   $("lines").addEventListener("click", (e) => {
@@ -563,17 +562,16 @@
   function closeCart() { $("drawer").hidden = true; $("scrim").hidden = true; }
   $("addBtn").onclick = () => add(true);
   $("stickyAdd").onclick = () => add(true);
-  $("buyNow").onclick = () => { add(false); toast("Dit is een voorbeeldwinkel: afrekenen is uitgeschakeld"); };
+  $("buyNow").onclick = () => { add(false); toast("Dit is een voorbeeldwinkel. Afrekenen is uitgeschakeld."); };
   $("openCart").onclick = openCart;
   $("closeCart").onclick = closeCart;
   $("scrim").onclick = closeCart;
   document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeCart(); });
-  $("checkout").onclick = () => toast("Dit is een voorbeeldwinkel: afrekenen is uitgeschakeld");
-
-  $("news").addEventListener("submit", (e) => { e.preventDefault(); $("email").value = ""; toast("Ingeschreven (voorbeeld, er wordt niets verstuurd)"); });
+  $("checkout").onclick = () => toast("Dit is een voorbeeldwinkel. Afrekenen is uitgeschakeld.");
+  $("news").addEventListener("submit", (e) => { e.preventDefault(); $("email").value = ""; toast("Aangemeld (voorbeeld, er wordt niets verstuurd)"); });
 
   let tt;
-  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => (t.hidden = true), 2600); }
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => (t.hidden = true), 2800); }
 
   renderCart();
 </script>
