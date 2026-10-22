@@ -1,7 +1,8 @@
 "use client";
 
-import { Fragment, useState, useTransition } from "react";
-import { AlertTriangle, Lock, Pencil, Plus, Trash2, Unlock, X } from "lucide-react";
+import { Fragment, useEffect, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
+import { AlertTriangle, Lock, MoreVertical, Pencil, Plus, Trash2, Unlock, X } from "lucide-react";
 import { AssigneeInput, type AssigneeTeamMember } from "@/components/AssigneeInput";
 import { ScrollToToday } from "@/components/ScrollToToday";
 import { createPhase, deletePhase, setPhaseFixedDate, updatePhaseColor, updatePhaseDates } from "@/lib/actions/schedule";
@@ -42,6 +43,72 @@ export function BouwplanningPanel({
   const [showAdd, setShowAdd] = useState(false);
   const [detailPhase, setDetailPhase] = useState<SchedulePhase | null>(null);
   const [, startTransition] = useTransition();
+
+  // Rij-menu (hangslot/datums/verwijderen samengevoegd tot één "•••" i.p.v.
+  // drie losse knopjes naast elkaar) — zelfde patroon als het bestaande
+  // project-overflow-menu bij "project verwijderen".
+  const [rowMenuPhaseId, setRowMenuPhaseId] = useState<string | null>(null);
+  const [rowMenuPos, setRowMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const rowMenuTriggerRef = useRef<HTMLButtonElement | null>(null);
+  const rowMenuRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!rowMenuPhaseId) return;
+    const onClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (rowMenuTriggerRef.current?.contains(target) || rowMenuRef.current?.contains(target)) return;
+      setRowMenuPhaseId(null);
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, [rowMenuPhaseId]);
+
+  const toggleRowMenu = (phaseId: string, trigger: HTMLButtonElement) => {
+    if (rowMenuPhaseId === phaseId) {
+      setRowMenuPhaseId(null);
+      rowMenuTriggerRef.current = null;
+      return;
+    }
+    const rect = trigger.getBoundingClientRect();
+    setRowMenuPos({ top: rect.bottom + 4, left: rect.right - 190 });
+    rowMenuTriggerRef.current = trigger;
+    setRowMenuPhaseId(phaseId);
+  };
+
+  // De uitleg-banner ("Bouwplanning — het grote geheel...") hoef je maar
+  // één keer te lezen — neemt daarna puur ruimte weg boven de tabel.
+  const [hintDismissed, setHintDismissed] = useState(true);
+  useEffect(() => {
+    setHintDismissed(localStorage.getItem("bouwplanning-hint-dismissed") === "1");
+  }, []);
+  const dismissHint = () => {
+    localStorage.setItem("bouwplanning-hint-dismissed", "1");
+    setHintDismissed(true);
+  };
+
+  // Liggend op een telefoon (smal scherm, laag) -> de Gantt-tabel vult
+  // het hele scherm, zonder app-chrome eromheen. Puur op hoogte + oriëntatie
+  // gebaseerd (niet op breedte) zodat dit ook klopt op telefoons die
+  // liggend de desktop-indeling-breakpoint passeren. draait de telefoon
+  // weer rechtop, dan verdwijnt dit vanzelf (matchMedia reageert live) en
+  // wordt een eventuele handmatige sluiting hieronder gereset.
+  const [isLandscapePhone, setIsLandscapePhone] = useState(false);
+  const [fullscreenDismissed, setFullscreenDismissed] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    const onChange = (e: MediaQueryList | MediaQueryListEvent) => {
+      setIsLandscapePhone(e.matches);
+      if (!e.matches) setFullscreenDismissed(false);
+    };
+    onChange(mq);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  const fullscreenActive = isLandscapePhone && !fullscreenDismissed;
+  useEffect(() => {
+    document.body.classList.toggle("gantt-landscape-fullscreen", fullscreenActive);
+    return () => document.body.classList.remove("gantt-landscape-fullscreen");
+  }, [fullscreenActive]);
 
   const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.name || "?";
   const phaseAssigneeLabel = (p: SchedulePhase) =>
@@ -113,11 +180,26 @@ export function BouwplanningPanel({
 
   return (
     <div className="panel panel-wide">
-      <div className="hint-bar">
-        Bouwplanning — het grote geheel per fase. De taken in &quot;Planning&quot; zijn hieraan gekoppeld en tellen automatisch mee als
-        voortgang.
-      </div>
-      {Object.keys(conflicts).length > 0 && (
+      {fullscreenActive && (
+        <button
+          type="button"
+          className="gantt-fullscreen-exit"
+          onClick={() => setFullscreenDismissed(true)}
+          title="Volledig scherm verlaten"
+        >
+          <X size={16} />
+        </button>
+      )}
+      {!fullscreenActive && !hintDismissed && (
+        <div className="hint-bar hint-bar-dismissible">
+          <button type="button" className="icon-btn ghost hint-bar-dismiss" onClick={dismissHint} title="Niet meer tonen">
+            <X size={13} />
+          </button>
+          Bouwplanning — het grote geheel per fase. De taken in &quot;Planning&quot; zijn hieraan gekoppeld en tellen automatisch mee als
+          voortgang.
+        </div>
+      )}
+      {!fullscreenActive && Object.keys(conflicts).length > 0 && (
         <div className="hint-bar conflict-bar">
           <AlertTriangle size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
           Let op: sommige fases hieronder overlappen met een planning op een ander project voor dezelfde persoon — zie het
@@ -214,20 +296,10 @@ export function BouwplanningPanel({
                       <div className="gantt-row-actions">
                         <button
                           className="icon-btn ghost"
-                          onClick={() => toggleFixed(i)}
-                          title={i.fixed_date ? "Weer laten meeschuiven" : "Deze fase niet meer laten verplaatsen"}
+                          title="Meer opties"
+                          onClick={(e) => toggleRowMenu(i.id, e.currentTarget)}
                         >
-                          {i.fixed_date ? <Unlock size={12} /> : <Lock size={12} />}
-                        </button>
-                        <button className="icon-btn ghost" onClick={() => startEditPhase(i)} title="Datums aanpassen">
-                          <Pencil size={12} />
-                        </button>
-                        <button
-                          className="icon-btn danger ghost"
-                          title="Fase verwijderen"
-                          onClick={() => startTransition(() => deletePhase(projectId, i.id).catch(() => {}))}
-                        >
-                          <Trash2 size={12} />
+                          <MoreVertical size={14} />
                         </button>
                       </div>
                     )}
@@ -262,6 +334,50 @@ export function BouwplanningPanel({
         </ScrollToToday>
       )}
       {!canEdit && phases.length > 0 && <div className="hint-bar small">Je kunt deze bouwplanning bekijken, maar niet wijzigen.</div>}
+
+      {rowMenuPhaseId &&
+        rowMenuPos &&
+        typeof document !== "undefined" &&
+        (() => {
+          const menuPhase = phases.find((p) => p.id === rowMenuPhaseId);
+          if (!menuPhase) return null;
+          return createPortal(
+            <div ref={rowMenuRef} className="project-overflow-menu" style={{ position: "fixed", top: rowMenuPos.top, left: rowMenuPos.left }}>
+              <button
+                type="button"
+                className="project-overflow-item"
+                onClick={() => {
+                  toggleFixed(menuPhase);
+                  setRowMenuPhaseId(null);
+                }}
+              >
+                {menuPhase.fixed_date ? <Unlock size={14} /> : <Lock size={14} />}
+                {menuPhase.fixed_date ? "Weer laten meeschuiven" : "Niet meer laten verplaatsen"}
+              </button>
+              <button
+                type="button"
+                className="project-overflow-item"
+                onClick={() => {
+                  startEditPhase(menuPhase);
+                  setRowMenuPhaseId(null);
+                }}
+              >
+                <Pencil size={14} /> Datums aanpassen
+              </button>
+              <button
+                type="button"
+                className="project-overflow-item danger"
+                onClick={() => {
+                  setRowMenuPhaseId(null);
+                  startTransition(() => deletePhase(projectId, menuPhase.id).catch(() => {}));
+                }}
+              >
+                <Trash2 size={14} /> Fase verwijderen
+              </button>
+            </div>,
+            document.body
+          );
+        })()}
 
       {detailPhase &&
         (() => {

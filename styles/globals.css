@@ -1446,6 +1446,17 @@ a:has(> .brandmark) {
 .hint-bar.small {
   font-size: 11px;
 }
+.hint-bar-dismissible {
+  position: relative;
+  padding-right: 32px;
+}
+.hint-bar-dismiss {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+}
 /* Een opslaan-bevestiging is geen neutrale hint maar een succesmelding —
    verdient een eigen kleur, niet dezelfde blauwe balk als alle andere
    uitleg-tekst op de pagina. */
@@ -2612,7 +2623,9 @@ a.link-btn:hover {
   overflow: hidden;
 }
 .gantt-row-label-actions {
-  padding-right: 60px;
+  /* Nog maar één "•••"-knop i.p.v. drie losse knopjes naast elkaar — die
+     ruimte gaat nu naar de titel zelf. */
+  padding-right: 26px;
 }
 /* Zelfde taal als de rest van de app: een dubbele boeking is iets dat
    opgelost moet worden, dus een gekleurde balk i.p.v. alleen een klein
@@ -2748,6 +2761,44 @@ a.link-btn:hover {
     rgba(0, 0, 0, 0.25) 8px
   );
 }
+
+/* Liggende volledig-scherm-modus voor de bouwplanning-Gantt op een
+   telefoon (zie BouwplanningPanel.tsx) — de klasse op <body> wordt
+   alleen gezet als het toestel ook écht liggend + laag genoeg is
+   (matchMedia, reageert live op draaien), dus hier is geen aparte
+   media query nodig, puur op de klasse sturen. .sidebar zit erbij
+   omdat een bredere telefoon liggend al over de 760px-grens van de
+   mobiele indeling kan gaan en dan anders de desktop-zijbalk toont. */
+body.gantt-landscape-fullscreen .mobile-bar,
+body.gantt-landscape-fullscreen .bottom-tabbar,
+body.gantt-landscape-fullscreen .sidebar,
+body.gantt-landscape-fullscreen .project-header,
+body.gantt-landscape-fullscreen .tabs-row {
+  display: none !important;
+}
+body.gantt-landscape-fullscreen .app-shell {
+  grid-template-columns: 1fr !important;
+}
+body.gantt-landscape-fullscreen .main {
+  padding: 8px !important;
+}
+.gantt-fullscreen-exit {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 50;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  box-shadow: var(--shadow-card);
+  color: var(--text);
+}
+
 .planning-legend {
   display: flex;
   flex-wrap: wrap;
