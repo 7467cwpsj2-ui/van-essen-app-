@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useMemo, useState, useTransition } from "react";
+import { Fragment, useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { AlertTriangle, Check, CheckCircle2, ChevronDown, Pencil, Plus, RotateCcw, Trash2, X } from "lucide-react";
 import { ScrollToToday } from "@/components/ScrollToToday";
@@ -534,8 +534,43 @@ export function TeamPlanningPanel({
     });
   };
 
+  // Liggend op een telefoon -> de Gantt vult het hele scherm, zonder
+  // app-chrome of de lijsten/knoppen eronder. Zelfde mechanisme als de
+  // bouwplanning-Gantt (components/BouwplanningPanel.tsx) — zie de CSS-
+  // uitleg daar voor waarom dit puur op hoogte + oriëntatie gaat i.p.v.
+  // breedte, en waarom position:sticky niet gebruikt wordt.
+  const [isLandscapePhone, setIsLandscapePhone] = useState(false);
+  const [fullscreenDismissed, setFullscreenDismissed] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(orientation: landscape) and (max-height: 500px)");
+    const onChange = (e: MediaQueryList | MediaQueryListEvent) => {
+      setIsLandscapePhone(e.matches);
+      if (!e.matches) setFullscreenDismissed(false);
+    };
+    onChange(mq);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  const fullscreenActive = isLandscapePhone && !fullscreenDismissed;
+  useEffect(() => {
+    document.body.classList.toggle("gantt-landscape-fullscreen", fullscreenActive);
+    return () => document.body.classList.remove("gantt-landscape-fullscreen");
+  }, [fullscreenActive]);
+
   return (
     <div className="panel panel-wide">
+      {fullscreenActive && (
+        <button
+          type="button"
+          className="gantt-fullscreen-exit"
+          onClick={() => setFullscreenDismissed(true)}
+          title="Volledig scherm verlaten"
+        >
+          <X size={16} />
+        </button>
+      )}
+      {!fullscreenActive && (
+        <>
       <div className="header-eyebrow">Overzicht</div>
       <h1 className="page-title">Algemene planning</h1>
       <div className="hint-bar">
@@ -650,6 +685,8 @@ export function TeamPlanningPanel({
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
       {people.length === 0 ? (
         <div className="empty-hint">
@@ -895,6 +932,8 @@ export function TeamPlanningPanel({
           );
         })()}
 
+      {!fullscreenActive && (
+        <>
       {canEdit && (
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
           <button type="button" className="btn-primary" onClick={() => setShowAddJob(true)} style={{ alignSelf: "flex-start" }}>
@@ -1364,6 +1403,8 @@ export function TeamPlanningPanel({
             </div>
           )}
         </div>
+      )}
+        </>
       )}
     </div>
   );
