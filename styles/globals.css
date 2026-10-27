@@ -3041,6 +3041,11 @@ body.gantt-landscape-fullscreen .main {
   padding: 8px 10px;
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
+  /* .access-item is soms een <Link> (bv. Nacalculatie) — zonder dit
+     erft elke regel erin de standaard-onderstreping van een link,
+     zelfde bugje als eerder bij .task-row. */
+  text-decoration: none;
+  color: inherit;
 }
 .access-item:last-child {
   border-bottom: none;
