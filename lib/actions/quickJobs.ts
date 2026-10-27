@@ -51,6 +51,7 @@ export async function createQuickJob(data: {
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
   revalidatePath("/dashboard");
+  revalidatePath("/uren");
 
   // Alleen de eigenaar kan een klus aanmaken, dus hemzelf hierover
   // pushen heeft geen nut — wel de mensen die hij er net op inplant,
@@ -106,6 +107,7 @@ export async function updateQuickJob(
   revalidatePath("/planning-overzicht");
   revalidatePath("/dashboard");
   revalidatePath(`/klussen/${id}`);
+  revalidatePath("/uren");
 }
 
 export async function updateQuickJobColor(id: string, color: string) {
@@ -156,6 +158,7 @@ export async function updateQuickJobDayAssignment(id: string, date: string, team
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
   revalidatePath(`/klussen/${id}`);
+  revalidatePath("/uren");
 }
 
 export async function toggleQuickJobDone(id: string, done: boolean) {
@@ -166,6 +169,11 @@ export async function toggleQuickJobDone(id: string, done: boolean) {
   revalidatePath("/planning-overzicht");
   revalidatePath(`/klussen/${id}`);
   revalidatePath("/nacalculatie");
+  // Zonder dit bleef de uren-kieslijst de klus gewoon als "nog open"
+  // laten zien nadat hij op Gereed was gezet, totdat iets anders die
+  // pagina toevallig een keer verste — precies de stille cache-bug
+  // achter "afgeronde klussen staan er nog".
+  revalidatePath("/uren");
 }
 
 export async function deleteQuickJob(id: string) {
@@ -175,4 +183,5 @@ export async function deleteQuickJob(id: string) {
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
   revalidatePath("/dashboard");
+  revalidatePath("/uren");
 }
