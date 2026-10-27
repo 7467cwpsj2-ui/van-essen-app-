@@ -165,6 +165,7 @@ export async function toggleQuickJobDone(id: string, done: boolean) {
   if (error) throw new Error(error.message);
   revalidatePath("/planning-overzicht");
   revalidatePath(`/klussen/${id}`);
+  revalidatePath("/nacalculatie");
 }
 
 export async function deleteQuickJob(id: string) {

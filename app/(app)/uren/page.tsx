@@ -80,7 +80,7 @@ export default async function UrenTopLevelPage({
         targetName={selectedJob.title}
         role={current.profile.role}
         currentTeamMemberId={myStaffId}
-        isLocked={false}
+        isLocked={selectedJob.done}
         entries={(entries ?? []) as HourEntry[]}
         teamMembers={teamMembers.map((m) => ({ id: m.id, name: m.name }))}
         autoOpenDetail={searchParams.open === "1"}

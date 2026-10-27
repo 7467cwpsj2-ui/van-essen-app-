@@ -75,7 +75,12 @@ export function UrenPicker({
   const todayProjects = projects.filter((p) => p.status === "lopend");
   const todayJobs = quickJobs.filter(isJobToday);
   const otherProjects = projects.filter((p) => p.status !== "lopend");
-  const otherJobs = quickJobs.filter((j) => !isJobToday(j));
+  // Een afgeronde klus is vergrendeld voor nieuwe uren (zie migratie
+  // 0071) — die hoeft dan ook niet meer in de kies-lijst te staan, dat
+  // was precies waarom "overige" zo vol en onoverzichtelijk werd. Wil
+  // je er alsnog een correctie op boeken, dan heropen je 'm eerst op de
+  // Nacalculatie- of Algemene planning-pagina.
+  const otherJobs = quickJobs.filter((j) => !isJobToday(j) && !j.done);
   const otherCount = otherProjects.length + otherJobs.length;
 
   const q = query.trim().toLowerCase();

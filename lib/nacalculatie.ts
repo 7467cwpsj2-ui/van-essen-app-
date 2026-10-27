@@ -34,6 +34,11 @@ export interface NacalculatieRow {
   href: string | null;
   labor: NacalculatieLaborRow[];
   costItems: CostItem[];
+  // Alleen gevuld voor klussen — voor het overzicht op datum sorteren/
+  // tonen, zodat een oude afgeronde klus tussen tientallen andere
+  // terug te vinden is (zie Nacalculatie > zoeken + datumsortering).
+  startDate: string | null;
+  endDate: string | null;
 }
 
 // Alle projecten én losse klussen samen, met begroot/werkelijk/marge —
@@ -47,7 +52,7 @@ export const getNacalculatieOverview = cache(async (): Promise<NacalculatieRow[]
   const [{ data: projects }, { data: quickJobs }, { data: extraWork }, { data: hours }, { data: costItemsData }, { data: teamMembers }] =
     await Promise.all([
       supabase.from("projects").select("id,name,status,quote_amount,quote_vat_type"),
-      supabase.from("quick_jobs").select("id,title,done,price,price_vat_type").eq("kind", "klus"),
+      supabase.from("quick_jobs").select("id,title,done,price,price_vat_type,start_date,end_date").eq("kind", "klus"),
       supabase.from("extra_work").select("project_id,type,amount").eq("status", "akkoord"),
       supabase.from("hours").select("project_id,quick_job_id,team_member_id,hours"),
       supabase.from("cost_items").select("*"),
@@ -128,6 +133,8 @@ export const getNacalculatieOverview = cache(async (): Promise<NacalculatieRow[]
       href: `/projects/${pid}/nacalculatie`,
       labor: [],
       costItems: [],
+      startDate: null,
+      endDate: null,
     });
   }
   for (const j of quickJobs ?? []) {
@@ -152,6 +159,8 @@ export const getNacalculatieOverview = cache(async (): Promise<NacalculatieRow[]
       href: null,
       labor,
       costItems: jobCostItems,
+      startDate: j.start_date as string,
+      endDate: j.end_date as string,
     });
   }
 

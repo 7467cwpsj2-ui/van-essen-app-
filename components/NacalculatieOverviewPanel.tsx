@@ -2,15 +2,18 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Check, ChevronDown, ChevronRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, ChevronRight, Clock, Pencil, Plus, RotateCcw, Search, Trash2 } from "lucide-react";
 import { createCostItem, deleteCostItem, updateCostItem, updateQuickJobPrice } from "@/lib/actions/calc";
+import { toggleQuickJobDone } from "@/lib/actions/quickJobs";
 import { InvoiceUploadPanel } from "@/components/InvoiceUploadPanel";
 import { VAT_TYPE_LABEL, type CostItem, type ExtraWorkVatType } from "@/types/database";
 import type { NacalculatieRow } from "@/lib/nacalculatie";
 
 const fmtEuro = (n: number) => new Intl.NumberFormat("nl-NL", { style: "currency", currency: "EUR" }).format(Number(n) || 0);
+const fmtShort = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "short", year: "numeric" }).format(new Date(iso + "T00:00:00Z"));
 
 type Filter = "alle" | "lopend" | "afgerond";
+type Sort = "marge" | "datum";
 
 function MargeAmount({ row }: { row: NacalculatieRow }) {
   if (!row.hasPrice) {
@@ -25,12 +28,28 @@ function MargeAmount({ row }: { row: NacalculatieRow }) {
 
 export function NacalculatieOverviewPanel({ rows }: { rows: NacalculatieRow[] }) {
   const [filter, setFilter] = useState<Filter>("alle");
+  const [sort, setSort] = useState<Sort>("marge");
+  const [query, setQuery] = useState("");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const filtered = useMemo(
-    () => rows.filter((r) => filter === "alle" || (filter === "lopend" ? r.isOpen : !r.isOpen)),
-    [rows, filter]
-  );
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    let list = rows.filter((r) => filter === "alle" || (filter === "lopend" ? r.isOpen : !r.isOpen));
+    if (q) list = list.filter((r) => r.name.toLowerCase().includes(q));
+    if (sort === "datum") {
+      // Projecten hebben geen enkele einddatum om op te sorteren (meerdere
+      // fases, geen vaste einddatum) — die blijven gewoon op naam staan,
+      // na alle klussen met een datum. Dit is vooral bedoeld om tussen
+      // tientallen (ook afgeronde) klussen snel de juiste terug te vinden.
+      list = [...list].sort((a, b) => {
+        if (!a.startDate && !b.startDate) return a.name.localeCompare(b.name, "nl");
+        if (!a.startDate) return 1;
+        if (!b.startDate) return -1;
+        return b.startDate.localeCompare(a.startDate);
+      });
+    }
+    return list;
+  }, [rows, filter, sort, query]);
 
   const toggle = (id: string) => {
     setExpanded((prev) => {
@@ -45,12 +64,26 @@ export function NacalculatieOverviewPanel({ rows }: { rows: NacalculatieRow[] })
     <div className="panel">
       <div className="hint-bar">Nacalculatie is alleen voor jou zichtbaar — team en klant zien dit nooit.</div>
 
-      <div className="mode-toggle">
-        {(["alle", "lopend", "afgerond"] as Filter[]).map((f) => (
-          <button key={f} type="button" className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>
-            {f === "alle" ? "Alles" : f === "lopend" ? "Lopend" : "Afgerond"}
-          </button>
-        ))}
+      <div className="uren-search">
+        <Search size={14} />
+        <input type="text" placeholder="Zoek een project of klus…" value={query} onChange={(e) => setQuery(e.target.value)} />
+      </div>
+
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "space-between" }}>
+        <div className="mode-toggle">
+          {(["alle", "lopend", "afgerond"] as Filter[]).map((f) => (
+            <button key={f} type="button" className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>
+              {f === "alle" ? "Alles" : f === "lopend" ? "Lopend" : "Afgerond"}
+            </button>
+          ))}
+        </div>
+        <div className="mode-toggle">
+          {(["marge", "datum"] as Sort[]).map((s) => (
+            <button key={s} type="button" className={sort === s ? "active" : ""} onClick={() => setSort(s)}>
+              {s === "marge" ? "Op marge" : "Op datum"}
+            </button>
+          ))}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -74,7 +107,15 @@ export function NacalculatieOverviewPanel({ rows }: { rows: NacalculatieRow[] })
                 <button type="button" className="access-summary" onClick={() => toggle(r.id)}>
                   <span className="access-summary-main">
                     <span className="access-summary-name">{r.name}</span>
-                    <span className="access-summary-sub">Losse klus · {r.statusLabel}</span>
+                    <span className="access-summary-sub">
+                      Losse klus · {r.statusLabel}
+                      {r.startDate && (
+                        <>
+                          {" · "}
+                          {r.startDate === r.endDate ? fmtShort(r.startDate) : `${fmtShort(r.startDate)} – ${fmtShort(r.endDate!)}`}
+                        </>
+                      )}
+                    </span>
                   </span>
                   <MargeAmount row={r} />
                   <ChevronDown size={14} className={"access-chevron" + (expanded.has(r.id) ? " open" : "")} />
@@ -108,6 +149,13 @@ function QuickJobCalcInline({ row }: { row: NacalculatieRow }) {
 
   const target = { quickJobId: row.id } as const;
   const missingRate = row.labor.some((l) => l.rate == null);
+  const isDone = !row.isOpen;
+
+  const toggleDone = () => {
+    startTransition(() => {
+      toggleQuickJobDone(row.id, !isDone).catch((err) => alert(err instanceof Error ? err.message : "Bijwerken mislukt."));
+    });
+  };
 
   const savePrice = () => {
     startTransition(() => {
@@ -168,6 +216,28 @@ function QuickJobCalcInline({ row }: { row: NacalculatieRow }) {
 
   return (
     <>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        {isDone ? (
+          <button type="button" className="btn-ghost" onClick={toggleDone}>
+            <RotateCcw size={14} /> Heropenen om uren te corrigeren
+          </button>
+        ) : (
+          <>
+            <Link href={`/uren?job=${row.id}`} className="btn-ghost">
+              <Clock size={14} /> Uren registreren
+            </Link>
+            <button type="button" className="btn-ghost" onClick={toggleDone}>
+              <Check size={14} /> Als gereed markeren
+            </button>
+          </>
+        )}
+      </div>
+      {isDone && (
+        <div className="hint-bar small">
+          Deze klus is afgerond — nieuwe uren zijn vergrendeld. Heropen &apos;m eerst om een correctie te boeken, en zet &apos;m daarna
+          weer op gereed.
+        </div>
+      )}
       <div className="add-form-grid">
         <label className="field-with-label">
           <span className="field-label">Prijs (afgesproken/gefactureerd)</span>
