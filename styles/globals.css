@@ -1531,6 +1531,11 @@ a:has(> .brandmark) {
   gap: 10px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--border);
+  /* .task-row is soms een <Link> i.p.v. een <div> (bv. meldingen, mijn
+     planning) — zonder dit erft elke regel erin de standaard-
+     onderstreping van een link, wat de hele rij vol strepen zet. */
+  text-decoration: none;
+  color: inherit;
 }
 .task-row:last-child {
   border-bottom: none;
@@ -1540,6 +1545,32 @@ a:has(> .brandmark) {
 }
 .task-row.done {
   opacity: 0.55;
+}
+/* Meldingenpagina: ongelezen duidelijker dan alleen het kleine bolletje
+   dat hier eerst stond — makkelijk te missen, zeker in een lange lijst. */
+.task-row.unread {
+  background: var(--brand-soft);
+}
+.task-row.unread:hover {
+  background: color-mix(in srgb, var(--brand-soft) 70%, var(--panel-2));
+}
+.task-row.unread .task-title {
+  font-weight: 700;
+}
+.notif-group {
+  margin-bottom: 4px;
+}
+.notif-group-label {
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-faint);
+  text-transform: uppercase;
+  margin: 14px 2px 4px;
+}
+.notif-group:first-child .notif-group-label {
+  margin-top: 2px;
 }
 /* Zelfde signaal als de dashboardtegels/meerwerkregels: te laat = een
    gekleurde balk aan de linkerkant, niet alleen een rood datumlabel dat
