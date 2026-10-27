@@ -24,7 +24,10 @@ export default async function UrenTopLevelPage({
   const supabase = createClient();
   const [projects, { data: quickJobsData }, { data: teamMembersData }] = await Promise.all([
     getProjectsWithProgress(),
-    supabase.from("quick_jobs").select("*").order("start_date", { ascending: false }),
+    // Vakantie is geen werk om uren op te boeken — die hoort hier dus
+    // sowieso nooit tussen te staan, ook niet als "afgerond". Kantoor
+    // blijft wel gewoon staan, dat is vaak nog wel te verantwoorden uren.
+    supabase.from("quick_jobs").select("*").neq("kind", "verlof").order("start_date", { ascending: false }),
     supabase.from("team_members").select("*").order("name"),
   ]);
   const quickJobs = (quickJobsData ?? []) as QuickJob[];
