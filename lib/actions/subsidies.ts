@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { requireOwner, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
-import type { SubsidyApplicationStatus } from "@/types/database";
+import { getOwnerUserIds, getProjectName, sendPushToUsers } from "@/lib/push";
+import type { FileType, SubsidyApplicationStatus } from "@/types/database";
 
 export interface SubsidyProductInput {
   category: string;
@@ -268,26 +269,35 @@ export async function saveSubsidyApplication(projectId: string, data: SubsidyApp
   revalidatePath(`/projects/${projectId}/subsidie`);
 }
 
-// De klant zet hier zijn handtekening — de handtekening zelf is al
-// geüpload naar Storage door de aanroeper, dit legt alleen de
-// ondertekening vast. Bewust idempotent (net als bij meerwerk): een
-// dubbele tik op "Ondertekenen" faalt niet, maar doet ook niets extra's.
-export async function signSubsidyAuthorization(id: string, projectId: string, signaturePath: string) {
+// De klant uploadt hier het ingevulde, ondertekende officiële
+// RVO-formulier (PDF of foto). Het bestand is al geüpload naar
+// Storage door de aanroeper, dit legt alleen het pad vast. Mag altijd
+// opnieuw (bv. een onscherpe foto vervangen), ook als er al eerder
+// iets geüpload was.
+export async function uploadAuthorizationForm(id: string, projectId: string, filePath: string, fileType: FileType) {
   const current = await requireUser();
-  if (current.profile.role !== "klant") throw new Error("Alleen de klant kan dit ondertekenen.");
+  if (current.profile.role !== "klant") throw new Error("Alleen de klant kan dit uploaden.");
   const supabase = createClient();
-  const { data: existing } = await supabase.from("subsidy_authorizations").select("status").eq("id", id).single();
-  if (existing?.status === "ondertekend") return;
   const { error } = await supabase
     .from("subsidy_authorizations")
     .update({
       status: "ondertekend",
-      client_signature_path: signaturePath,
+      form_file_path: filePath,
+      form_file_type: fileType,
       client_signed_by: current.profile.name,
       client_signed_at: new Date().toISOString(),
     })
-    .eq("id", id)
-    .eq("status", "wacht_op_klant");
+    .eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${projectId}/machtiging`);
+
+  const recipients = await getOwnerUserIds(current.id);
+  if (recipients.length) {
+    const projectName = await getProjectName(projectId);
+    await sendPushToUsers(recipients, {
+      title: `Machtigingsformulier ontvangen — ${projectName}`,
+      body: `${current.profile.name} heeft het ingevulde RVO-formulier geüpload.`,
+      url: `/projects/${projectId}/machtiging`,
+    });
+  }
 }

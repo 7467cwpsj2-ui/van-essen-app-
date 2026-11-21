@@ -8,11 +8,10 @@ export interface AuthorizationData {
   clientName: string | null;
   company: CompanyDetails;
   authorization: SubsidyAuthorization | null;
-  signatureUrl: string | null;
+  formFileUrl: string | null;
 }
 
-// Eén centrale plek om alles voor de machtiging op te halen — gebruikt
-// door zowel het scherm als de PDF-export.
+// Eén centrale plek om alles voor de machtiging op te halen.
 export async function loadAuthorizationData(
   supabase: SupabaseClient,
   projectId: string,
@@ -32,10 +31,10 @@ export async function loadAuthorizationData(
   const clientName = await getProjectClientName(supabase, projectId, p.client_id);
   const auth = (authorization as SubsidyAuthorization | null) ?? null;
 
-  let signatureUrl: string | null = null;
-  if (auth?.client_signature_path) {
-    const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(auth.client_signature_path, urlTtlSeconds);
-    signatureUrl = signed?.signedUrl ?? null;
+  let formFileUrl: string | null = null;
+  if (auth?.form_file_path) {
+    const { data: signed } = await supabase.storage.from("project-files").createSignedUrl(auth.form_file_path, urlTtlSeconds);
+    formFileUrl = signed?.signedUrl ?? null;
   }
 
   return {
@@ -50,6 +49,6 @@ export async function loadAuthorizationData(
       company_email: null,
     },
     authorization: auth,
-    signatureUrl,
+    formFileUrl,
   };
 }

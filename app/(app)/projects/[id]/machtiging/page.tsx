@@ -18,10 +18,8 @@ export default async function MachtigingPage({ params }: { params: { id: string 
     <AuthorizationPanel
       projectId={params.id}
       role={current.profile.role}
-      clientName={data.clientName}
-      projectAddress={data.project.address}
-      company={data.company}
       authorization={data.authorization}
+      formFileUrl={data.formFileUrl}
     />
   );
 }

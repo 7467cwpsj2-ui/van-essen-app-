@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { CheckCircle2, Clock, Download, FileSignature, X } from "lucide-react";
-import { SignaturePad } from "@/components/SignaturePad";
-import { cancelSubsidyAuthorization, requestSubsidyAuthorization, signSubsidyAuthorization } from "@/lib/actions/subsidies";
+import { useState } from "react";
+import { CheckCircle2, Clock, Download, FileText, Upload, X } from "lucide-react";
+import { FileCaptureButtons } from "@/components/FileCaptureButtons";
+import { FilePreview } from "@/components/FilePreview";
+import { cancelSubsidyAuthorization, requestSubsidyAuthorization, uploadAuthorizationForm } from "@/lib/actions/subsidies";
+import { processUploadedFile } from "@/lib/fileProcessing";
 import { createClient } from "@/lib/supabase/client";
 import { uploadWithRetry } from "@/lib/uploadWithRetry";
-import { SUBSIDY_AUTHORIZATION_SCOPE_LABEL } from "@/types/database";
-import type { CompanyDetails, Role, SubsidyAuthorization } from "@/types/database";
+import type { Role, SubsidyAuthorization } from "@/types/database";
+
+const RVO_FORM_URL = "https://www.rvo.nl/sites/default/files/2022-10/Machtigingsformulier-ISDE-woningeigenaren.pdf";
 
 const fmtDate = (iso: string) =>
   new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
@@ -15,64 +18,91 @@ const fmtDate = (iso: string) =>
 export function AuthorizationPanel({
   projectId,
   role,
-  clientName,
-  projectAddress,
-  company,
   authorization,
+  formFileUrl,
 }: {
   projectId: string;
   role: Role;
-  clientName: string | null;
-  projectAddress: string | null;
-  company: CompanyDetails;
   authorization: SubsidyAuthorization | null;
+  formFileUrl: string | null;
 }) {
-  const [signing, setSigning] = useState(false);
-  const [busy, startTransition] = useTransition();
+  const [pending, setPending] = useState<{ blob: Blob; fileType: "image" | "pdf"; fileName: string; previewUrl: string } | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const run = (fn: () => Promise<void>) => {
-    startTransition(() => {
-      fn().catch((err) => alert(err instanceof Error ? err.message : "Er ging iets mis."));
-    });
+  const request = async () => {
+    setBusy(true);
+    try {
+      await requestSubsidyAuthorization(projectId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Er ging iets mis.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const request = () => run(() => requestSubsidyAuthorization(projectId));
-
-  const cancel = () => {
+  const cancel = async () => {
     if (!authorization) return;
     if (!confirm("Deze aanvraag intrekken?")) return;
-    run(() => cancelSubsidyAuthorization(authorization.id, projectId));
+    setBusy(true);
+    try {
+      await cancelSubsidyAuthorization(authorization.id, projectId);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Er ging iets mis.");
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleSign = async (blob: Blob) => {
-    if (!authorization) return;
-    const supabase = createClient();
-    const path = `${projectId}/machtiging/${crypto.randomUUID()}.png`;
-    const { error: uploadError } = await uploadWithRetry(supabase, path, blob, { contentType: "image/png" });
-    if (uploadError) throw new Error(uploadError.message);
-    await signSubsidyAuthorization(authorization.id, projectId, path);
-    setSigning(false);
+  const handlePicked = async (file: File) => {
+    setBusy(true);
+    try {
+      const result = await processUploadedFile(file);
+      setPending(result);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Verwerken mislukt.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const confirmUpload = async () => {
+    if (!pending || !authorization) return;
+    setBusy(true);
+    try {
+      const supabase = createClient();
+      const ext = pending.fileName.split(".").pop() || (pending.fileType === "pdf" ? "pdf" : "jpg");
+      const path = `${projectId}/machtiging/${crypto.randomUUID()}.${ext}`;
+      const { error: uploadError } = await uploadWithRetry(supabase, path, pending.blob, {
+        contentType: pending.fileType === "pdf" ? "application/pdf" : "image/jpeg",
+      });
+      if (uploadError) throw new Error(uploadError.message);
+      await uploadAuthorizationForm(authorization.id, projectId, path, pending.fileType);
+      setPending(null);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Uploaden mislukt.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   if (role !== "klant") {
     return (
       <div className="panel">
         <div className="hint-bar">
-          Met dit machtigingsformulier geeft de klant Van Essen officieel toestemming om namens hem/haar de ISDE-subsidieaanvraag in
-          te dienen, te beheren en eventueel bezwaar te maken — precies zoals RVO dat vereist. Het hoeft niet naar RVO gestuurd te
-          worden; bewaar het in je eigen administratie, RVO kan er later om vragen.
+          Hiermee vraag je de klant om het officiële RVO-machtigingsformulier te downloaden, in te vullen en te ondertekenen, en het
+          daarna hier als foto of scan terug te uploaden. Bewaar dat bestand in je eigen administratie — RVO kan er later om vragen.
         </div>
 
         {!authorization && (
           <button className="btn-primary" onClick={request} disabled={busy} style={{ width: "fit-content" }}>
-            <FileSignature size={14} /> Machtiging aanvragen bij klant
+            <FileText size={14} /> Machtiging aanvragen bij klant
           </button>
         )}
 
         {authorization && authorization.status === "wacht_op_klant" && (
           <div className="dossier-status pending">
             <Clock size={16} />
-            Wachtend op ondertekening door de klant (aangevraagd {fmtDate(authorization.requested_at)})
+            Wachtend op het ingevulde formulier van de klant (aangevraagd {fmtDate(authorization.requested_at)})
             <div className="dossier-status-actions">
               <button className="btn-ghost" onClick={cancel} disabled={busy}>
                 <X size={14} /> Intrekken
@@ -84,12 +114,14 @@ export function AuthorizationPanel({
         {authorization && authorization.status === "ondertekend" && (
           <div className="dossier-status signed">
             <CheckCircle2 size={16} />
-            Ondertekend door {authorization.client_signed_by} op {fmtDate(authorization.client_signed_at as string)}
-            <div className="dossier-status-actions">
-              <a href={`/api/projects/${projectId}/machtiging-pdf`} target="_blank" rel="noreferrer" className="btn-primary">
-                <Download size={13} /> Download machtigingsformulier
-              </a>
-            </div>
+            Ontvangen van {authorization.client_signed_by} op {fmtDate(authorization.client_signed_at as string)}
+            {formFileUrl && (
+              <div className="dossier-status-actions">
+                <a href={formFileUrl} target="_blank" rel="noreferrer" className="btn-primary">
+                  <Download size={13} /> Bekijk ingevuld formulier
+                </a>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -98,16 +130,16 @@ export function AuthorizationPanel({
 
   return (
     <div className="panel">
-      {signing && <SignaturePad title="Onderteken de machtiging" onCancel={() => setSigning(false)} onSave={handleSign} />}
-
       {authorization?.status === "ondertekend" ? (
         <div className="dossier-status signed">
           <CheckCircle2 size={16} />
-          U heeft deze machtiging ondertekend op {fmtDate(authorization.client_signed_at as string)}
+          U heeft het machtigingsformulier geüpload op {fmtDate(authorization.client_signed_at as string)}
           <div className="dossier-status-actions">
-            <a href={`/api/projects/${projectId}/machtiging-pdf`} target="_blank" rel="noreferrer" className="btn-primary">
-              <Download size={13} /> Download uw exemplaar
-            </a>
+            {formFileUrl && (
+              <a href={formFileUrl} target="_blank" rel="noreferrer" className="btn-ghost">
+                <Download size={13} /> Bekijk uw upload
+              </a>
+            )}
           </div>
         </div>
       ) : (
@@ -116,27 +148,29 @@ export function AuthorizationPanel({
             <div className="add-form">
               <div className="add-form-title">Machtigingsformulier ISDE voor woningeigenaren</div>
               <p>
-                Ondergetekende, {clientName || "de woningeigenaar"}, van de woning op {projectAddress || "het opgegeven adres"},
-                machtigt hierbij:
+                Download hieronder het officiële formulier van de Rijksdienst voor Ondernemend Nederland (RVO), vul het in, onderteken
+                het, en upload daarna een foto of scan terug.
               </p>
-              <p>
-                <b>{company.company_name}</b>
-                {company.company_kvk && <> (KVK {company.company_kvk})</>}
-                {company.company_address && <>, {company.company_address}</>}
-                {company.company_postal_city && <>, {company.company_postal_city}</>}
-              </p>
-              <p>
-                om namens ondergetekende {SUBSIDY_AUTHORIZATION_SCOPE_LABEL[authorization.scope]} bij de Rijksdienst voor
-                Ondernemend Nederland (RVO) voor de Investeringssubsidie duurzame energie en energiebesparing (ISDE).
-              </p>
-              <div className="hint-bar small">
-                Dit formulier wordt niet naar RVO gestuurd, maar bewaard in de administratie van {company.company_name} en kan
-                later door RVO worden opgevraagd.
-              </div>
+              <a href={RVO_FORM_URL} target="_blank" rel="noreferrer" className="btn-ghost" style={{ width: "fit-content" }}>
+                <Download size={14} /> Download het RVO-formulier
+              </a>
             </div>
-            <button className="btn-primary" onClick={() => setSigning(true)} style={{ width: "fit-content" }}>
-              <FileSignature size={14} /> Ondertekenen
-            </button>
+
+            <div className="field-with-label">
+              <span className="field-label">Ingevuld en ondertekend formulier</span>
+              <FileCaptureButtons accept="image/*,application/pdf" onPicked={handlePicked} busy={busy} />
+              <FilePreview
+                previewUrl={pending?.previewUrl ?? null}
+                fileType={pending?.fileType ?? null}
+                fileName={pending?.fileName ?? null}
+                onClear={() => setPending(null)}
+              />
+            </div>
+            {pending && (
+              <button type="button" className="btn-primary" onClick={confirmUpload} disabled={busy} style={{ width: "fit-content" }}>
+                <Upload size={14} /> Uploaden
+              </button>
+            )}
           </>
         )
       )}

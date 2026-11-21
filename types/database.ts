@@ -506,7 +506,8 @@ export interface SubsidyAuthorization {
   status: SubsidyAuthorizationStatus;
   requested_by: string | null;
   requested_at: string;
-  client_signature_path: string | null;
+  form_file_path: string | null;
+  form_file_type: FileType | null;
   client_signed_by: string | null;
   client_signed_at: string | null;
   created_at: string;
