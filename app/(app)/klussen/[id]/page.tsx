@@ -20,6 +20,10 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
   if (!data) notFound();
   const job = data as QuickJob;
 
+  // Personeel ziet alleen de klussen waar ze zelf op ingepland staan,
+  // niet alles van iedereen — ook niet via een directe link.
+  if (current.profile.role === "team" && !job.assignee_team_member_ids.includes(current.teamMember?.id ?? "")) notFound();
+
   const { data: members } = job.assignee_team_member_ids.length
     ? await supabase.from("team_members").select("id,name").in("id", job.assignee_team_member_ids)
     : { data: [] as { id: string; name: string }[] };

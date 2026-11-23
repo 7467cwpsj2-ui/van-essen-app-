@@ -49,7 +49,10 @@ export default async function DashboardPage({
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
   const myHoursToday = myStaffId ? await getMyHoursToday(myStaffId) : null;
-  const openQuickJobCount = current.profile.role !== "klant" ? (await getQuickJobsList()).filter((j) => !j.done).length : 0;
+  const openQuickJobCount =
+    current.profile.role !== "klant"
+      ? (await getQuickJobsList(current.profile.role === "team" ? current.teamMember?.id ?? null : null)).filter((j) => !j.done).length
+      : 0;
 
   const hasOverdueTasks = extras.todayTasks.some((t) => t.overdue);
 

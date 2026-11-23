@@ -380,16 +380,20 @@ export interface QuickJobListItem {
 // personeel (en de eigenaar) snel moet kunnen doorzoeken om bijv. een
 // projectnummer op te zoeken, in tegenstelling tot de Gantt-achtige
 // Algemene planning of de (eigenaar-only) Nacalculatie met bedragen.
-export const getQuickJobsList = cache(async (): Promise<QuickJobListItem[]> => {
+// Geef je een teamMemberId mee, dan zie je alleen de klussen waar die
+// persoon ook echt op is ingepland — personeel hoort niet alle klussen
+// van iedereen te zien, alleen die van zichzelf. De eigenaar geeft hier
+// altijd null door en ziet gewoon alles.
+export const getQuickJobsList = cache(async (teamMemberId: string | null = null): Promise<QuickJobListItem[]> => {
   const supabase = createClient();
-  const [{ data: jobs }, { data: members }] = await Promise.all([
-    supabase
-      .from("quick_jobs")
-      .select("id,title,address,start_date,end_date,done,daypart,assignee,assignee_team_member_ids,project_number,project_number_year")
-      .eq("kind", "klus")
-      .order("start_date", { ascending: false }),
-    supabase.from("team_members").select("id,name"),
-  ]);
+  let jobsQuery = supabase
+    .from("quick_jobs")
+    .select("id,title,address,start_date,end_date,done,daypart,assignee,assignee_team_member_ids,project_number,project_number_year")
+    .eq("kind", "klus")
+    .order("start_date", { ascending: false });
+  if (teamMemberId) jobsQuery = jobsQuery.contains("assignee_team_member_ids", [teamMemberId]);
+
+  const [{ data: jobs }, { data: members }] = await Promise.all([jobsQuery, supabase.from("team_members").select("id,name")]);
 
   const nameById = new Map((members ?? []).map((m) => [m.id as string, m.name as string]));
 
