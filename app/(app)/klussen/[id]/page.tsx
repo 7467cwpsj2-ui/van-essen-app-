@@ -5,6 +5,7 @@ import { canSeeHours, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { RouteMenu } from "@/components/RouteMenu";
 import { ProjectNumberChip } from "@/components/ProjectNumberChip";
+import { QuickJobEditButton } from "@/components/QuickJobEditButton";
 import { QuickJobNumberPanel } from "@/components/QuickJobNumberPanel";
 import type { QuickJob } from "@/types/database";
 
@@ -29,11 +30,17 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
     : { data: [] as { id: string; name: string }[] };
   const nameById = new Map((members ?? []).map((m) => [m.id as string, m.name as string]));
 
+  const { data: allTeamMembers } =
+    current.profile.role === "eigenaar" ? await supabase.from("team_members").select("id,name").order("name") : { data: [] };
+
   const sameDay = job.start_date === job.end_date;
 
   return (
     <div className="panel">
-      <div className="header-eyebrow">{job.kind === "kantoor" ? "Kantoordag" : "Losse klus"}</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <div className="header-eyebrow">{job.kind === "kantoor" ? "Kantoordag" : "Losse klus"}</div>
+        {current.profile.role === "eigenaar" && <QuickJobEditButton job={job} teamMembers={(allTeamMembers ?? []) as { id: string; name: string }[]} />}
+      </div>
       <h1 className="page-title">{job.title}</h1>
       <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <span className={"stamp " + (job.done ? "stamp-akkoord" : "stamp-open")}>{job.done ? "Gereed" : "Actief"}</span>
