@@ -1,11 +1,14 @@
-// Projectnummer: jaartal + een volgnummer dat elk jaar weer bij 1
-// begint (zie migratie 0074_project_number_year.sql) — zo is in één
+// Projectnummer: (korte) jaartal + een volgnummer dat elk jaar weer bij
+// 1 begint (zie migratie 0074_project_number_year.sql) — zo is in één
 // oogopslag te zien uit welk jaar een project/klus komt, en het nummer
 // loopt binnen een jaar gewoon netjes op in plaats van willekeurig te
 // lijken. Het laatste cijfer is een Luhn-controlecijfer over jaar +
-// volgnummer samen: tikt iemand één cijfer verkeerd (ook in het
-// jaartal), dan klopt de check bijna altijd niet meer — belangrijk
-// voor als er later automatisch op dit nummer gezocht wordt in e-mail.
+// volgnummer samen (zoals getoond, dus het verkorte 2-cijferige jaar):
+// tikt iemand één cijfer verkeerd, dan klopt de check bijna altijd niet
+// meer — belangrijk voor als er later automatisch op dit nummer gezocht
+// wordt in e-mail. In de database blijft het volledige jaartal staan
+// (project_number_year), dit bestand bepaalt alleen hoe het getoond
+// wordt.
 function luhnCheckDigit(digits: string): number {
   let sum = 0;
   for (let i = 0; i < digits.length; i++) {
@@ -20,25 +23,30 @@ function luhnCheckDigit(digits: string): number {
   return (10 - (sum % 10)) % 10;
 }
 
+function shortYear(year: number): string {
+  return String(year % 100).padStart(2, "0");
+}
+
 function payloadFor(year: number, sequence: number): string {
-  return `${year}${String(sequence).padStart(3, "0")}`;
+  return `${shortYear(year)}${String(sequence).padStart(3, "0")}`;
 }
 
 export function formatProjectNumber(year: number | null | undefined, sequence: number | null | undefined): string {
   if (year == null || sequence == null) return "";
   const payload = payloadFor(year, sequence);
-  return `${year}-${payload.slice(4)}-${luhnCheckDigit(payload)}`;
+  return `${payload.slice(0, 2)}-${payload.slice(2)}-${luhnCheckDigit(payload)}`;
 }
 
 // Haalt jaar + volgnummer uit een los getypt/geplakt projectnummer,
 // maar alleen als het controlecijfer klopt — anders null. Nog niet
 // gebruikt, maar dit is de bouwsteen voor het straks herkennen van
-// projectnummers in binnenkomende e-mail.
+// projectnummers in binnenkomende e-mail. Het 2-cijferige jaar wordt
+// aangenomen in de 2000-2099 range.
 export function parseProjectNumber(full: string): { year: number; sequence: number } | null {
   const digits = full.replace(/\D/g, "");
-  if (digits.length < 8) return null;
+  if (digits.length < 6) return null;
   const payload = digits.slice(0, -1);
   const checkDigit = Number(digits.slice(-1));
   if (luhnCheckDigit(payload) !== checkDigit) return null;
-  return { year: Number(payload.slice(0, 4)), sequence: Number(payload.slice(4)) };
+  return { year: 2000 + Number(payload.slice(0, 2)), sequence: Number(payload.slice(2)) };
 }
