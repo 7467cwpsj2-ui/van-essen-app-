@@ -3,7 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { projectProgress } from "@/lib/progress";
 import { getProjectClientNamesMap } from "@/lib/clientNames";
 import { signedUrlMap } from "@/lib/storage";
-import type { AppNotification, Project, SchedulePhase } from "@/types/database";
+import type { AppNotification, DayPart, Project, SchedulePhase } from "@/types/database";
 
 export interface ProjectWithProgress extends Project {
   clientName: string | null;
@@ -362,3 +362,51 @@ export async function getDashboardExtras(projects: ProjectWithProgress[]): Promi
     activity,
   };
 }
+
+export interface QuickJobListItem {
+  id: string;
+  title: string;
+  address: string | null;
+  startDate: string;
+  endDate: string;
+  done: boolean;
+  daypart: DayPart;
+  assigneeNames: string;
+  projectNumber: number | null;
+  projectNumberYear: number | null;
+}
+
+// Alle losse klussen op een rij, zonder financiële info — dit is wat
+// personeel (en de eigenaar) snel moet kunnen doorzoeken om bijv. een
+// projectnummer op te zoeken, in tegenstelling tot de Gantt-achtige
+// Algemene planning of de (eigenaar-only) Nacalculatie met bedragen.
+export const getQuickJobsList = cache(async (): Promise<QuickJobListItem[]> => {
+  const supabase = createClient();
+  const [{ data: jobs }, { data: members }] = await Promise.all([
+    supabase
+      .from("quick_jobs")
+      .select("id,title,address,start_date,end_date,done,daypart,assignee,assignee_team_member_ids,project_number,project_number_year")
+      .eq("kind", "klus")
+      .order("start_date", { ascending: false }),
+    supabase.from("team_members").select("id,name"),
+  ]);
+
+  const nameById = new Map((members ?? []).map((m) => [m.id as string, m.name as string]));
+
+  return (jobs ?? []).map((j) => {
+    const memberIds = (j.assignee_team_member_ids as string[]) ?? [];
+    const assigneeNames = memberIds.length > 0 ? memberIds.map((id) => nameById.get(id) ?? "?").join(", ") : (j.assignee as string | null) ?? "";
+    return {
+      id: j.id as string,
+      title: j.title as string,
+      address: j.address as string | null,
+      startDate: j.start_date as string,
+      endDate: j.end_date as string,
+      done: j.done as boolean,
+      daypart: j.daypart as DayPart,
+      assigneeNames,
+      projectNumber: j.project_number as number | null,
+      projectNumberYear: j.project_number_year as number | null,
+    };
+  });
+});

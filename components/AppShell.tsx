@@ -22,6 +22,7 @@ import {
   Menu,
   Smartphone,
   User,
+  Wrench,
   X,
 } from "lucide-react";
 import { AppBadgeUpdater } from "@/components/AppBadgeUpdater";
@@ -223,6 +224,15 @@ export function AppShell({
             onClick={() => setSidebarOpen(false)}
           >
             <Clock size={14} /> Uren registreren
+          </Link>
+        )}
+        {(role === "eigenaar" || role === "team") && (
+          <Link
+            href="/klussen"
+            className={"toegang-toggle" + (pathname === "/klussen" ? " active" : "")}
+            onClick={() => setSidebarOpen(false)}
+          >
+            <Wrench size={14} /> Losse klussen
           </Link>
         )}
         {hasOwnPlanning && (

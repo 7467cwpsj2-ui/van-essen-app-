@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { Building2, Camera, CheckCircle2, ClipboardList, Clock, MapPin, Sparkles, TrendingDown, TrendingUp, Wrench } from "lucide-react";
 import { canSeeModule, requireUser } from "@/lib/auth";
 import { ProjectThumb } from "@/components/ProjectThumb";
 import {
@@ -8,6 +8,7 @@ import {
   getMyHoursToday,
   getMySchedule,
   getProjectsWithProgress,
+  getQuickJobsList,
   getTodayStaffSchedule,
   type ActivityItem,
 } from "@/lib/data";
@@ -48,6 +49,7 @@ export default async function DashboardPage({
   const staffToday = current.profile.role === "eigenaar" ? await getTodayStaffSchedule() : [];
   const leadsSummary = current.profile.role === "eigenaar" ? await getLeadsSummary() : { openCount: 0, overdueCount: 0 };
   const myHoursToday = myStaffId ? await getMyHoursToday(myStaffId) : null;
+  const openQuickJobCount = current.profile.role !== "klant" ? (await getQuickJobsList()).filter((j) => !j.done).length : 0;
 
   const hasOverdueTasks = extras.todayTasks.some((t) => t.overdue);
 
@@ -101,6 +103,15 @@ export default async function DashboardPage({
             </div>
             <div className="dash-card-value">{myHoursToday}</div>
             <div className="dash-card-title">Mijn uren vandaag{myHoursToday === 0 ? " — nog invullen" : ""}</div>
+          </Link>
+        )}
+        {current.profile.role !== "klant" && (
+          <Link href="/klussen" className="dash-card">
+            <div className="dash-card-icon">
+              <Wrench size={16} />
+            </div>
+            <div className="dash-card-value">{openQuickJobCount}</div>
+            <div className="dash-card-title">Losse klussen open</div>
           </Link>
         )}
         {current.profile.role === "eigenaar" && (
