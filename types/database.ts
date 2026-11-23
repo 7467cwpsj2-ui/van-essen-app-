@@ -155,6 +155,7 @@ export interface Project {
   dossier_share_token: string | null;
   hidden_tabs: string[];
   project_number: number | null;
+  project_number_year: number | null;
   offer_number: string | null;
   invoice_numbers: string[];
 }
@@ -204,6 +205,7 @@ export interface QuickJob {
   price_vat_type: ExtraWorkVatType;
   created_at: string;
   project_number: number | null;
+  project_number_year: number | null;
   offer_number: string | null;
   invoice_numbers: string[];
 }

@@ -13,6 +13,7 @@ import {
 } from "@/lib/data";
 import { timeAgo } from "@/lib/timeAgo";
 import { timeAwareGreeting } from "@/lib/greeting";
+import { formatProjectNumber } from "@/lib/projectNumber";
 import { TASK_ASSIGNEE_LABEL, type ProjectStatus } from "@/types/database";
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -256,7 +257,18 @@ export default async function DashboardPage({
                   </div>
                   <div className="dash-panel-row-body">
                     <div className="dash-panel-row-title">{p.name}</div>
-                    {p.clientName && <div className="dash-panel-row-sub">{p.clientName}</div>}
+                    {(p.project_number != null || p.clientName) && (
+                      <div className="dash-panel-row-sub mono">
+                        {[
+                          p.project_number != null && p.project_number_year != null
+                            ? `#${formatProjectNumber(p.project_number_year, p.project_number)}`
+                            : null,
+                          p.clientName,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </div>
+                    )}
                     <div className="proj-card-progress">
                       <div className="proj-card-progress-fill" style={{ width: `${p.progress}%` }} />
                     </div>
@@ -377,7 +389,14 @@ export default async function DashboardPage({
                   <div className="proj-card-progress-fill" style={{ width: `${p.progress}%` }} />
                 </div>
                 <div className="proj-card-foot">
-                  <span className={"pill pill-" + p.status}>{STATUS_LABEL[p.status]}</span>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span className={"pill pill-" + p.status}>{STATUS_LABEL[p.status]}</span>
+                    {p.project_number != null && p.project_number_year != null && (
+                      <span className="mono" style={{ color: "var(--text-faint)" }}>
+                        #{formatProjectNumber(p.project_number_year, p.project_number)}
+                      </span>
+                    )}
+                  </div>
                   <span className="mono">{p.progress}%</span>
                 </div>
               </div>

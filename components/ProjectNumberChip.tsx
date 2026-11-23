@@ -4,10 +4,10 @@ import { useState } from "react";
 import { Check, Copy } from "lucide-react";
 import { formatProjectNumber } from "@/lib/projectNumber";
 
-export function ProjectNumberChip({ sequence }: { sequence: number | null }) {
+export function ProjectNumberChip({ year, sequence }: { year: number | null; sequence: number | null }) {
   const [copied, setCopied] = useState(false);
-  if (sequence == null) return null;
-  const number = formatProjectNumber(sequence);
+  if (year == null || sequence == null) return null;
+  const number = formatProjectNumber(year, sequence);
 
   const copy = async () => {
     try {

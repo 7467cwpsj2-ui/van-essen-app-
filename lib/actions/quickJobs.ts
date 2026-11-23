@@ -177,17 +177,19 @@ export async function toggleQuickJobDone(id: string, done: boolean) {
 }
 
 // Zie updateProjectNumber in lib/actions/projects.ts — zelfde idee,
-// maar dan voor een losse klus (gedeelde nummerreeks met projecten).
-export async function updateQuickJobNumber(id: string, sequence: number) {
+// maar dan voor een losse klus (gedeelde nummerreeks met projecten,
+// per jaar).
+export async function updateQuickJobNumber(id: string, year: number, sequence: number) {
   await requireOwner();
-  if (!Number.isInteger(sequence) || sequence < 1) throw new Error("Ongeldig projectnummer.");
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) throw new Error("Ongeldig jaartal.");
+  if (!Number.isInteger(sequence) || sequence < 1) throw new Error("Ongeldig volgnummer.");
   const supabase = createClient();
   const [{ data: otherJob }, { data: otherProject }] = await Promise.all([
-    supabase.from("quick_jobs").select("id").eq("project_number", sequence).neq("id", id).maybeSingle(),
-    supabase.from("projects").select("id").eq("project_number", sequence).maybeSingle(),
+    supabase.from("quick_jobs").select("id").eq("project_number_year", year).eq("project_number", sequence).neq("id", id).maybeSingle(),
+    supabase.from("projects").select("id").eq("project_number_year", year).eq("project_number", sequence).maybeSingle(),
   ]);
   if (otherJob || otherProject) throw new Error("Dit projectnummer is al in gebruik.");
-  const { error } = await supabase.from("quick_jobs").update({ project_number: sequence }).eq("id", id);
+  const { error } = await supabase.from("quick_jobs").update({ project_number_year: year, project_number: sequence }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/klussen/${id}`);
   revalidatePath("/planning-overzicht");

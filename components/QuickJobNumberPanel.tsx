@@ -10,21 +10,24 @@ import { updateQuickJobExternalRefs, updateQuickJobNumber } from "@/lib/actions/
 // zelfde patroon bij een project.
 export function QuickJobNumberPanel({
   jobId,
+  year,
   sequence,
   offerNumber,
   invoiceNumbers,
 }: {
   jobId: string;
+  year: number | null;
   sequence: number | null;
   offerNumber: string | null;
   invoiceNumbers: string[];
 }) {
   return (
     <ProjectNumberEditor
+      year={year}
       sequence={sequence}
       offerNumber={offerNumber}
       invoiceNumbers={invoiceNumbers}
-      onSaveNumber={(seq) => updateQuickJobNumber(jobId, seq)}
+      onSaveNumber={(y, seq) => updateQuickJobNumber(jobId, y, seq)}
       onSaveRefs={(data) => updateQuickJobExternalRefs(jobId, data)}
     />
   );

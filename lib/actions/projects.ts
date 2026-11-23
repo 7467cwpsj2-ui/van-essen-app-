@@ -58,20 +58,21 @@ export async function updateProjectDetails(id: string, data: { name: string; add
 }
 
 // Projectnummer corrigeren (bijv. een typefout uit het verleden) — de
-// kolom bevat alleen het reeksnummer, het controlecijfer wordt pas bij
-// weergave aangeplakt (zie lib/projectNumber.ts). Controleert op
-// uniciteit over projecten én losse klussen heen, want die delen één
-// nummerreeks.
-export async function updateProjectNumber(id: string, sequence: number) {
+// kolommen bevatten alleen jaar + volgnummer, het controlecijfer wordt
+// pas bij weergave aangeplakt (zie lib/projectNumber.ts). Controleert
+// op uniciteit over projecten én losse klussen heen, want die delen
+// dezelfde nummerreeks per jaar.
+export async function updateProjectNumber(id: string, year: number, sequence: number) {
   await requireOwner();
-  if (!Number.isInteger(sequence) || sequence < 1) throw new Error("Ongeldig projectnummer.");
+  if (!Number.isInteger(year) || year < 2000 || year > 2100) throw new Error("Ongeldig jaartal.");
+  if (!Number.isInteger(sequence) || sequence < 1) throw new Error("Ongeldig volgnummer.");
   const supabase = createClient();
   const [{ data: otherProject }, { data: otherJob }] = await Promise.all([
-    supabase.from("projects").select("id").eq("project_number", sequence).neq("id", id).maybeSingle(),
-    supabase.from("quick_jobs").select("id").eq("project_number", sequence).maybeSingle(),
+    supabase.from("projects").select("id").eq("project_number_year", year).eq("project_number", sequence).neq("id", id).maybeSingle(),
+    supabase.from("quick_jobs").select("id").eq("project_number_year", year).eq("project_number", sequence).maybeSingle(),
   ]);
   if (otherProject || otherJob) throw new Error("Dit projectnummer is al in gebruik.");
-  const { error } = await supabase.from("projects").update({ project_number: sequence }).eq("id", id);
+  const { error } = await supabase.from("projects").update({ project_number_year: year, project_number: sequence }).eq("id", id);
   if (error) throw new Error(error.message);
   revalidatePath(`/projects/${id}`);
 }

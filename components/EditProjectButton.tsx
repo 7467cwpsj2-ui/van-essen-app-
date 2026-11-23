@@ -10,6 +10,7 @@ export function EditProjectButton({
   name,
   address,
   projectNumber,
+  projectNumberYear,
   offerNumber,
   invoiceNumbers,
 }: {
@@ -17,6 +18,7 @@ export function EditProjectButton({
   name: string;
   address: string | null;
   projectNumber: number | null;
+  projectNumberYear: number | null;
   offerNumber: string | null;
   invoiceNumbers: string[];
 }) {
@@ -71,10 +73,11 @@ export function EditProjectButton({
 
             <div style={{ borderTop: "1px solid var(--border)", marginTop: 14, paddingTop: 14 }}>
               <ProjectNumberEditor
+                year={projectNumberYear}
                 sequence={projectNumber}
                 offerNumber={offerNumber}
                 invoiceNumbers={invoiceNumbers}
-                onSaveNumber={(seq) => updateProjectNumber(projectId, seq)}
+                onSaveNumber={(year, seq) => updateProjectNumber(projectId, year, seq)}
                 onSaveRefs={(data) => updateProjectExternalRefs(projectId, data)}
               />
             </div>

@@ -47,6 +47,7 @@ export interface SidebarProject {
   coverPhotoUrl: string | null;
   planningColor: string | null;
   projectNumber: number | null;
+  projectNumberYear: number | null;
 }
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -326,7 +327,7 @@ export function AppShell({
                     <div className="project-item-info">
                       <span className="project-item-name">{p.name}</span>
                       <span className="project-item-sub mono">
-                        {p.projectNumber != null ? `#${formatProjectNumber(p.projectNumber)} · ` : ""}
+                        {p.projectNumber != null && p.projectNumberYear != null ? `#${formatProjectNumber(p.projectNumberYear, p.projectNumber)} · ` : ""}
                         {p.clientName || "geen klant gekoppeld"}
                       </span>
                       <div className="project-item-progress">
@@ -363,7 +364,7 @@ export function AppShell({
                             <div className="project-item-info">
                               <span className="project-item-name">{p.name}</span>
                               <span className="project-item-sub mono">
-                                {p.projectNumber != null ? `#${formatProjectNumber(p.projectNumber)} · ` : ""}
+                                {p.projectNumber != null && p.projectNumberYear != null ? `#${formatProjectNumber(p.projectNumberYear, p.projectNumber)} · ` : ""}
                                 {p.clientName || "geen klant gekoppeld"}
                               </span>
                               <div className="project-item-progress">

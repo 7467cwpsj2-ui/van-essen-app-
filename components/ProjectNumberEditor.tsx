@@ -8,31 +8,41 @@ import { formatProjectNumber } from "@/lib/projectNumber";
 // externe offerte-/factuurnummers (uit de eigen facturatietool) vast te
 // leggen — gebruikt zowel bij projecten als bij losse klussen.
 export function ProjectNumberEditor({
+  year,
   sequence,
   offerNumber,
   invoiceNumbers,
   onSaveNumber,
   onSaveRefs,
 }: {
+  year: number | null;
   sequence: number | null;
   offerNumber: string | null;
   invoiceNumbers: string[];
-  onSaveNumber: (sequence: number) => Promise<void>;
+  onSaveNumber: (year: number, sequence: number) => Promise<void>;
   onSaveRefs: (data: { offerNumber: string | null; invoiceNumbers: string[] }) => Promise<void>;
 }) {
-  const [numberInput, setNumberInput] = useState(sequence != null ? String(sequence) : "");
+  const [yearInput, setYearInput] = useState(year != null ? String(year) : String(new Date().getFullYear()));
+  const [seqInput, setSeqInput] = useState(sequence != null ? String(sequence) : "");
   const [offer, setOffer] = useState(offerNumber || "");
   const [invoices, setInvoices] = useState<string[]>(invoiceNumbers.length ? invoiceNumbers : [""]);
   const [pending, startTransition] = useTransition();
 
+  const parsedYear = Number(yearInput);
+  const parsedSeq = Number(seqInput);
+  const preview = yearInput && seqInput ? formatProjectNumber(parsedYear, parsedSeq) : null;
+
   const saveNumber = () => {
-    const parsed = Number(numberInput);
-    if (!Number.isInteger(parsed) || parsed < 1) {
-      alert("Vul een geldig nummer in.");
+    if (!Number.isInteger(parsedYear) || parsedYear < 2000 || parsedYear > 2100) {
+      alert("Vul een geldig jaartal in.");
+      return;
+    }
+    if (!Number.isInteger(parsedSeq) || parsedSeq < 1) {
+      alert("Vul een geldig volgnummer in.");
       return;
     }
     startTransition(() => {
-      onSaveNumber(parsed).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
+      onSaveNumber(parsedYear, parsedSeq).catch((err) => alert(err instanceof Error ? err.message : "Opslaan mislukt."));
     });
   };
 
@@ -51,18 +61,26 @@ export function ProjectNumberEditor({
         <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
           <input
             className="access-name-input"
-            style={{ maxWidth: 90 }}
+            style={{ maxWidth: 70 }}
             inputMode="numeric"
-            value={numberInput}
-            onChange={(e) => setNumberInput(e.target.value.replace(/\D/g, ""))}
+            placeholder="jaar"
+            value={yearInput}
+            onChange={(e) => setYearInput(e.target.value.replace(/\D/g, ""))}
           />
-          <span className="access-summary-sub mono">
-            wordt getoond als #{numberInput ? formatProjectNumber(Number(numberInput)) : "…"}
-          </span>
+          <span className="access-summary-sub">–</span>
+          <input
+            className="access-name-input"
+            style={{ maxWidth: 70 }}
+            inputMode="numeric"
+            placeholder="volgnr."
+            value={seqInput}
+            onChange={(e) => setSeqInput(e.target.value.replace(/\D/g, ""))}
+          />
           <button type="button" className="btn-ghost" onClick={saveNumber} disabled={pending}>
             Opslaan
           </button>
         </div>
+        <span className="access-summary-sub mono">wordt getoond als #{preview ?? "…"}</span>
       </div>
 
       <div className="field-with-label">

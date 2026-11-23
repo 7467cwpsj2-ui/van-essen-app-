@@ -38,7 +38,7 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
           {sameDay ? fmtDate(job.start_date) : `${fmtShort(job.start_date)} – ${fmtDate(job.end_date)}`}
         </span>
         {job.daypart !== "dag" && <span className="stamp stamp-open">{job.daypart === "ochtend" ? "Ochtend" : "Middag"}</span>}
-        <ProjectNumberChip sequence={job.project_number} />
+        <ProjectNumberChip year={job.project_number_year} sequence={job.project_number} />
       </div>
 
       {job.address && (
@@ -100,6 +100,7 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
           <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
             <QuickJobNumberPanel
               jobId={job.id}
+              year={job.project_number_year}
               sequence={job.project_number}
               offerNumber={job.offer_number}
               invoiceNumbers={job.invoice_numbers}

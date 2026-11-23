@@ -71,6 +71,7 @@ bestand in `supabase/migrations/` op volgorde: `0001_init.sql`,
 `0070_general_tasks.sql`,
 `0071_lock_hours_on_done_quick_jobs.sql`,
 `0072_authorization_form_upload.sql`, `0073_project_number.sql`,
+`0074_project_number_year.sql`,
 en klik telkens Run), of met de
 Supabase CLI:
 

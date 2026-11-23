@@ -19,6 +19,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     coverPhotoUrl: p.coverPhotoUrl,
     planningColor: p.planning_color,
     projectNumber: p.project_number,
+    projectNumberYear: p.project_number_year,
   }));
 
   const canSeePlanningOverzicht =

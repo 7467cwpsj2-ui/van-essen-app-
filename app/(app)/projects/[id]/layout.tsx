@@ -68,7 +68,7 @@ export default async function ProjectLayout({
                 </span>
               )}
               <span className={"pill pill-" + p.status}>{STATUS_LABEL[p.status]}</span>
-              <ProjectNumberChip sequence={p.project_number} />
+              <ProjectNumberChip year={p.project_number_year} sequence={p.project_number} />
               {isLocked && (
                 <span className="pill pill-afgerond">
                   <Lock size={10} style={{ display: "inline", marginRight: 3, verticalAlign: -1 }} /> Vergrendeld
@@ -86,6 +86,7 @@ export default async function ProjectLayout({
                     name={p.name}
                     address={p.address}
                     projectNumber={p.project_number}
+                    projectNumberYear={p.project_number_year}
                     offerNumber={p.offer_number}
                     invoiceNumbers={p.invoice_numbers}
                   />
