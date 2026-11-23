@@ -4,6 +4,8 @@ import { CalendarRange, Clock, MapPin, Users } from "lucide-react";
 import { canSeeHours, requireUser } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { RouteMenu } from "@/components/RouteMenu";
+import { ProjectNumberChip } from "@/components/ProjectNumberChip";
+import { QuickJobNumberPanel } from "@/components/QuickJobNumberPanel";
 import type { QuickJob } from "@/types/database";
 
 const fmtDate = (iso: string) => new Intl.DateTimeFormat("nl-NL", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso + "T00:00:00Z"));
@@ -36,6 +38,7 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
           {sameDay ? fmtDate(job.start_date) : `${fmtShort(job.start_date)} – ${fmtDate(job.end_date)}`}
         </span>
         {job.daypart !== "dag" && <span className="stamp stamp-open">{job.daypart === "ochtend" ? "Ochtend" : "Middag"}</span>}
+        <ProjectNumberChip sequence={job.project_number} />
       </div>
 
       {job.address && (
@@ -90,9 +93,19 @@ export default async function QuickJobPage({ params }: { params: { id: string } 
       )}
 
       {current.profile.role === "eigenaar" && (
-        <Link href="/planning-overzicht" className="link-btn">
-          Bewerken in Algemene planning
-        </Link>
+        <>
+          <Link href="/planning-overzicht" className="link-btn">
+            Bewerken in Algemene planning
+          </Link>
+          <div style={{ borderTop: "1px solid var(--border)", paddingTop: 14 }}>
+            <QuickJobNumberPanel
+              jobId={job.id}
+              sequence={job.project_number}
+              offerNumber={job.offer_number}
+              invoiceNumbers={job.invoice_numbers}
+            />
+          </div>
+        </>
       )}
     </div>
   );

@@ -2,9 +2,24 @@
 
 import { useState, useTransition } from "react";
 import { Pencil } from "lucide-react";
-import { updateProjectDetails } from "@/lib/actions/projects";
+import { ProjectNumberEditor } from "@/components/ProjectNumberEditor";
+import { updateProjectDetails, updateProjectExternalRefs, updateProjectNumber } from "@/lib/actions/projects";
 
-export function EditProjectButton({ projectId, name, address }: { projectId: string; name: string; address: string | null }) {
+export function EditProjectButton({
+  projectId,
+  name,
+  address,
+  projectNumber,
+  offerNumber,
+  invoiceNumbers,
+}: {
+  projectId: string;
+  name: string;
+  address: string | null;
+  projectNumber: number | null;
+  offerNumber: string | null;
+  invoiceNumbers: string[];
+}) {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState({ name, address: address || "" });
   const [pending, startTransition] = useTransition();
@@ -52,6 +67,16 @@ export function EditProjectButton({ projectId, name, address }: { projectId: str
               <button type="button" className="btn-primary" onClick={save} disabled={pending || !form.name.trim()}>
                 {pending ? "Bezig…" : "Opslaan"}
               </button>
+            </div>
+
+            <div style={{ borderTop: "1px solid var(--border)", marginTop: 14, paddingTop: 14 }}>
+              <ProjectNumberEditor
+                sequence={projectNumber}
+                offerNumber={offerNumber}
+                invoiceNumbers={invoiceNumbers}
+                onSaveNumber={(seq) => updateProjectNumber(projectId, seq)}
+                onSaveRefs={(data) => updateProjectExternalRefs(projectId, data)}
+              />
             </div>
           </div>
         </div>

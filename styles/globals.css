@@ -2830,6 +2830,46 @@ body.gantt-landscape-fullscreen .main {
   color: var(--text);
 }
 
+/* Projectnummer: klein, monospace nummer-chipje met kopieerknop,
+   zelfde visuele taal als de bestaande status-pills ernaast. */
+.project-number-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  padding: 3px 6px 3px 9px;
+  border-radius: var(--radius-lg);
+  background: var(--panel-2);
+  color: var(--text-dim);
+  border: 1px solid var(--border);
+}
+.project-number-chip button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--text-faint);
+  cursor: pointer;
+}
+.project-number-chip button:hover {
+  background: var(--border);
+  color: var(--text);
+}
+.has-cover .project-number-chip {
+  background: rgba(255, 255, 255, 0.16);
+  border-color: rgba(255, 255, 255, 0.3);
+  color: #fff;
+}
+.has-cover .project-number-chip button {
+  color: rgba(255, 255, 255, 0.8);
+}
+
 .planning-legend {
   display: flex;
   flex-wrap: wrap;

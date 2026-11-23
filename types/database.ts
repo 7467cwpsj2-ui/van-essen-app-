@@ -154,6 +154,9 @@ export interface Project {
   review_request_sent_at: string | null;
   dossier_share_token: string | null;
   hidden_tabs: string[];
+  project_number: number | null;
+  offer_number: string | null;
+  invoice_numbers: string[];
 }
 
 export interface SchedulePhase {
@@ -200,6 +203,9 @@ export interface QuickJob {
   price: number;
   price_vat_type: ExtraWorkVatType;
   created_at: string;
+  project_number: number | null;
+  offer_number: string | null;
+  invoice_numbers: string[];
 }
 
 export type TaskAssigneeType = "eigenaar" | "team" | "klant";

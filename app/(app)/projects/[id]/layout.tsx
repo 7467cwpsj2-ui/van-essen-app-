@@ -9,6 +9,7 @@ import { RouteMenu } from "@/components/RouteMenu";
 import { DeleteProjectButton } from "@/components/DeleteProjectButton";
 import { EditProjectButton } from "@/components/EditProjectButton";
 import { CoverPhotoControls } from "@/components/CoverPhotoControls";
+import { ProjectNumberChip } from "@/components/ProjectNumberChip";
 import { MODULE_KEYS, type Project } from "@/types/database";
 
 const STATUS_LABEL = { gepland: "Gepland", lopend: "Lopend", afgerond: "Afgerond" };
@@ -67,6 +68,7 @@ export default async function ProjectLayout({
                 </span>
               )}
               <span className={"pill pill-" + p.status}>{STATUS_LABEL[p.status]}</span>
+              <ProjectNumberChip sequence={p.project_number} />
               {isLocked && (
                 <span className="pill pill-afgerond">
                   <Lock size={10} style={{ display: "inline", marginRight: 3, verticalAlign: -1 }} /> Vergrendeld
@@ -79,7 +81,14 @@ export default async function ProjectLayout({
               <>
                 <div className="header-toolbar">
                   <CoverPhotoControls projectId={p.id} hasPhoto={!!coverPhotoUrl} />
-                  <EditProjectButton projectId={p.id} name={p.name} address={p.address} />
+                  <EditProjectButton
+                    projectId={p.id}
+                    name={p.name}
+                    address={p.address}
+                    projectNumber={p.project_number}
+                    offerNumber={p.offer_number}
+                    invoiceNumbers={p.invoice_numbers}
+                  />
                   <StatusSelect projectId={p.id} status={p.status} />
                 </div>
                 <DeleteProjectButton projectId={p.id} projectName={p.name} />
@@ -94,6 +103,14 @@ export default async function ProjectLayout({
           <Lock size={13} style={{ display: "inline", marginRight: 6, verticalAlign: -2 }} />
           Het opleverdossier is ondertekend door {p.delivery_signed_by} — dit project ligt permanent vast, niemand kan er nog iets aan
           wijzigen.
+        </div>
+      )}
+
+      {current.profile.role !== "klant" && (p.offer_number || p.invoice_numbers.length > 0) && (
+        <div className="access-summary-sub mono" style={{ padding: "0 4px 8px" }}>
+          {p.offer_number && <>Offerte {p.offer_number}</>}
+          {p.offer_number && p.invoice_numbers.length > 0 && " · "}
+          {p.invoice_numbers.length > 0 && <>Factuur {p.invoice_numbers.join(", ")}</>}
         </div>
       )}
 

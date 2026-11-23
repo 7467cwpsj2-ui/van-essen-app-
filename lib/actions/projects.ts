@@ -57,6 +57,41 @@ export async function updateProjectDetails(id: string, data: { name: string; add
   revalidatePath("/dashboard");
 }
 
+// Projectnummer corrigeren (bijv. een typefout uit het verleden) — de
+// kolom bevat alleen het reeksnummer, het controlecijfer wordt pas bij
+// weergave aangeplakt (zie lib/projectNumber.ts). Controleert op
+// uniciteit over projecten én losse klussen heen, want die delen één
+// nummerreeks.
+export async function updateProjectNumber(id: string, sequence: number) {
+  await requireOwner();
+  if (!Number.isInteger(sequence) || sequence < 1) throw new Error("Ongeldig projectnummer.");
+  const supabase = createClient();
+  const [{ data: otherProject }, { data: otherJob }] = await Promise.all([
+    supabase.from("projects").select("id").eq("project_number", sequence).neq("id", id).maybeSingle(),
+    supabase.from("quick_jobs").select("id").eq("project_number", sequence).maybeSingle(),
+  ]);
+  if (otherProject || otherJob) throw new Error("Dit projectnummer is al in gebruik.");
+  const { error } = await supabase.from("projects").update({ project_number: sequence }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${id}`);
+}
+
+// Offertenummer + factuurnummers uit de eigen facturatietool van Van
+// Essen, zodat die ook in de app bij het project te vinden zijn.
+export async function updateProjectExternalRefs(id: string, data: { offerNumber: string | null; invoiceNumbers: string[] }) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("projects")
+    .update({
+      offer_number: data.offerNumber?.trim() || null,
+      invoice_numbers: data.invoiceNumbers.map((n) => n.trim()).filter(Boolean),
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/projects/${id}`);
+}
+
 // Welke tabs de eigenaar voor dit project uit de navigatiebalk heeft
 // verborgen — puur een weergavefilter (zie migratie 0049), geen
 // rechtensysteem: de pagina's zelf blijven gewoon bereikbaar.

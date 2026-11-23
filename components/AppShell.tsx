@@ -35,6 +35,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { UpdateChecker } from "@/components/UpdateChecker";
 import { signOut } from "@/lib/actions/auth";
 import { haptic } from "@/lib/haptics";
+import { formatProjectNumber } from "@/lib/projectNumber";
 import type { AppNotification, ProjectStatus, Role } from "@/types/database";
 
 export interface SidebarProject {
@@ -45,6 +46,7 @@ export interface SidebarProject {
   progress: number;
   coverPhotoUrl: string | null;
   planningColor: string | null;
+  projectNumber: number | null;
 }
 
 const STATUS_LABEL: Record<ProjectStatus, string> = {
@@ -323,7 +325,10 @@ export function AppShell({
                     </div>
                     <div className="project-item-info">
                       <span className="project-item-name">{p.name}</span>
-                      <span className="project-item-sub">{p.clientName || "geen klant gekoppeld"}</span>
+                      <span className="project-item-sub mono">
+                        {p.projectNumber != null ? `#${formatProjectNumber(p.projectNumber)} · ` : ""}
+                        {p.clientName || "geen klant gekoppeld"}
+                      </span>
                       <div className="project-item-progress">
                         <div className="project-item-progress-fill" style={{ width: `${p.progress}%` }} />
                       </div>
@@ -357,7 +362,10 @@ export function AppShell({
                             </div>
                             <div className="project-item-info">
                               <span className="project-item-name">{p.name}</span>
-                              <span className="project-item-sub">{p.clientName || "geen klant gekoppeld"}</span>
+                              <span className="project-item-sub mono">
+                                {p.projectNumber != null ? `#${formatProjectNumber(p.projectNumber)} · ` : ""}
+                                {p.clientName || "geen klant gekoppeld"}
+                              </span>
                               <div className="project-item-progress">
                                 <div className="project-item-progress-fill" style={{ width: `${p.progress}%` }} />
                               </div>

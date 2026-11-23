@@ -176,6 +176,37 @@ export async function toggleQuickJobDone(id: string, done: boolean) {
   revalidatePath("/uren");
 }
 
+// Zie updateProjectNumber in lib/actions/projects.ts — zelfde idee,
+// maar dan voor een losse klus (gedeelde nummerreeks met projecten).
+export async function updateQuickJobNumber(id: string, sequence: number) {
+  await requireOwner();
+  if (!Number.isInteger(sequence) || sequence < 1) throw new Error("Ongeldig projectnummer.");
+  const supabase = createClient();
+  const [{ data: otherJob }, { data: otherProject }] = await Promise.all([
+    supabase.from("quick_jobs").select("id").eq("project_number", sequence).neq("id", id).maybeSingle(),
+    supabase.from("projects").select("id").eq("project_number", sequence).maybeSingle(),
+  ]);
+  if (otherJob || otherProject) throw new Error("Dit projectnummer is al in gebruik.");
+  const { error } = await supabase.from("quick_jobs").update({ project_number: sequence }).eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/klussen/${id}`);
+  revalidatePath("/planning-overzicht");
+}
+
+export async function updateQuickJobExternalRefs(id: string, data: { offerNumber: string | null; invoiceNumbers: string[] }) {
+  await requireOwner();
+  const supabase = createClient();
+  const { error } = await supabase
+    .from("quick_jobs")
+    .update({
+      offer_number: data.offerNumber?.trim() || null,
+      invoice_numbers: data.invoiceNumbers.map((n) => n.trim()).filter(Boolean),
+    })
+    .eq("id", id);
+  if (error) throw new Error(error.message);
+  revalidatePath(`/klussen/${id}`);
+}
+
 export async function deleteQuickJob(id: string) {
   await requireOwner();
   const supabase = createClient();
