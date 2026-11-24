@@ -27,6 +27,12 @@ function shortYear(year: number): string {
   return String(year % 100).padStart(2, "0");
 }
 
+// Voorloopnullen van het volgnummer zijn puur cosmetisch (voor
+// uitlijning in de weergave) — het controlecijfer wordt daarom altijd
+// herberekend over deze vaste, opgevulde vorm, nooit over de cijfers
+// zoals iemand ze toevallig heeft getypt. Zo komt "26-3-7" (zonder
+// voorloopnullen, zoals een leverancier het typt) op exact hetzelfde
+// controlecijfer uit als "26-003-7".
 function payloadFor(year: number, sequence: number): string {
   return `${shortYear(year)}${String(sequence).padStart(3, "0")}`;
 }
@@ -37,16 +43,31 @@ export function formatProjectNumber(year: number | null | undefined, sequence: n
   return `${payload.slice(0, 2)}-${payload.slice(2)}-${luhnCheckDigit(payload)}`;
 }
 
-// Haalt jaar + volgnummer uit een los getypt/geplakt projectnummer,
-// maar alleen als het controlecijfer klopt — anders null. Nog niet
-// gebruikt, maar dit is de bouwsteen voor het straks herkennen van
-// projectnummers in binnenkomende e-mail. Het 2-cijferige jaar wordt
-// aangenomen in de 2000-2099 range.
+// Zelfde nummer als formatProjectNumber, maar zonder de koppeltekens —
+// dit is wat de kopieerknop meegeeft, zodat plakken in een mail/factuur
+// altijd de juiste cijfers oplevert zonder dat iemand zelf nog
+// streepjes moet overtypen (of per ongeluk weglaat).
+export function formatProjectNumberPlain(year: number | null | undefined, sequence: number | null | undefined): string {
+  return formatProjectNumber(year, sequence).replace(/-/g, "");
+}
+
+// Haalt jaar + volgnummer uit een los getypt/geplakt projectnummer, en
+// controleert dat tegen een vers herberekend controlecijfer (dus
+// onafhankelijk van streepjes, spaties, of ontbrekende voorloopnullen
+// in het volgnummer) — anders null. Nog niet gebruikt, maar dit is de
+// bouwsteen voor het straks herkennen van projectnummers in
+// binnenkomende e-mail/facturen, ook als een leverancier het nummer
+// zonder streepjes en zonder voorloopnullen overneemt (bijv. "2637"
+// i.p.v. "26-003-7"). Het 2-cijferige jaar wordt aangenomen in de
+// 2000-2099 range.
 export function parseProjectNumber(full: string): { year: number; sequence: number } | null {
   const digits = full.replace(/\D/g, "");
-  if (digits.length < 6) return null;
-  const payload = digits.slice(0, -1);
+  if (digits.length < 4) return null;
+  const yearDigits = digits.slice(0, 2);
+  const sequence = Number(digits.slice(2, -1));
   const checkDigit = Number(digits.slice(-1));
-  if (luhnCheckDigit(payload) !== checkDigit) return null;
-  return { year: 2000 + Number(payload.slice(0, 2)), sequence: Number(payload.slice(2)) };
+  if (!sequence || sequence < 1) return null;
+  const year = 2000 + Number(yearDigits);
+  if (luhnCheckDigit(payloadFor(year, sequence)) !== checkDigit) return null;
+  return { year, sequence };
 }

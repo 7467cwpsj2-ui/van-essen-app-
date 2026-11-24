@@ -2,16 +2,19 @@
 
 import { useState } from "react";
 import { Check, Copy } from "lucide-react";
-import { formatProjectNumber } from "@/lib/projectNumber";
+import { formatProjectNumber, formatProjectNumberPlain } from "@/lib/projectNumber";
 
 export function ProjectNumberChip({ year, sequence }: { year: number | null; sequence: number | null }) {
   const [copied, setCopied] = useState(false);
   if (year == null || sequence == null) return null;
   const number = formatProjectNumber(year, sequence);
 
+  // Kopieert zonder streepjes — leveranciers typen die er in de
+  // praktijk toch niet bij, en zonder streepjes blijft het nummer nog
+  // steeds correct te herleiden (zie lib/projectNumber.ts).
   const copy = async () => {
     try {
-      await navigator.clipboard.writeText(number);
+      await navigator.clipboard.writeText(formatProjectNumberPlain(year, sequence));
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
